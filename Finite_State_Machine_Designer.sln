@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34322.80
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Finite_State_Machine_Designer", "Finite_State_Machine_Designer\Finite_State_Machine_Designer\Finite_State_Machine_Designer.csproj", "{89AAED22-DB30-4BAB-9450-09708BAC3BD6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Finite_State_Machine_Designer.Client", "Finite_State_Machine_Designer\Finite_State_Machine_Designer.Client\Finite_State_Machine_Designer.Client.csproj", "{05BF45D0-30F3-4915-A965-1FDDA8872C29}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89AAED22-DB30-4BAB-9450-09708BAC3BD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89AAED22-DB30-4BAB-9450-09708BAC3BD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89AAED22-DB30-4BAB-9450-09708BAC3BD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89AAED22-DB30-4BAB-9450-09708BAC3BD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05BF45D0-30F3-4915-A965-1FDDA8872C29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05BF45D0-30F3-4915-A965-1FDDA8872C29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05BF45D0-30F3-4915-A965-1FDDA8872C29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05BF45D0-30F3-4915-A965-1FDDA8872C29}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {33E7A855-4ED8-451F-BEE6-3C0A6DFB9920}
+	EndGlobalSection
+EndGlobal

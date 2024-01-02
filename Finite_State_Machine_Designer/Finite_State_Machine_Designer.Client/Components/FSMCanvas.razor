@@ -1,0 +1,39 @@
+﻿
+<section class="center">
+	<label>
+		Canvas Height:
+		<InputNumber TValue="int" @bind-Value:get="Height" />
+	</label>
+	<label>
+		Canvas Width:
+		<InputNumber TValue="int" @bind-Value:get="Width" />
+	</label>
+	<div class="center">
+		Export as:
+		<a href="javascript:saveAsPNG()"
+		   download>PNG</a>
+		|
+		<a href="javascript:saveAsSVG()"
+		   download>SVG</a>
+		|
+		<a href="javascript:saveAsLaTeX()"
+		   download>LaTeX</a>
+	</div>
+</section>
+<canvas
+		height="@Height"
+		width="@Width"
+		class="border border-dark">
+	<span class="error">
+		Your browser does not support<br />the HTML5 &lt;canvas&gt;
+		element
+	</span>
+</canvas>
+
+@code {
+	[Parameter]
+	public int Height { get; set; } = 150;
+
+	[Parameter]
+	public int Width { get; set; } = 300;
+}

@@ -1,0 +1,80 @@
+﻿@page "/designer"
+@using Components
+@rendermode InteractiveWebAssembly
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<PageTitle>Finite State Machine Designer</PageTitle>
+
+<DynamicComponent Type="@_canvasLoaded" Parameters="_canvasDimensions" />
+
+<div>
+	<p>
+		The big white box above is the FSM designer.&nbsp; Here's how to
+		use it:
+	</p>
+	<ul>
+		<li><b>Add a state:</b> double-click on the canvas</li>
+		<li><b>Add an arrow:</b> shift-drag on the canvas</li>
+		<li><b>Move something:</b> drag it around</li>
+		<li>
+			<b>Delete something:</b> click it and press the delete key
+			(not the backspace key)
+		</li>
+	</ul>
+	<ul>
+		<li>
+			<b>Make accept state:</b> double-click on an existing state
+		</li>
+		<li>
+			<b>Type numeric subscript:</b> put an underscore before the
+			number (like "S_0")
+		</li>
+		<li>
+			<b>Type greek letter:</b> put a backslash before it (like
+			"\beta")
+		</li>
+	</ul>
+	<p>
+		This was made in HTML5 and JavaScript using the canvas element.
+	</p>
+</div>
+<p>
+	Created by <a href="https://madebyevan.com/">Evan Wallace</a> in
+	2010
+</p>
+<p>Modified by <b>Tobi Adeniji</b> in 2024</p>
+
+@code {
+		IJSObjectReference module;
+	private Dictionary<string, object> _canvasDimensions = new();
+	private Type? _canvasLoaded = typeof(Loading);
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			module = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/FSMDesigner.razor.js");
+			await SetCanvasDimensions();
+		}
+	}
+
+	protected async Task SetCanvasDimensions()
+	{
+		int[] dimensions = await module.InvokeAsync<int[]>("getWindowDimensions");
+
+		_canvasDimensions.TryAdd("Height", dimensions[0]);
+		_canvasDimensions.TryAdd("Width", dimensions[1]);
+
+		_canvasLoaded = typeof(FSMCanvas);
+		StateHasChanged();
+	}
+
+	async ValueTask IAsyncDisposable.DisposeAsync()
+	{
+		if (module is not null)
+		{
+			await module.DisposeAsync();
+		}
+	}
+}
