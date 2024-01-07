@@ -63,8 +63,8 @@
 	{
 		int[] dimensions = await module.InvokeAsync<int[]>("getWindowDimensions");
 
-		_canvasDimensions.TryAdd("Height", dimensions[0]);
-		_canvasDimensions.TryAdd("Width", dimensions[1]);
+		_canvasDimensions.TryAdd("Height", (dimensions[0]*4)/5);
+		_canvasDimensions.TryAdd("Width", (dimensions[1]*4)/5);
 
 		_canvasLoaded = typeof(FSMCanvas);
 		StateHasChanged();

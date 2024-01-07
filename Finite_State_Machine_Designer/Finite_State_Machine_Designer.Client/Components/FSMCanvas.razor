@@ -1,13 +1,18 @@
-﻿
+﻿@inherits ModuleCheckBaseComponent
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<canvas
+	id="FSMCanvas"
+	height="@Height"
+	width="@Width"
+	class="border border-dark"
+	@ondblclick="FiniteStateHandler"
+>
+	Your browser does not support the HTML5 &lt;canvas&gt;
+	element.
+</canvas>
 <section class="center">
-	<label>
-		Canvas Height:
-		<InputNumber TValue="int" @bind-Value:get="Height" />
-	</label>
-	<label>
-		Canvas Width:
-		<InputNumber TValue="int" @bind-Value:get="Width" />
-	</label>
 	<div class="center">
 		Export as:
 		<a href="javascript:saveAsPNG()"
@@ -20,15 +25,6 @@
 		   download>LaTeX</a>
 	</div>
 </section>
-<canvas
-		height="@Height"
-		width="@Width"
-		class="border border-dark">
-	<span class="error">
-		Your browser does not support<br />the HTML5 &lt;canvas&gt;
-		element
-	</span>
-</canvas>
 
 @code {
 	[Parameter]
@@ -36,4 +32,42 @@
 
 	[Parameter]
 	public int Width { get; set; } = 300;
+
+	private IJSObjectReference? module;
+
+	/// <summary>
+	/// X co-ordinate relative in the canvas space.
+	/// </summary>
+	private double _mouseX;
+	/// <summary>
+	/// Y co-ordinate relative in the canvas space.
+	/// </summary>
+	private double _mouseY;
+
+	protected async override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			module = await JS.InvokeAsync<IJSObjectReference?>("import", "./Components/FSMCanvas.razor.js");
+		}
+	}
+
+	private async Task FiniteStateHandler(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(module))
+		{
+			_mouseX = mouseEventArgs.OffsetX;
+			_mouseY = mouseEventArgs.OffsetY;
+
+			await module.InvokeAsync<bool>("CreateState", new object[] { _mouseX, _mouseY, 30, "#0000ff" });
+		}
+	}
+
+	async ValueTask IAsyncDisposable.DisposeAsync()
+	{
+		if (module is not null)
+		{
+			await module.DisposeAsync();
+		}
+	}
 }

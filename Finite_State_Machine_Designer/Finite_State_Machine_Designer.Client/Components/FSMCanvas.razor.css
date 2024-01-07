@@ -1,7 +1,4 @@
 ﻿canvas {
-    display: block;
-    max-width: 800px;
-    background: white;
     border-radius: 20px;
     -moz-border-radius: 20px;
     margin: 10px auto;
