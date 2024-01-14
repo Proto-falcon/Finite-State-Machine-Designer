@@ -73,7 +73,7 @@
 
 		public override int GetHashCode()
 		{
-			return (int)((_x * _y)^2 - (_x * _y) - (_x + _y));
+			return _x + _y;
 		}
 	}
 }
