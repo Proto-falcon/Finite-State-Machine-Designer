@@ -1,6 +1,30 @@
 ﻿const canvasWidthRatio = 0.8;
 const canvasHeightRatio = 0.8;
 
+
+class Coordinate {
+    x = -1
+    y = -1
+}
+
+class State {
+    coordinate = new Coordinate();
+    radius = 0;
+    text = "";
+    IsFinal = false;
+}
+
+
+class StateTransition {
+    /** @type {?State} */
+    fromState = new State();
+    toState = new State();
+    arcRadius = 0;
+    text = "";
+}
+
+
+
 /**
  * Represents the Canvas element
  */
@@ -29,8 +53,10 @@ class Canvas {
         this.canvasElement.width = width;
         this.canvasElement.height = height;
 
-        // USE getImageData and putImageData to temporarily store canvas when resizing
+        // TODO: Convert C# objects to js objects to be serialized to string
+        // in order to be stored in localstorage
 
+        // Can use IAsyncDisposable on Blazor side to excute code to do above tasks
     }
 }
 
@@ -42,25 +68,27 @@ let canvas = new Canvas("FSMCanvas");
  * @param {Event} event
  */
 function updateCanvasDimensions(event) {
-    const height = window.innerHeight * canvasHeightRatio;
-    const width = window.innerWidth * canvasWidthRatio;
+    const height = window.outerHeight * canvasHeightRatio;
+    const width = window.outerWidth * canvasWidthRatio;
     canvas.updateDimensions(height, width);
 }
 
 addEventListener("resize", updateCanvasDimensions);
+//addEventListener("visibilitychange");
+
 
 /**
  * Creates a state at a position within the canvas with colour.
  * @param {number} x X co-ordinate in canvas space
  * @param {number} y Y co-ordinate in canvas space
- * @param {any} radius Radius of the state
- * @param {any} selectedColour Colour when created 
+ * @param {number} radius Radius of the state
+ * @param {string} colour Colour when created 
  * @returns True when created successfully, otherwise can't create it because canvas context is false.
  */
-export function CreateState(x, y, radius, selectedColour = "blue") {
+export function DrawState(x, y, radius, colour = "#0000ff") {
     if (canvas.canvasExists) {
         canvas.canvasCtx.beginPath();
-        canvas.canvasCtx.strokeStyle = selectedColour;
+        canvas.canvasCtx.strokeStyle = colour;
         canvas.canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvas.canvasCtx.closePath();
         canvas.canvasCtx.stroke();
@@ -69,3 +97,20 @@ export function CreateState(x, y, radius, selectedColour = "blue") {
     return false
 }
 
+/**
+ * Selects or deselects a state to change colour.
+ * @param {?State} newState Possibly new selected state
+ * @param {Array<State>} states 
+ */
+export function SelectState(newState, states) {
+    for (var i = 0; i < states.length; i++) {
+        if (newState != null
+            && states[i].coordinate.x == newState.coordinate.x
+            && states[i].coordinate.y == newState.coordinate.y) {
+            DrawState(newState.coordinate.x, newState.coordinate.y, newState.radius, "#0000ff");
+        }
+        else {
+            DrawState(states[i].coordinate.x, states[i].coordinate.y, states[i].radius, "#000000");
+        }
+    }
+}

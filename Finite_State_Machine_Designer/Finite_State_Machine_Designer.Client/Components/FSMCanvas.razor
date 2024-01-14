@@ -1,30 +1,30 @@
-﻿@inherits ModuleCheckBaseComponent
+﻿@using FSM
+@inherits ModuleCheckBaseComponent
 @implements IAsyncDisposable
 @inject IJSRuntime JS
 
+<section class="center">
+	Export as:
+	<a href="javascript:saveAsPNG()"
+	   download>PNG</a>
+	   |
+	<a href="javascript:saveAsSVG()"
+	   download>SVG</a>
+	|
+	<a href="javascript:saveAsLaTeX()"
+	   download>LaTeX</a>
+</section>
 <canvas
 	id="FSMCanvas"
 	height="@Height"
 	width="@Width"
 	class="border border-dark"
 	@ondblclick="FiniteStateHandler"
+	@onclick="FiniteStateHandler"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
 </canvas>
-<section class="center">
-	<div class="center">
-		Export as:
-		<a href="javascript:saveAsPNG()"
-		   download>PNG</a>
-		|
-		<a href="javascript:saveAsSVG()"
-		   download>SVG</a>
-		|
-		<a href="javascript:saveAsLaTeX()"
-		   download>LaTeX</a>
-	</div>
-</section>
 
 @code {
 	[Parameter]
@@ -35,14 +35,21 @@
 
 	private IJSObjectReference? module;
 
+	private FSMController _fSM = new FSMController();
+
 	/// <summary>
 	/// X co-ordinate relative in the canvas space.
 	/// </summary>
-	private double _mouseX;
+	private int _mouseX;
 	/// <summary>
 	/// Y co-ordinate relative in the canvas space.
 	/// </summary>
-	private double _mouseY;
+	private int _mouseY;
+
+	private float _defalutStateRadius = 30;
+
+	private string _selectedStateColour = "#0000ff";
+	private string _notSelectedStateColour = "#000000";
 
 	protected async override Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -56,10 +63,35 @@
 	{
 		if (CheckJsModule(module))
 		{
-			_mouseX = mouseEventArgs.OffsetX;
-			_mouseY = mouseEventArgs.OffsetY;
+			_mouseX = (int)mouseEventArgs.OffsetX;
+			_mouseY = (int)mouseEventArgs.OffsetY;
 
-			await module.InvokeAsync<bool>("CreateState", new object[] { _mouseX, _mouseY, 30, "#0000ff" });
+			if (mouseEventArgs.Detail > 1)
+			{
+				bool isCreated = await module.InvokeAsync<bool>(
+					"DrawState", 
+					new object[] 
+					{
+						_mouseX,
+						_mouseY,
+						_defalutStateRadius,
+						_selectedStateColour
+					}
+				);
+
+				if (!isCreated)
+					throw new Exception($"State to be created at {(_mouseX, _mouseY)} failed to be created");
+
+				var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+				_fSM.AddState(coordinate, _defalutStateRadius);
+			}
+			else
+			{
+				var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+				FiniteState? state = _fSM.FindState(coordinate);
+				await module.InvokeVoidAsync("SelectState", new object[] {state, _fSM.States});
+			}
+
 		}
 	}
 

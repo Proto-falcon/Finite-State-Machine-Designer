@@ -1,5 +1,7 @@
 ﻿@page "/designer"
 @using Components
+@using FSM
+@inherits ModuleCheckBaseComponent
 @rendermode InteractiveWebAssembly
 @implements IAsyncDisposable
 @inject IJSRuntime JS
@@ -36,7 +38,7 @@
 		</li>
 	</ul>
 	<p>
-		This was made in HTML5 and JavaScript using the canvas element.
+		This was made in Blazor and JavaScript Interop using the canvas element.
 	</p>
 </div>
 <p>
@@ -46,7 +48,7 @@
 <p>Modified by <b>Tobi Adeniji</b> in 2024</p>
 
 @code {
-		IJSObjectReference module;
+	IJSObjectReference? module;
 	private Dictionary<string, object> _canvasDimensions = new();
 	private Type? _canvasLoaded = typeof(Loading);
 
@@ -61,13 +63,22 @@
 
 	protected async Task SetCanvasDimensions()
 	{
-		int[] dimensions = await module.InvokeAsync<int[]>("getWindowDimensions");
+		if (CheckJsModule(module))
+		{
+			int[] dimensions = await module.InvokeAsync<int[]>("getWindowDimensions");
 
-		_canvasDimensions.TryAdd("Height", (dimensions[0]*4)/5);
-		_canvasDimensions.TryAdd("Width", (dimensions[1]*4)/5);
+			int width = (int)(dimensions[0] * 0.8);
+			int height = (int)(dimensions[1] * 0.8);
 
-		_canvasLoaded = typeof(FSMCanvas);
-		StateHasChanged();
+			_canvasDimensions.TryAdd("Height", width);
+			_canvasDimensions.TryAdd("Width", height);
+			_canvasLoaded = typeof(FSMCanvas);
+
+			CanvasCoordinate.MaxCanvasX = width;
+			CanvasCoordinate.MaxCanvasY = height;
+
+			StateHasChanged();
+		}
 	}
 
 	async ValueTask IAsyncDisposable.DisposeAsync()

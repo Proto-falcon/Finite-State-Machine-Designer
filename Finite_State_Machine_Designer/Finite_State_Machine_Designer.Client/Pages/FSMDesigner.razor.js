@@ -1,6 +1,6 @@
 ﻿export function getWindowDimensions() {
     return [
-        window.innerHeight,
-        window.innerWidth,
+        window.outerHeight,
+        window.outerWidth,
     ];
 }
