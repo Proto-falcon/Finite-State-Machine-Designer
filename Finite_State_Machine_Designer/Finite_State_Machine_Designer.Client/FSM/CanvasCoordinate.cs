@@ -61,19 +61,5 @@
 			_x = x;
 			_y = y;
 		}
-
-		public override bool Equals(object? obj)
-		{
-			if (obj is not CanvasCoordinate coordinate)
-			{
-				return false;
-			}
-			return (_x == coordinate._x) && (_y == coordinate._y);
-		}
-
-		public override int GetHashCode()
-		{
-			return (_x >> 1) ^ (_y << 1);
-		}
 	}
 }
