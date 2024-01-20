@@ -1,6 +1,8 @@
 ﻿const canvasWidthRatio = 0.8;
 const canvasHeightRatio = 0.8;
 
+const SelectedStateColour = "#0000ff";
+const stateColour = "#000000";
 
 class Coordinate {
     x = -1
@@ -85,7 +87,7 @@ addEventListener("resize", updateCanvasDimensions);
  * @param {string} colour Colour when created 
  * @returns True when created successfully, otherwise can't create it because canvas context is false.
  */
-export function DrawState(x, y, radius, colour = "#0000ff") {
+export function DrawState(x, y, radius, colour = SelectedStateColour) {
     if (canvas.canvasExists) {
         canvas.canvasCtx.beginPath();
         canvas.canvasCtx.strokeStyle = colour;
@@ -95,22 +97,4 @@ export function DrawState(x, y, radius, colour = "#0000ff") {
         return true
     }
     return false
-}
-
-/**
- * Selects or deselects a state to change colour.
- * @param {?State} newState Possibly new selected state
- * @param {Array<State>} states 
- */
-export function SelectState(newState, states) {
-    for (var i = 0; i < states.length; i++) {
-        if (newState != null
-            && states[i].coordinate.x == newState.coordinate.x
-            && states[i].coordinate.y == newState.coordinate.y) {
-            DrawState(newState.coordinate.x, newState.coordinate.y, newState.radius, "#0000ff");
-        }
-        else {
-            DrawState(states[i].coordinate.x, states[i].coordinate.y, states[i].radius, "#000000");
-        }
-    }
 }

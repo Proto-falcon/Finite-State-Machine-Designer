@@ -19,8 +19,8 @@
 	height="@Height"
 	width="@Width"
 	class="border border-dark"
-	@ondblclick="FiniteStateHandler"
-	@onclick="FiniteStateHandler"
+	@ondblclick="ClicksStateHandler"
+	@onclick="ClicksStateHandler"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
@@ -48,8 +48,8 @@
 
 	private float _defalutStateRadius = 30;
 
-	private string _selectedStateColour = "#0000ff";
-	private string _notSelectedStateColour = "#000000";
+	private const string _selectedStateColour = "#0000ff";
+	private const string _stateColour = "#000000";
 
 	protected async override Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -59,14 +59,17 @@
 		}
 	}
 
-	private async Task FiniteStateHandler(MouseEventArgs mouseEventArgs)
+	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(module))
 		{
 			_mouseX = (int)mouseEventArgs.OffsetX;
 			_mouseY = (int)mouseEventArgs.OffsetY;
 
-			if (mouseEventArgs.Detail > 1)
+			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+			FiniteState? existingState = _fSM.FindState(coordinate);
+
+			if (existingState == null && mouseEventArgs.Detail > 1)
 			{
 				bool isCreated = await module.InvokeAsync<bool>(
 					"DrawState", 
@@ -82,14 +85,39 @@
 				if (!isCreated)
 					throw new Exception($"State to be created at {(_mouseX, _mouseY)} failed to be created");
 
-				var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+				coordinate = new CanvasCoordinate(_mouseX, _mouseY);
 				_fSM.AddState(coordinate, _defalutStateRadius);
+				return;
 			}
-			else
+
+			FiniteState? prevSelectedState = _fSM.SelectedState;
+
+			_fSM.SelectedState = existingState;
+
+			if (prevSelectedState != _fSM.SelectedState)
 			{
-				var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
-				FiniteState? state = _fSM.FindState(coordinate);
-				await module.InvokeVoidAsync("SelectState", new object[] {state, _fSM.States});
+				string currentColour = _stateColour;
+				foreach (FiniteState state in _fSM.States)
+				{
+					currentColour = _stateColour;
+
+					if (
+						_fSM.SelectedState != null
+						&& state.Coordinate.X == _fSM.SelectedState.Coordinate.X
+						&& state.Coordinate.Y == _fSM.SelectedState.Coordinate.Y
+					)
+					{
+						currentColour = _selectedStateColour;
+					}
+
+					await module.InvokeAsync<bool>(
+						"DrawState",
+						state.Coordinate.X,
+						state.Coordinate.Y,
+						state.Radius,
+						currentColour
+					);
+				}
 			}
 
 		}
