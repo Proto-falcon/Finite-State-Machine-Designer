@@ -1,11 +1,9 @@
 ﻿namespace Finite_State_Machine_Designer.Client.FSM
 {
-    public class FSMController
+    public class FiniteStateMachine
     {
         public List<FiniteState> States { get => _states; }
         private readonly List<FiniteState> _states = [];
-
-        private uint _stateRadius;
 
         public FiniteState? SelectedState
         {

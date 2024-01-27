@@ -1,9 +1,6 @@
 ﻿const canvasWidthRatio = 0.8;
 const canvasHeightRatio = 0.8;
 
-const SelectedStateColour = "#0000ff";
-const stateColour = "#000000";
-
 class Coordinate {
     x = -1
     y = -1
@@ -64,6 +61,23 @@ class Canvas {
 
 let canvas = new Canvas("FSMCanvas");
 
+/**
+ * Clears the whole canvas
+ * @returns {boolean} True if cleared the whole canvas successfully,
+ * otherwise there wasn't canvas (context) to doesn't exist.
+ */
+export function clearCanvas() {
+    if (canvas.canvasExists) {
+        canvas.canvasCtx.clearRect(
+            0,
+            0,
+            canvas.canvasElement.width,
+            canvas.canvasElement.height
+        );
+        return true;
+    }
+    return false;
+}
 
 /**
  * Updates the canvas dimensions when the window size changes
@@ -84,17 +98,17 @@ addEventListener("resize", updateCanvasDimensions);
  * @param {number} x X co-ordinate in canvas space
  * @param {number} y Y co-ordinate in canvas space
  * @param {number} radius Radius of the state
- * @param {string} colour Colour when created 
- * @returns True when created successfully, otherwise can't create it because canvas context is false.
+ * @param {string} colour Colour when drawn 
+ * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function DrawState(x, y, radius, colour = SelectedStateColour) {
+export function DrawState(x, y, radius, colour) {
     if (canvas.canvasExists) {
         canvas.canvasCtx.beginPath();
         canvas.canvasCtx.strokeStyle = colour;
         canvas.canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvas.canvasCtx.closePath();
         canvas.canvasCtx.stroke();
-        return true
+        return true;
     }
-    return false
+    return false;
 }

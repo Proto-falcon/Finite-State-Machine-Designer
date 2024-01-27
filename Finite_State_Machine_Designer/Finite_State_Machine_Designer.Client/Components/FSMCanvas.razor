@@ -16,11 +16,13 @@
 </section>
 <canvas
 	id="FSMCanvas"
+	contenteditable="true"
 	height="@Height"
 	width="@Width"
 	class="border border-dark"
 	@ondblclick="ClicksStateHandler"
 	@onclick="ClicksStateHandler"
+	@onkeydown="DeleteState"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
@@ -35,7 +37,7 @@
 
 	private IJSObjectReference? module;
 
-	private FSMController _fSM = new FSMController();
+	private FiniteStateMachine _fSM = new FiniteStateMachine();
 
 	/// <summary>
 	/// X co-ordinate relative in the canvas space.
@@ -59,6 +61,95 @@
 		}
 	}
 
+	/*
+	*
+	*
+	*
+	*
+	*
+	*
+	* @onmousedown="Some Method" Mouse down event works so I can move things !!!!!!!!!!!!!!!!!!!!!!!!
+	*
+	*
+	*
+	*
+	*
+	*/
+
+	private async ValueTask<bool> CreateState(CanvasCoordinate coordinate)
+	{
+		if (CheckJsModule(module))
+		{
+			bool isCreated = await module.InvokeAsync<bool>(
+						"DrawState",
+						new object[]
+						{
+							_mouseX,
+							_mouseY,
+							_defalutStateRadius,
+							_selectedStateColour
+						}
+					);
+
+			if (!isCreated)
+				return false;
+
+			coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+			_fSM.AddState(coordinate, _defalutStateRadius);
+
+			return true;
+		}
+		return false;
+	}
+
+	private async ValueTask<bool> DrawMachine(CanvasCoordinate? selectedCoords = null)
+	{
+		if (CheckJsModule(module)
+		&& await module.InvokeAsync<bool>("clearCanvas"))
+		{
+			bool hasSelectedState = false;
+			string currentColour = _stateColour;
+			foreach (FiniteState state in _fSM.States)
+			{
+				currentColour = _stateColour;
+
+				if (
+					selectedCoords != null
+					&& state.Coordinate.X == selectedCoords.X
+					&& state.Coordinate.Y == selectedCoords.Y
+				)
+				{
+					currentColour = _selectedStateColour;
+					hasSelectedState = true;
+				}
+
+				await module.InvokeAsync<bool>(
+					"DrawState",
+					state.Coordinate.X,
+					state.Coordinate.Y,
+					state.Radius,
+					currentColour
+				);
+			}
+			return hasSelectedState;
+		}
+		return false;
+	}
+
+	private async Task DeleteState(KeyboardEventArgs keyboardEventArgs)
+	{
+		if (CheckJsModule(module))
+		{
+			if (_fSM.SelectedState != null
+				&& keyboardEventArgs.Code.ToLower() == "delete"
+				&& _fSM.RemoveState(_fSM.SelectedState.Coordinate)
+			)
+			{
+				_ = await DrawMachine();
+			}
+		}
+	}
+
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(module))
@@ -71,22 +162,11 @@
 
 			if (existingState == null && mouseEventArgs.Detail > 1)
 			{
-				bool isCreated = await module.InvokeAsync<bool>(
-					"DrawState", 
-					new object[] 
-					{
-						_mouseX,
-						_mouseY,
-						_defalutStateRadius,
-						_selectedStateColour
-					}
-				);
+				bool isCreated = await CreateState(coordinate);
 
 				if (!isCreated)
 					throw new Exception($"State to be created at {(_mouseX, _mouseY)} failed to be created");
 
-				coordinate = new CanvasCoordinate(_mouseX, _mouseY);
-				_fSM.AddState(coordinate, _defalutStateRadius);
 				return;
 			}
 
@@ -96,28 +176,7 @@
 
 			if (prevSelectedState != _fSM.SelectedState)
 			{
-				string currentColour = _stateColour;
-				foreach (FiniteState state in _fSM.States)
-				{
-					currentColour = _stateColour;
-
-					if (
-						_fSM.SelectedState != null
-						&& state.Coordinate.X == _fSM.SelectedState.Coordinate.X
-						&& state.Coordinate.Y == _fSM.SelectedState.Coordinate.Y
-					)
-					{
-						currentColour = _selectedStateColour;
-					}
-
-					await module.InvokeAsync<bool>(
-						"DrawState",
-						state.Coordinate.X,
-						state.Coordinate.Y,
-						state.Radius,
-						currentColour
-					);
-				}
+				_ = await DrawMachine(_fSM.SelectedState?.Coordinate);
 			}
 
 		}
