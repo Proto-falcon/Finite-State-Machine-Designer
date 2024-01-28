@@ -21,8 +21,9 @@
 	width="@Width"
 	class="border border-dark"
 	@ondblclick="ClicksStateHandler"
-	@onclick="ClicksStateHandler"
+	@onmousedown="ClicksStateHandler"
 	@onkeydown="DeleteState"
+	@onmousemove="MoveState"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
@@ -61,20 +62,11 @@
 		}
 	}
 
-	/*
-	*
-	*
-	*
-	*
-	*
-	*
-	* @onmousedown="Some Method" Mouse down event works so I can move things !!!!!!!!!!!!!!!!!!!!!!!!
-	*
-	*
-	*
-	*
-	*
-	*/
+	private void SetMouseCoords(double x, double y)
+	{
+		_mouseX = (int)x;
+		_mouseY = (int)y;
+	}
 
 	private async ValueTask<bool> CreateState(CanvasCoordinate coordinate)
 	{
@@ -115,8 +107,7 @@
 
 				if (
 					selectedCoords != null
-					&& state.Coordinate.X == selectedCoords.X
-					&& state.Coordinate.Y == selectedCoords.Y
+					&& state.Coordinate == selectedCoords
 				)
 				{
 					currentColour = _selectedStateColour;
@@ -150,12 +141,28 @@
 		}
 	}
 
+	private async Task MoveState(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(module)
+		&& _fSM.SelectedState != null
+		&& mouseEventArgs.Buttons > 0
+		&& mouseEventArgs.Buttons <= 3)
+		{
+			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+			var coords = new CanvasCoordinate(_mouseX, _mouseY);
+
+			_fSM.SelectedState.Coordinate = coords;
+
+			_ = await DrawMachine(_fSM.SelectedState.Coordinate);
+
+		}
+	}
+
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(module))
 		{
-			_mouseX = (int)mouseEventArgs.OffsetX;
-			_mouseY = (int)mouseEventArgs.OffsetY;
+			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
 			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
 			FiniteState? existingState = _fSM.FindState(coordinate);

@@ -2,39 +2,13 @@
 {
 	public class CanvasCoordinate
 	{
-		public static int MaxCanvasX
-		{
-			set
-			{
-				if (value >= 0)
-					_maxCanvasX = value;
-				else
-					_maxCanvasX = 100;
-			}
-		}
-		private static int _maxCanvasX;
-
-		public static int MaxCanvasY
-		{
-			set
-			{
-				if (value >= 0)
-					_maxCanvasY = value;
-				else
-					_maxCanvasY = 100;
-			}
-		}
-		private static int _maxCanvasY;
-
 		public int X
 		{
 			get => _x;
 			set
 			{
-				if (value >= 0 && value <= _maxCanvasX)
+				if (value >= 0)
 					_x = value;
-				else if (value > _maxCanvasX)
-					_x = _maxCanvasX;
 				else
 					_x = 0;
 			}
@@ -46,10 +20,8 @@
 			get => _y;
 			set
 			{
-				if (value >= 0 && value <= _maxCanvasY)
+				if (value >= 0)
 					_y = value;
-				else if (value > _maxCanvasY)
-					_y = _maxCanvasY;
 				else
 					_y = 0;
 			}
@@ -60,6 +32,20 @@
 		{
 			_x = x;
 			_y = y;
+		}
+
+		public override bool Equals(object? obj)
+		{
+			if (obj is CanvasCoordinate coordinate)
+			{
+				return X == coordinate.X && Y == coordinate.Y;
+			}
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(_x, _y);
 		}
 	}
 }

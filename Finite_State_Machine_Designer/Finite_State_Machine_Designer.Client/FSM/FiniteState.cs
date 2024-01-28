@@ -5,8 +5,9 @@
 		public CanvasCoordinate Coordinate
 		{
 			get => _coordinate;
+			set => _coordinate = value;
 		}
-		private readonly CanvasCoordinate _coordinate;
+		private CanvasCoordinate _coordinate;
 
 		public float Radius
 		{
