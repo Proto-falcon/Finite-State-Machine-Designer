@@ -4,8 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Finite_State_Machine_Designer.Client
 {
-	public class ModuleCheckBaseComponent: ComponentBase
+	public class ModuleCheckBaseComponent : ComponentBase, IAsyncDisposable
 	{
+		[Inject]
+		public IJSRuntime JS { get; set; }
+
+		private IJSObjectReference? _jsModule;
+		protected IJSObjectReference? JsModule { get => _jsModule; } 
+
 		protected static bool CheckJsModule([NotNullWhen(true)] IJSObjectReference? module)
 		{
 			if (module == null)
@@ -13,5 +19,18 @@ namespace Finite_State_Machine_Designer.Client
 			return true;
 		}
 
+		protected async ValueTask SetJsModule(params object?[]? jsPath)
+		{
+			_jsModule = await JS.InvokeAsync<IJSObjectReference>("import", jsPath);
+		}
+
+		async ValueTask IAsyncDisposable.DisposeAsync()
+		{
+			GC.SuppressFinalize(this);
+			if (_jsModule != null)
+			{
+				await _jsModule.DisposeAsync();
+			}
+		}
 	}
 }

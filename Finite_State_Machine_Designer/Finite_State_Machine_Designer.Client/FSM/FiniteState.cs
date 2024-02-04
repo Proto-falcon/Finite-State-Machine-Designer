@@ -38,7 +38,7 @@
 
 		public override string ToString()
 		{
-			return $"(x: {_coordinate.X}, y: {_coordinate.Y}, Radius: {_radius})";
+			return $"(co-ordinate: {_coordinate}, Radius: {_radius})";
 		}
 	}
 }

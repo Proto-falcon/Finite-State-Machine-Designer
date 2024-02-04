@@ -3,12 +3,11 @@
 @using FSM
 @inherits ModuleCheckBaseComponent
 @rendermode InteractiveWebAssembly
-@implements IAsyncDisposable
-@inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <PageTitle>Finite State Machine Designer</PageTitle>
 
-<DynamicComponent Type="@_canvasLoaded" Parameters="_canvasDimensions" />
+<DynamicComponent Type="@_canvasLoaded" Parameters="_canvasParams" />
 
 <div>
 	<p>
@@ -48,41 +47,55 @@
 <p>Modified by <b>Tobi Adeniji</b> in 2024</p>
 
 @code {
-	IJSObjectReference? module;
-	private Dictionary<string, object> _canvasDimensions = new();
+	private Dictionary<string, object> _canvasParams = new();
 	private Type? _canvasLoaded = typeof(Loading);
+
+	private bool _mustRetryContext = false;
+
+	protected override void OnInitialized()
+	{
+		Navigation.LocationChanged += HandleLocationChanged;
+	}
+
+	private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+	{
+		string path = e.Location.Substring(e.Location.LastIndexOf('/'));
+
+		if (path == "/designer")
+		{
+			_mustRetryContext = true;
+			if (_canvasParams.ContainsKey("MustRetryContext"))
+			{
+				_canvasParams["MustRetryContext"] = _mustRetryContext;
+			}
+			StateHasChanged();
+		}
+	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
-			module = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/FSMDesigner.razor.js");
+			await SetJsModule("./Pages/FSMDesigner.razor.js");
 			await SetCanvasDimensions();
 		}
 	}
 
 	private async ValueTask SetCanvasDimensions()
 	{
-		if (CheckJsModule(module))
+		if (CheckJsModule(JsModule))
 		{
-			int[] dimensions = await module.InvokeAsync<int[]>("getWindowDimensions");
+			int[] dimensions = await JsModule.InvokeAsync<int[]>("getWindowDimensions");
 
 			int width = (int)(dimensions[0] * 0.8);
 			int height = (int)(dimensions[1] * 0.8);
 
-			_canvasDimensions.TryAdd("Height", width);
-			_canvasDimensions.TryAdd("Width", height);
+			_canvasParams.TryAdd("Height", width);
+			_canvasParams.TryAdd("Width", height);
+			_canvasParams.TryAdd("MustRetryContext", _mustRetryContext);
 			_canvasLoaded = typeof(FSMCanvas);
 
 			StateHasChanged();
-		}
-	}
-
-	async ValueTask IAsyncDisposable.DisposeAsync()
-	{
-		if (module is not null)
-		{
-			await module.DisposeAsync();
 		}
 	}
 }

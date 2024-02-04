@@ -1,65 +1,37 @@
 ﻿const canvasWidthRatio = 0.8;
 const canvasHeightRatio = 0.8;
 
-class Coordinate {
-    x = -1
-    y = -1
-}
-
-class State {
-    coordinate = new Coordinate();
-    radius = 0;
-    text = "";
-    IsFinal = false;
-}
-
-
-class StateTransition {
-    /** @type {?State} */
-    fromState = new State();
-    toState = new State();
-    arcRadius = 0;
-    text = "";
-}
-
-
+/** @type {?CanvasRenderingContext2D}*/
+let canvasCtx;
 
 /**
- * Represents the Canvas element
+ * Gets canvas context
+ * @param {string} id HTML Id of Canvas
+ * @returns {boolean} true when the retrieveing the canvas context was successfull, otherwise false.
  */
-class Canvas {
-    constructor(canvasId) {
-        this.canvasExists = false;
+export function getCanvasContext(id) {
+    /** @type {HTMLCanvasElement}*/
+    let canvasElement = document.getElementById(id);
 
-        /** @type {HTMLCanvasElement}*/
-        this.canvasElement = document.getElementById(canvasId);
+    /** @type {?CanvasRenderingContext2D}*/
+    let canvasContext;
 
-        /**@type {CanvasRenderingContext2D} */
-        this.canvasCtx;
-
-        if (this.canvasElement.getContext) {
-            this.canvasCtx = this.canvasElement.getContext("2d");
-            this.canvasExists = true;
-        }
+    if (canvasElement !== null && canvasElement.getContext) {
+        canvasContext = canvasElement.getContext("2d");
     }
-
-    /**
-     * Updates the canvas element dimensions
-     * @param {number} height
-     * @param {number} width
-     */
-    updateDimensions(height, width) {
-        this.canvasElement.width = width;
-        this.canvasElement.height = height;
-
-        // TODO: Convert C# objects to js objects to be serialized to string
-        // in order to be stored in localstorage
-
-        // Can use IAsyncDisposable on Blazor side to excute code to do above tasks
-    }
+    canvasCtx = canvasContext;
+    return canvasCtx !== null && canvasCtx !== undefined;
 }
 
-let canvas = new Canvas("FSMCanvas");
+function checkCanvasCtxtIsNotNullOrUndefined() {
+    if (
+        (canvasCtx !== undefined && canvasCtx.canvas !== undefined)
+        && (canvasCtx !== null && canvasCtx.canvas !== null)
+    ) {
+        return true;
+    }
+    return false;
+}
 
 /**
  * Clears the whole canvas
@@ -67,12 +39,12 @@ let canvas = new Canvas("FSMCanvas");
  * otherwise there wasn't canvas (context) to doesn't exist.
  */
 export function clearCanvas() {
-    if (canvas.canvasExists) {
-        canvas.canvasCtx.clearRect(
+    if (checkCanvasCtxtIsNotNullOrUndefined()) {
+        canvasCtx.clearRect(
             0,
             0,
-            canvas.canvasElement.width,
-            canvas.canvasElement.height
+            canvasCtx.canvas.width,
+            canvasCtx.canvas.height
         );
         return true;
     }
@@ -84,9 +56,10 @@ export function clearCanvas() {
  * @param {Event} event
  */
 function updateCanvasDimensions(event) {
-    const height = window.outerHeight * canvasHeightRatio;
-    const width = window.outerWidth * canvasWidthRatio;
-    canvas.updateDimensions(height, width);
+    if (checkCanvasCtxtIsNotNullOrUndefined()) {
+        canvasCtx.canvas.height = window.outerHeight * canvasHeightRatio;
+        canvasCtx.canvas.width = window.outerWidth * canvasWidthRatio;
+    }
 }
 
 addEventListener("resize", updateCanvasDimensions);
@@ -101,13 +74,13 @@ addEventListener("resize", updateCanvasDimensions);
  * @param {string} colour Colour when drawn 
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function DrawState(x, y, radius, colour) {
-    if (canvas.canvasExists) {
-        canvas.canvasCtx.beginPath();
-        canvas.canvasCtx.strokeStyle = colour;
-        canvas.canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
-        canvas.canvasCtx.closePath();
-        canvas.canvasCtx.stroke();
+export function drawState(x, y, radius, colour) {
+    if (checkCanvasCtxtIsNotNullOrUndefined()) {
+        canvasCtx.beginPath();
+        canvasCtx.strokeStyle = colour;
+        canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
+        canvasCtx.closePath();
+        canvasCtx.stroke();
         return true;
     }
     return false;

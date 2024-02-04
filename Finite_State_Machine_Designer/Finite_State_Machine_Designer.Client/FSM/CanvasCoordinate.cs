@@ -47,5 +47,10 @@
 		{
 			return HashCode.Combine(_x, _y);
 		}
+
+		public override string ToString()
+		{
+			return $"(x: {_x}, y: {_y})";
+		}
 	}
 }

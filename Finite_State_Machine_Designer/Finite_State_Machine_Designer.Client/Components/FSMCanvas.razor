@@ -1,7 +1,6 @@
 ﻿@using FSM
 @inherits ModuleCheckBaseComponent
-@implements IAsyncDisposable
-@inject IJSRuntime JS
+@inject ILogger<FSMCanvas> logger
 
 <section class="center">
 	Export as:
@@ -36,7 +35,8 @@
 	[Parameter]
 	public int Width { get; set; } = 300;
 
-	private IJSObjectReference? module;
+	[Parameter]
+	public bool MustRetryContext { get; set; } = false;
 
 	private FiniteStateMachine _fSM = new FiniteStateMachine();
 
@@ -54,11 +54,59 @@
 	private const string _selectedStateColour = "#0000ff";
 	private const string _stateColour = "#000000";
 
+	private readonly string[] _specialSymbolNames = new string[] { 
+		"Alpha",
+		"Beta",
+		"Gamma",
+		"Delta",
+		"Epsilon",
+		"Zeta",
+		"Eta",
+		"Theta",
+		"Iota",
+		"Kappa",
+		"Lambda",
+		"Mu",
+		"Nu",
+		"Xi",
+		"Omicron",
+		"Pi",
+		"Rho",
+		"Sigma",
+		"Tau",
+		"Upsilon",
+		"Phi",
+		"Chi",
+		"Psi",
+		"Omega",
+		"emptyset",
+		"rightarrow",
+		"leftarrow",
+	};
+
 	protected async override Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
-			module = await JS.InvokeAsync<IJSObjectReference?>("import", "./Components/FSMCanvas.razor.js");
+			await SetJsModule("./Components/FSMCanvas.razor.js");
+
+			if (CheckJsModule(JsModule))
+				await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
+		}
+		if (CheckJsModule(JsModule) && MustRetryContext)
+		{
+			var isCreated = await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
+
+			if (isCreated)
+			{
+				MustRetryContext = false;
+			}
+			else
+			{
+				// throw new Exception("Couldn't get 2d context");
+				logger.LogError("Couldn't get 2d context");
+			}
+
 		}
 	}
 
@@ -70,10 +118,10 @@
 
 	private async ValueTask<bool> CreateState(CanvasCoordinate coordinate)
 	{
-		if (CheckJsModule(module))
+		if (CheckJsModule(JsModule))
 		{
-			bool isCreated = await module.InvokeAsync<bool>(
-						"DrawState",
+			bool isCreated = await JsModule.InvokeAsync<bool>(
+						"drawState",
 						new object[]
 						{
 							_mouseX,
@@ -96,8 +144,8 @@
 
 	private async ValueTask<bool> DrawMachine(CanvasCoordinate? selectedCoords = null)
 	{
-		if (CheckJsModule(module)
-		&& await module.InvokeAsync<bool>("clearCanvas"))
+		if (CheckJsModule(JsModule)
+		&& await JsModule.InvokeAsync<bool>("clearCanvas"))
 		{
 			bool hasSelectedState = false;
 			string currentColour = _stateColour;
@@ -114,8 +162,8 @@
 					hasSelectedState = true;
 				}
 
-				await module.InvokeAsync<bool>(
-					"DrawState",
+				_ = await JsModule.InvokeAsync<bool>(
+					"drawState",
 					state.Coordinate.X,
 					state.Coordinate.Y,
 					state.Radius,
@@ -129,7 +177,7 @@
 
 	private async Task DeleteState(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(module))
+		if (CheckJsModule(JsModule))
 		{
 			if (_fSM.SelectedState != null
 				&& keyboardEventArgs.Code.ToLower() == "delete"
@@ -143,7 +191,7 @@
 
 	private async Task MoveState(MouseEventArgs mouseEventArgs)
 	{
-		if (CheckJsModule(module)
+		if (CheckJsModule(JsModule)
 		&& _fSM.SelectedState != null
 		&& mouseEventArgs.Buttons > 0
 		&& mouseEventArgs.Buttons <= 3)
@@ -160,10 +208,10 @@
 
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
-		if (CheckJsModule(module))
+		if (CheckJsModule(JsModule))
 		{
 			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-
+			Console.WriteLine(MustRetryContext);
 			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
 			FiniteState? existingState = _fSM.FindState(coordinate);
 
@@ -172,7 +220,8 @@
 				bool isCreated = await CreateState(coordinate);
 
 				if (!isCreated)
-					throw new Exception($"State to be created at {(_mouseX, _mouseY)} failed to be created");
+					// throw new Exception($"State to be created at {coordinate} failed to be created");
+					logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
 
 				return;
 			}
@@ -186,14 +235,6 @@
 				_ = await DrawMachine(_fSM.SelectedState?.Coordinate);
 			}
 
-		}
-	}
-
-	async ValueTask IAsyncDisposable.DisposeAsync()
-	{
-		if (module is not null)
-		{
-			await module.DisposeAsync();
 		}
 	}
 }
