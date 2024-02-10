@@ -2,7 +2,7 @@
 @inherits ModuleCheckBaseComponent
 @inject ILogger<FSMCanvas> logger
 
-<section class="center">
+<div class="center">
 	Export as:
 	<a href="javascript:saveAsPNG()"
 	   download>PNG</a>
@@ -12,16 +12,17 @@
 	|
 	<a href="javascript:saveAsLaTeX()"
 	   download>LaTeX</a>
-</section>
+</div>
+
 <canvas
 	id="FSMCanvas"
-	tabindex="0"
+	contenteditable="true"
 	height="@Height"
 	width="@Width"
 	class="border border-dark"
-	@ondblclick="ClicksStateHandler"
 	@onmousedown="ClicksStateHandler"
-	@onkeydown="DeleteState"
+	@onkeydown:preventDefault="true"
+	@onkeydown="KeyHandler"
 	@onmousemove="MoveState"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
@@ -103,7 +104,6 @@
 			}
 			else
 			{
-				// throw new Exception("Couldn't get 2d context");
 				logger.LogError("Couldn't get 2d context");
 			}
 
@@ -167,7 +167,8 @@
 					state.Coordinate.X,
 					state.Coordinate.Y,
 					state.Radius,
-					currentColour
+					currentColour,
+					state.Text
 				);
 			}
 			return hasSelectedState;
@@ -175,17 +176,56 @@
 		return false;
 	}
 
-	private async Task DeleteState(KeyboardEventArgs keyboardEventArgs)
+	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(JsModule))
+				Console.WriteLine("help");
+		switch (keyboardEventArgs.Key.ToLower())
 		{
-			if (_fSM.SelectedState != null
-				&& keyboardEventArgs.Code.ToLower() == "delete"
-				&& _fSM.RemoveState(_fSM.SelectedState.Coordinate)
-			)
-			{
-				_ = await DrawMachine();
-			}
+			case "backspace":
+				if (_fSM.SelectedState != null && _fSM.SelectedState.Text.Length > 0  && CheckJsModule(JsModule))
+				{
+					var text = _fSM.SelectedState.Text;
+					_fSM.SelectedState.Text = text.Substring(0, text.Length-1);
+					var coordinate = _fSM.SelectedState.Coordinate;
+					await DrawMachine(coordinate);
+				}
+				break;
+			case "delete":
+				await DeleteState(keyboardEventArgs);
+				break;
+			default:
+				var hasNoSpecialKeys = !keyboardEventArgs.MetaKey
+				&& !keyboardEventArgs.CtrlKey
+				&& !keyboardEventArgs.AltKey;
+				if (hasNoSpecialKeys
+					&& keyboardEventArgs.Key.Length == 1
+					&& _fSM.SelectedState != null
+					&& CheckJsModule(JsModule))
+				{
+					_fSM.SelectedState.Text += keyboardEventArgs.Key;
+					var coordinate = _fSM.SelectedState.Coordinate;
+					await DrawMachine(coordinate);
+				}
+				break;
+		}
+	}
+
+	private async ValueTask DrawText(string text, int x, int y)
+	{
+		if (CheckJsModule(JsModule)
+			&& _fSM.SelectedState != null)
+		{
+			_ = await JsModule.InvokeAsync<bool>("drawText", text, x, y);
+		}
+	}
+
+	private async ValueTask DeleteState(KeyboardEventArgs keyboardEventArgs)
+	{
+		if (CheckJsModule(JsModule)
+			&& _fSM.SelectedState != null
+			&& _fSM.RemoveState(_fSM.SelectedState.Coordinate))
+		{
+			_ = await DrawMachine();
 		}
 	}
 
@@ -211,16 +251,14 @@
 		if (CheckJsModule(JsModule))
 		{
 			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-			Console.WriteLine(MustRetryContext);
 			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
 			FiniteState? existingState = _fSM.FindState(coordinate);
 
-			if (existingState == null && mouseEventArgs.Detail > 1)
+			if (existingState == null && mouseEventArgs.Detail == 2)
 			{
 				bool isCreated = await CreateState(coordinate);
 
 				if (!isCreated)
-					// throw new Exception($"State to be created at {coordinate} failed to be created");
 					logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
 
 				return;

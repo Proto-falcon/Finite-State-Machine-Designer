@@ -18,12 +18,26 @@ export function getCanvasContext(id) {
 
     if (canvasElement !== null && canvasElement.getContext) {
         canvasContext = canvasElement.getContext("2d");
+        canvasContext.font = '20px "Times New Roman", serif';
     }
     canvasCtx = canvasContext;
     return canvasCtx !== null && canvasCtx !== undefined;
 }
 
-function checkCanvasCtxtIsNotNullOrUndefined() {
+export function drawText(text, x, y) {
+    if (checkCanvas()) {
+        canvasCtx.fillText(text, x, y+6);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Checks whether the canvas element and context are null or undefined.
+ * @returns {boolean} true when both aren't null or undefined, false when either are
+ * null or undefined.
+ */
+function checkCanvas() {
     if (
         (canvasCtx !== undefined && canvasCtx.canvas !== undefined)
         && (canvasCtx !== null && canvasCtx.canvas !== null)
@@ -39,7 +53,7 @@ function checkCanvasCtxtIsNotNullOrUndefined() {
  * otherwise there wasn't canvas (context) to doesn't exist.
  */
 export function clearCanvas() {
-    if (checkCanvasCtxtIsNotNullOrUndefined()) {
+    if (checkCanvas()) {
         canvasCtx.clearRect(
             0,
             0,
@@ -56,7 +70,7 @@ export function clearCanvas() {
  * @param {Event} event
  */
 function updateCanvasDimensions(event) {
-    if (checkCanvasCtxtIsNotNullOrUndefined()) {
+    if (checkCanvas()) {
         canvasCtx.canvas.height = window.outerHeight * canvasHeightRatio;
         canvasCtx.canvas.width = window.outerWidth * canvasWidthRatio;
     }
@@ -71,16 +85,22 @@ addEventListener("resize", updateCanvasDimensions);
  * @param {number} x X co-ordinate in canvas space
  * @param {number} y Y co-ordinate in canvas space
  * @param {number} radius Radius of the state
- * @param {string} colour Colour when drawn 
+ * @param {string} colour Colour when drawn
+ * @param {string} text Text within the state
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawState(x, y, radius, colour) {
-    if (checkCanvasCtxtIsNotNullOrUndefined()) {
+export function drawState(x, y, radius, colour, text) {
+    if (checkCanvas()) {
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = colour;
         canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvasCtx.closePath();
         canvasCtx.stroke();
+        if (text !== undefined) {
+            let textMetric = canvasCtx.measureText(text);
+            let textX = x - (textMetric.width / 2);
+            canvasCtx.fillText(text, textX, y + textMetric.fontBoundingBoxDescent);
+        }
         return true;
     }
     return false;
