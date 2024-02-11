@@ -24,14 +24,6 @@ export function getCanvasContext(id) {
     return canvasCtx !== null && canvasCtx !== undefined;
 }
 
-export function drawText(text, x, y) {
-    if (checkCanvas()) {
-        canvasCtx.fillText(text, x, y+6);
-        return true;
-    }
-    return false;
-}
-
 /**
  * Checks whether the canvas element and context are null or undefined.
  * @returns {boolean} true when both aren't null or undefined, false when either are
@@ -95,12 +87,13 @@ export function drawState(x, y, radius, colour, text) {
         canvasCtx.strokeStyle = colour;
         canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvasCtx.closePath();
-        canvasCtx.stroke();
         if (text !== undefined) {
+            canvasCtx.fillStyle = colour;
             let textMetric = canvasCtx.measureText(text);
             let textX = x - (textMetric.width / 2);
             canvasCtx.fillText(text, textX, y + textMetric.fontBoundingBoxDescent);
         }
+        canvasCtx.stroke();
         return true;
     }
     return false;

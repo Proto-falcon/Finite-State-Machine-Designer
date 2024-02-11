@@ -16,12 +16,13 @@
 
 <canvas
 	id="FSMCanvas"
+	@ref="_canvasElement"
 	contenteditable="true"
 	height="@Height"
 	width="@Width"
-	class="border border-dark"
+	@onmousedown:preventDefault
 	@onmousedown="ClicksStateHandler"
-	@onkeydown:preventDefault="true"
+	@onkeydown:preventDefault
 	@onkeydown="KeyHandler"
 	@onmousemove="MoveState"
 >
@@ -39,6 +40,8 @@
 	[Parameter]
 	public bool MustRetryContext { get; set; } = false;
 
+	private ElementReference? _canvasElement;
+
 	private FiniteStateMachine _fSM = new FiniteStateMachine();
 
 	/// <summary>
@@ -51,6 +54,7 @@
 	private int _mouseY;
 
 	private float _defalutStateRadius = 30;
+	private bool _canvasHasFocus = false;
 
 	private const string _selectedStateColour = "#0000ff";
 	private const string _stateColour = "#000000";
@@ -107,6 +111,12 @@
 				logger.LogError("Couldn't get 2d context");
 			}
 
+		}
+
+		if (_canvasElement != null && _canvasHasFocus)
+		{
+			await _canvasElement.Value.FocusAsync(true);
+			_canvasHasFocus = false;
 		}
 	}
 
@@ -178,7 +188,6 @@
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-				Console.WriteLine("help");
 		switch (keyboardEventArgs.Key.ToLower())
 		{
 			case "backspace":
@@ -193,6 +202,7 @@
 			case "delete":
 				await DeleteState(keyboardEventArgs);
 				break;
+			case " ":
 			default:
 				var hasNoSpecialKeys = !keyboardEventArgs.MetaKey
 				&& !keyboardEventArgs.CtrlKey
@@ -207,15 +217,6 @@
 					await DrawMachine(coordinate);
 				}
 				break;
-		}
-	}
-
-	private async ValueTask DrawText(string text, int x, int y)
-	{
-		if (CheckJsModule(JsModule)
-			&& _fSM.SelectedState != null)
-		{
-			_ = await JsModule.InvokeAsync<bool>("drawText", text, x, y);
 		}
 	}
 
@@ -273,6 +274,10 @@
 				_ = await DrawMachine(_fSM.SelectedState?.Coordinate);
 			}
 
+		}
+		if (_canvasElement != null)
+		{
+			_canvasHasFocus = true;
 		}
 	}
 }
