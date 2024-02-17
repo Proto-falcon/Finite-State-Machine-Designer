@@ -25,6 +25,7 @@
 	@onkeydown:preventDefault
 	@onkeydown="KeyHandler"
 	@onmousemove="MoveState"
+	@onblur="DeselectState"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
@@ -188,45 +189,40 @@
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		switch (keyboardEventArgs.Key.ToLower())
+		if (CheckJsModule(JsModule))
 		{
-			case "backspace":
-				if (_fSM.SelectedState != null && _fSM.SelectedState.Text.Length > 0  && CheckJsModule(JsModule))
-				{
-					var text = _fSM.SelectedState.Text;
-					_fSM.SelectedState.Text = text.Substring(0, text.Length-1);
-					var coordinate = _fSM.SelectedState.Coordinate;
-					await DrawMachine(coordinate);
-				}
-				break;
-			case "delete":
-				await DeleteState(keyboardEventArgs);
-				break;
-			case " ":
-			default:
-				var hasNoSpecialKeys = !keyboardEventArgs.MetaKey
-				&& !keyboardEventArgs.CtrlKey
-				&& !keyboardEventArgs.AltKey;
-				if (hasNoSpecialKeys
-					&& keyboardEventArgs.Key.Length == 1
-					&& _fSM.SelectedState != null
-					&& CheckJsModule(JsModule))
-				{
-					_fSM.SelectedState.Text += keyboardEventArgs.Key;
-					var coordinate = _fSM.SelectedState.Coordinate;
-					await DrawMachine(coordinate);
-				}
-				break;
-		}
-	}
-
-	private async ValueTask DeleteState(KeyboardEventArgs keyboardEventArgs)
-	{
-		if (CheckJsModule(JsModule)
-			&& _fSM.SelectedState != null
-			&& _fSM.RemoveState(_fSM.SelectedState.Coordinate))
-		{
-			_ = await DrawMachine();
+			switch (keyboardEventArgs.Key.ToLower())
+			{
+				case "backspace":
+					if (_fSM.SelectedState != null && _fSM.SelectedState.Text.Length > 0)
+					{
+						var text = _fSM.SelectedState.Text;
+						_fSM.SelectedState.Text = text.Substring(0, text.Length-1);
+						var coordinate = _fSM.SelectedState.Coordinate;
+						await DrawMachine(coordinate);
+					}
+					break;
+				case "delete":
+					if (_fSM.SelectedState != null
+						&& _fSM.RemoveState(_fSM.SelectedState.Coordinate))
+					{
+						_ = await DrawMachine();
+					}
+					break;
+				default:
+					var hasNoSpecialKeys = !keyboardEventArgs.MetaKey
+					&& !keyboardEventArgs.CtrlKey
+					&& !keyboardEventArgs.AltKey;
+					if (hasNoSpecialKeys
+						&& keyboardEventArgs.Key.Length == 1
+						&& _fSM.SelectedState != null)
+					{
+						_fSM.SelectedState.Text += keyboardEventArgs.Key != "spacebar" ? keyboardEventArgs.Key : " ";
+						var coordinate = _fSM.SelectedState.Coordinate;
+						await DrawMachine(coordinate);
+					}
+					break;
+			}
 		}
 	}
 
@@ -279,5 +275,11 @@
 		{
 			_canvasHasFocus = true;
 		}
+	}
+
+	private async Task DeselectState(FocusEventArgs focusEventArgs)
+	{
+		_fSM.SelectedState = null;
+		await DrawMachine();
 	}
 }
