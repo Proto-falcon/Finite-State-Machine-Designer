@@ -65,6 +65,8 @@ function updateCanvasDimensions(event) {
     if (checkCanvas()) {
         canvasCtx.canvas.height = window.outerHeight * canvasHeightRatio;
         canvasCtx.canvas.width = window.outerWidth * canvasWidthRatio;
+
+        canvasCtx.font = '20px "Times New Roman", serif';
     }
 }
 
