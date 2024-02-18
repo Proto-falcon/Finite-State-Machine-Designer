@@ -70,33 +70,75 @@ function updateCanvasDimensions(event) {
     }
 }
 
-addEventListener("resize", updateCanvasDimensions);
-//addEventListener("visibilitychange");
-
-
 /**
  * Creates a state at a position within the canvas with colour.
  * @param {number} x X co-ordinate in canvas space
  * @param {number} y Y co-ordinate in canvas space
  * @param {number} radius Radius of the state
  * @param {string} colour Colour when drawn
- * @param {string} text Text within the state
+ * @param {string[]} text Array of text strings within the state. Each string is a newline
+ * @param {boolean} editable Flag to show vertical bar appear and reappear in popular text editors.
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawState(x, y, radius, colour, text) {
+export function drawState(x, y, radius, colour, text, editable) {
     if (checkCanvas()) {
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = colour;
         canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvasCtx.closePath();
-        if (text !== undefined) {
-            canvasCtx.fillStyle = colour;
-            let textMetric = canvasCtx.measureText(text);
-            let textX = x - (textMetric.width / 2);
-            canvasCtx.fillText(text, textX, y + textMetric.fontBoundingBoxDescent);
-        }
         canvasCtx.stroke();
+
+        let caretX = 0;
+        let textX = 0;
+        let textY = 0;
+
+
+        if (text.length <= 0) {
+            caretX = x + 0.5;
+            textY = y + 10;
+        }
+        else {
+            for (var i = 0; i < text.length; i++) {
+                canvasCtx.fillStyle = colour;
+                let textMetric = canvasCtx.measureText(text[i]);
+
+                let halfWidth = (textMetric.width / 2);
+
+                textX += x - halfWidth;
+                textY += y + 10;
+                canvasCtx.fillText(text[i], textX, textY);
+
+                caretX += x + halfWidth;
+            }
+        }
+
+        if (editable) {
+            drawTextLine(caretX, textY, text.length > 0);
+        }
+
         return true;
     }
     return false;
 }
+
+/**
+ * Draw line used in text editors
+ * @param {number} x
+ * @param {number} y
+ * @param {boolean} hasOffset
+ */
+export function drawTextLine(x, y, hasOffset) {
+    canvasCtx.beginPath();
+
+    if (hasOffset) {
+        x += 1.5;
+    }
+
+    canvasCtx.moveTo(x, y - 20.5);
+    canvasCtx.lineTo(x, y + 5.5);
+    canvasCtx.closePath();
+    canvasCtx.stroke();
+}
+
+addEventListener("resize", updateCanvasDimensions);
+//addEventListener("visibilitychange");

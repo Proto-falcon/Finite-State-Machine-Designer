@@ -1,5 +1,6 @@
 ﻿@using FSM
 @inherits ModuleCheckBaseComponent
+@implements IAsyncDisposable
 @inject ILogger<FSMCanvas> logger
 
 <div class="center">
@@ -44,6 +45,10 @@
 	private ElementReference? _canvasElement;
 
 	private FiniteStateMachine _fSM = new FiniteStateMachine();
+
+	private Timer? _drawTimer;
+	private bool _stopTimer;
+	private bool _lineVisible = true;
 
 	/// <summary>
 	/// X co-ordinate relative in the canvas space.
@@ -94,6 +99,8 @@
 	{
 		if (firstRender)
 		{
+			_drawTimer = _drawTimer = new Timer(DrawMachineTimer, null, 0, 500);
+
 			await SetJsModule("./Components/FSMCanvas.razor.js");
 
 			if (CheckJsModule(JsModule))
@@ -104,14 +111,9 @@
 			var isCreated = await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
 
 			if (isCreated)
-			{
 				MustRetryContext = false;
-			}
 			else
-			{
 				logger.LogError("Couldn't get 2d context");
-			}
-
 		}
 
 		if (_canvasElement != null && _canvasHasFocus)
@@ -127,64 +129,48 @@
 		_mouseY = (int)y;
 	}
 
-	private async ValueTask<bool> CreateState(CanvasCoordinate coordinate)
+	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
+		Console.WriteLine(_drawTimer == null);
 		if (CheckJsModule(JsModule))
 		{
-			bool isCreated = await JsModule.InvokeAsync<bool>(
-						"drawState",
-						new object[]
-						{
-							_mouseX,
-							_mouseY,
-							_defalutStateRadius,
-							_selectedStateColour
-						}
-					);
+			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+			FiniteState? existingState = _fSM.FindState(coordinate);
 
-			if (!isCreated)
-				return false;
-
-			coordinate = new CanvasCoordinate(_mouseX, _mouseY);
-			_fSM.AddState(coordinate, _defalutStateRadius);
-
-			return true;
-		}
-		return false;
-	}
-
-	private async ValueTask<bool> DrawMachine(CanvasCoordinate? selectedCoords = null)
-	{
-		if (CheckJsModule(JsModule)
-		&& await JsModule.InvokeAsync<bool>("clearCanvas"))
-		{
-			bool hasSelectedState = false;
-			string currentColour = _stateColour;
-			foreach (FiniteState state in _fSM.States)
+			if (existingState == null && mouseEventArgs.Detail == 2)
 			{
-				currentColour = _stateColour;
+				bool isCreated = await CreateState(coordinate);
+				_stopTimer = !isCreated;
+				if (!isCreated)
+					logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
 
-				if (
-					selectedCoords != null
-					&& state.Coordinate == selectedCoords
-				)
-				{
-					currentColour = _selectedStateColour;
-					hasSelectedState = true;
-				}
-
-				_ = await JsModule.InvokeAsync<bool>(
-					"drawState",
-					state.Coordinate.X,
-					state.Coordinate.Y,
-					state.Radius,
-					currentColour,
-					state.Text
-				);
+				return;
 			}
-			return hasSelectedState;
+
+			FiniteState? prevSelectedState = _fSM.SelectedState;
+
+			_fSM.SelectedState = existingState;
+
+			if (prevSelectedState != _fSM.SelectedState)
+			{
+				switch (_fSM.SelectedState)
+				{
+					case null:
+						_stopTimer = true;
+						await DrawMachineAsync();
+						break;
+					default:
+						_stopTimer = false;
+						_lineVisible = true;
+						await DrawMachineAsync();
+						break;
+				}
+			}
+
 		}
-		return false;
+		if (_canvasElement != null)
+			_canvasHasFocus = true;
 	}
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
@@ -199,15 +185,15 @@
 						var text = _fSM.SelectedState.Text;
 						_fSM.SelectedState.Text = text.Substring(0, text.Length-1);
 						var coordinate = _fSM.SelectedState.Coordinate;
-						await DrawMachine(coordinate);
+
+						_lineVisible = true;
+						await DrawMachineAsync();
 					}
 					break;
 				case "delete":
 					if (_fSM.SelectedState != null
-						&& _fSM.RemoveState(_fSM.SelectedState.Coordinate))
-					{
-						_ = await DrawMachine();
-					}
+						&& _fSM.RemoveState(_fSM.SelectedState))
+						await DrawMachineAsync();
 					break;
 				default:
 					var hasNoSpecialKeys = !keyboardEventArgs.MetaKey
@@ -218,12 +204,88 @@
 						&& _fSM.SelectedState != null)
 					{
 						_fSM.SelectedState.Text += keyboardEventArgs.Key != "spacebar" ? keyboardEventArgs.Key : " ";
-						var coordinate = _fSM.SelectedState.Coordinate;
-						await DrawMachine(coordinate);
+						_lineVisible = true;
+						await DrawMachineAsync();
 					}
 					break;
 			}
 		}
+	}
+
+	private async ValueTask<bool> CreateState(CanvasCoordinate coordinate)
+	{
+		if (CheckJsModule(JsModule))
+		{
+			bool isCreated = await JsModule.InvokeAsync<bool>(
+				"drawState",
+				new object?[]
+				{
+					_mouseX,
+					_mouseY,
+					_defalutStateRadius,
+					_selectedStateColour,
+					Array.Empty<string>(),
+					true
+				}
+			);
+
+			if (!isCreated)
+				return false;
+
+			coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+			_fSM.AddState(coordinate, _defalutStateRadius);
+
+			return true;
+		}
+		return false;
+	}
+
+	private async void DrawMachineTimer(object? obj)
+	{
+		if (!_stopTimer)
+			await DrawMachineAsync();
+		_lineVisible = !_lineVisible;
+	}
+
+	private async ValueTask<bool> DrawMachineAsync()
+	{
+		if (CheckJsModule(JsModule)
+		&& await JsModule.InvokeAsync<bool>("clearCanvas"))
+		{
+			bool editable = false;
+			string currentColour = _stateColour;
+
+			foreach (FiniteState state in _fSM.States)
+			{
+				editable = false;
+				currentColour = _stateColour;
+
+				if (state == _fSM.SelectedState)
+				{
+					currentColour = _selectedStateColour;
+					editable = true;
+				}
+
+				string[] texts;
+
+				if (string.IsNullOrEmpty(state.Text))
+					texts = Array.Empty<string>();
+				else
+					texts = state.Text.Split('\n');
+
+				await JsModule.InvokeAsync<bool>(
+					"drawState",
+					state.Coordinate.X,
+					state.Coordinate.Y,
+					state.Radius,
+					currentColour,
+					texts,
+					editable && _lineVisible
+				);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private async Task MoveState(MouseEventArgs mouseEventArgs)
@@ -238,48 +300,30 @@
 
 			_fSM.SelectedState.Coordinate = coords;
 
-			_ = await DrawMachine(_fSM.SelectedState.Coordinate);
+			await DrawMachineAsync();
 
-		}
-	}
-
-	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
-	{
-		if (CheckJsModule(JsModule))
-		{
-			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
-			FiniteState? existingState = _fSM.FindState(coordinate);
-
-			if (existingState == null && mouseEventArgs.Detail == 2)
-			{
-				bool isCreated = await CreateState(coordinate);
-
-				if (!isCreated)
-					logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
-
-				return;
-			}
-
-			FiniteState? prevSelectedState = _fSM.SelectedState;
-
-			_fSM.SelectedState = existingState;
-
-			if (prevSelectedState != _fSM.SelectedState)
-			{
-				_ = await DrawMachine(_fSM.SelectedState?.Coordinate);
-			}
-
-		}
-		if (_canvasElement != null)
-		{
-			_canvasHasFocus = true;
 		}
 	}
 
 	private async Task DeselectState(FocusEventArgs focusEventArgs)
 	{
 		_fSM.SelectedState = null;
-		await DrawMachine();
+		_lineVisible = false;
+		_stopTimer = false;
+
+		if (_drawTimer != null)
+			await _drawTimer.DisposeAsync();
+
+		await DrawMachineAsync();
+	}
+
+	async ValueTask IAsyncDisposable.DisposeAsync()
+	{
+		GC.SuppressFinalize(this);
+		if (JsModule != null)
+			await JsModule.DisposeAsync();
+
+		if (_drawTimer != null)
+			await _drawTimer.DisposeAsync();
 	}
 }

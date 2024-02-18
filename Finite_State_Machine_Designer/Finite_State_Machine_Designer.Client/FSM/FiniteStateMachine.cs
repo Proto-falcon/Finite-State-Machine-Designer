@@ -42,11 +42,11 @@
             return null;
         }
 
-        public bool RemoveState(CanvasCoordinate coordinate)
+        public bool RemoveState(FiniteState stateToBeRemoved)
         {
             foreach (var state in _states)
             {
-                if (coordinate == state.Coordinate)
+                if (stateToBeRemoved == state)
                 {
                     _states.Remove(state);
                     return true;
