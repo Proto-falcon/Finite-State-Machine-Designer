@@ -49,6 +49,8 @@
 	private Timer? _drawTimer;
 	private bool _stopTimer;
 	private bool _lineVisible = true;
+	private int _drawTimerInterval = 500;
+	private DateTime _lastDrawTimerCall = DateTime.Now;
 
 	/// <summary>
 	/// X co-ordinate relative in the canvas space.
@@ -99,7 +101,7 @@
 	{
 		if (firstRender)
 		{
-			_drawTimer = _drawTimer = new Timer(DrawMachineTimer, null, 0, 500);
+			_drawTimer = _drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
 
 			await SetJsModule("./Components/FSMCanvas.razor.js");
 
@@ -121,6 +123,15 @@
 			await _canvasElement.Value.FocusAsync(true);
 			_canvasHasFocus = false;
 		}
+
+		if (_fSM.SelectedState != null
+			&& _drawTimer != null
+			&& (DateTime.Now - _lastDrawTimerCall) > TimeSpan.FromMilliseconds(_drawTimerInterval * 1.1))
+		{
+			await _drawTimer.DisposeAsync();
+
+			_drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
+		}
 	}
 
 	private void SetMouseCoords(double x, double y)
@@ -131,7 +142,6 @@
 
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
-		Console.WriteLine(_drawTimer == null);
 		if (CheckJsModule(JsModule))
 		{
 			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
@@ -245,6 +255,7 @@
 		if (!_stopTimer)
 			await DrawMachineAsync();
 		_lineVisible = !_lineVisible;
+		_lastDrawTimerCall = DateTime.Now;
 	}
 
 	private async ValueTask<bool> DrawMachineAsync()
