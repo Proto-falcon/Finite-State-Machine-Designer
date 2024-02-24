@@ -102,7 +102,7 @@ export function drawState(x, y, radius, colour, text, editable) {
                 canvasCtx.fillStyle = colour;
                 let textMetric = canvasCtx.measureText(text[i]);
 
-                let halfWidth = (textMetric.width / 2);
+                let halfWidth = Math.round(textMetric.width / 2);
 
                 textX += x - halfWidth;
                 textY += y + 10;
