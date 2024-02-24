@@ -185,40 +185,48 @@
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(JsModule))
+		if (CheckJsModule(JsModule) && _fSM.SelectedState != null)
 		{
 			switch (keyboardEventArgs.Key.ToLower())
 			{
 				case "backspace":
-					if (_fSM.SelectedState != null && _fSM.SelectedState.Text.Length > 0)
+					if (_fSM.SelectedState.Text.Length > 0)
 					{
 						var text = _fSM.SelectedState.Text;
 						_fSM.SelectedState.Text = text.Substring(0, text.Length-1);
 						var coordinate = _fSM.SelectedState.Coordinate;
 
 						_lineVisible = true;
-						await DrawMachineAsync();
 					}
 					break;
 				case "delete":
-					if (_fSM.SelectedState != null
-						&& _fSM.RemoveState(_fSM.SelectedState))
-						await DrawMachineAsync();
+					_fSM.RemoveState(_fSM.SelectedState);
+					break;
+				case "return":
+				case "enter":
+				case "↵":
+					_fSM.SelectedState.Text += '\n';
+					_lineVisible = true;
+					break;
+				case "spacebar":
+				case " ":
+					_fSM.SelectedState.Text += ' ';
+					_lineVisible = true;
 					break;
 				default:
-					var hasNoSpecialKeys = !keyboardEventArgs.MetaKey
+					bool hasNoSpecialKeys = !keyboardEventArgs.MetaKey
 					&& !keyboardEventArgs.CtrlKey
 					&& !keyboardEventArgs.AltKey;
+
 					if (hasNoSpecialKeys
-						&& keyboardEventArgs.Key.Length == 1
-						&& _fSM.SelectedState != null)
+						&& keyboardEventArgs.Key.Length == 1)
 					{
-						_fSM.SelectedState.Text += keyboardEventArgs.Key != "spacebar" ? keyboardEventArgs.Key : " ";
+						_fSM.SelectedState.Text += keyboardEventArgs.Key;
 						_lineVisible = true;
-						await DrawMachineAsync();
 					}
 					break;
 			}
+			await DrawMachineAsync();
 		}
 	}
 

@@ -1,5 +1,7 @@
-﻿const canvasWidthRatio = 0.8;
-const canvasHeightRatio = 0.8;
+﻿const CANVASWIDTHRATIO = 0.8;
+const CANVASHEIGHTRATIO = 0.8;
+const STATETEXTNEWLINE = 20;
+const CANVASTEXTFONTSTYLE = '20px "Times New Roman", serif';
 
 /** @type {?CanvasRenderingContext2D}*/
 let canvasCtx;
@@ -18,7 +20,7 @@ export function getCanvasContext(id) {
 
     if (canvasElement !== null && canvasElement.getContext) {
         canvasContext = canvasElement.getContext("2d");
-        canvasContext.font = '20px "Times New Roman", serif';
+        canvasContext.font = CANVASTEXTFONTSTYLE;
     }
     canvasCtx = canvasContext;
     return canvasCtx !== null && canvasCtx !== undefined;
@@ -63,8 +65,8 @@ export function clearCanvas() {
  */
 function updateCanvasDimensions(event) {
     if (checkCanvas()) {
-        canvasCtx.canvas.height = window.outerHeight * canvasHeightRatio;
-        canvasCtx.canvas.width = window.outerWidth * canvasWidthRatio;
+        canvasCtx.canvas.height = window.outerHeight * CANVASHEIGHTRATIO;
+        canvasCtx.canvas.width = window.outerWidth * CANVASWIDTHRATIO;
 
         canvasCtx.font = '20px "Times New Roman", serif';
     }
@@ -76,11 +78,11 @@ function updateCanvasDimensions(event) {
  * @param {number} y Y co-ordinate in canvas space
  * @param {number} radius Radius of the state
  * @param {string} colour Colour when drawn
- * @param {string[]} text Array of text strings within the state. Each string is a newline
+ * @param {string[]} textLines Array of text strings within the state. Each string is a line
  * @param {boolean} editable Flag to show vertical bar appear and reappear in popular text editors.
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawState(x, y, radius, colour, text, editable) {
+export function drawState(x, y, radius, colour, textLines, editable) {
     if (checkCanvas()) {
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = colour;
@@ -89,31 +91,36 @@ export function drawState(x, y, radius, colour, text, editable) {
         canvasCtx.stroke();
 
         let caretX = 0;
+        let caretY = 0;
         let textX = 0;
         let textY = 0;
 
 
-        if (text.length <= 0) {
+        if (textLines.length <= 0) {
             caretX = x + 0.5;
-            textY = y + 10;
+            caretY = y + 10;
         }
         else {
-            for (var i = 0; i < text.length; i++) {
-                canvasCtx.fillStyle = colour;
-                let textMetric = canvasCtx.measureText(text[i]);
+            let initialY = y - ((textLines.length-1) * (STATETEXTNEWLINE/2));
+            textY = initialY + 10;
+            canvasCtx.fillStyle = colour;
+
+            for (var i = 0; i < textLines.length; i++) {
+                let textMetric = canvasCtx.measureText(textLines[i]);
 
                 let halfWidth = Math.round(textMetric.width / 2);
 
-                textX += x - halfWidth;
-                textY += y + 10;
-                canvasCtx.fillText(text[i], textX, textY);
+                textX = x - halfWidth;
+                canvasCtx.fillText(textLines[i], textX, textY);
 
-                caretX += x + halfWidth;
+                caretX = x + halfWidth;
+                caretY = textY
+                textY += STATETEXTNEWLINE
             }
         }
 
         if (editable) {
-            drawTextLine(caretX, textY, text.length > 0);
+            drawTextLine(caretX, caretY, textLines.length > 0);
         }
 
         return true;
