@@ -10,7 +10,7 @@
 	   |
 	<a href="javascript:saveAsSVG()"
 	   download>SVG</a>
-	|
+	   |
 	<a href="javascript:saveAsLaTeX()"
 	   download>LaTeX</a>
 </div>
@@ -25,7 +25,7 @@
 	@onmousedown="ClicksStateHandler"
 	@onkeydown:preventDefault
 	@onkeydown="KeyHandler"
-	@onmousemove="MoveState"
+	@onmousemove="MoveMouseHandler"
 	@onblur="DeselectState"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
@@ -53,13 +53,13 @@
 	private DateTime _lastDrawTimerCall = DateTime.Now;
 
 	/// <summary>
-	/// X co-ordinate relative in the canvas space.
+	/// The last click X co-ordinate relative in the canvas space.
 	/// </summary>
-	private int _mouseX;
+	private int _lastClickXPos;
 	/// <summary>
-	/// Y co-ordinate relative in the canvas space.
+	/// The last click Y co-ordinate relative in the canvas space.
 	/// </summary>
-	private int _mouseY;
+	private int _lastClickYPos;
 
 	private float _defalutStateRadius = 30;
 	private bool _canvasHasFocus = false;
@@ -134,18 +134,19 @@
 		}
 	}
 
-	private void SetMouseCoords(double x, double y)
+	private void SetLastClickCoords(double x, double y)
 	{
-		_mouseX = (int)x;
-		_mouseY = (int)y;
+		_lastClickXPos = (int)x;
+		_lastClickYPos = (int)y;
 	}
 
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
+		SetLastClickCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+
 		if (CheckJsModule(JsModule))
 		{
-			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-			var coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+			var coordinate = new CanvasCoordinate(_lastClickXPos, _lastClickYPos);
 			FiniteState? existingState = _fSM.FindState(coordinate);
 
 			if (existingState == null && mouseEventArgs.Detail == 2)
@@ -230,7 +231,7 @@
 		}
 	}
 
-	private async ValueTask<bool> CreateState(CanvasCoordinate coordinate)
+	private async Task<bool> CreateState(CanvasCoordinate coordinate)
 	{
 		if (CheckJsModule(JsModule))
 		{
@@ -238,8 +239,8 @@
 				"drawState",
 				new object?[]
 				{
-					_mouseX,
-					_mouseY,
+					_lastClickXPos,
+					_lastClickYPos,
 					_defalutStateRadius,
 					_selectedStateColour,
 					Array.Empty<string>(),
@@ -250,7 +251,7 @@
 			if (!isCreated)
 				return false;
 
-			coordinate = new CanvasCoordinate(_mouseX, _mouseY);
+			coordinate = new CanvasCoordinate(_lastClickXPos, _lastClickYPos);
 			_fSM.AddState(coordinate, _defalutStateRadius);
 
 			return true;
@@ -266,7 +267,7 @@
 		_lastDrawTimerCall = DateTime.Now;
 	}
 
-	private async ValueTask<bool> DrawMachineAsync()
+	private async Task<bool> DrawMachineAsync()
 	{
 		if (CheckJsModule(JsModule)
 		&& await JsModule.InvokeAsync<bool>("clearCanvas"))
@@ -307,6 +308,31 @@
 		return false;
 	}
 
+	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+		{
+			// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
+			// where (a,b) are x and y coordinates of the centre of the circle respectively
+			// r is radius of circle
+			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fSM.SelectedState != null)
+			{
+				var coords = _fSM.SelectedState.Coordinate;
+
+				float newRadius = (float) Math.Sqrt(
+					Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
+					+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
+				);
+
+				_fSM.SelectedState.Radius = newRadius;
+			}
+			else
+			{
+				await MoveState(mouseEventArgs);
+			}
+		}
+	}
+
 	private async Task MoveState(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(JsModule)
@@ -314,8 +340,7 @@
 		&& mouseEventArgs.Buttons > 0
 		&& mouseEventArgs.Buttons <= 3)
 		{
-			SetMouseCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-			var coords = new CanvasCoordinate(_mouseX, _mouseY);
+			var coords = new CanvasCoordinate((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
 
 			_fSM.SelectedState.Coordinate = coords;
 

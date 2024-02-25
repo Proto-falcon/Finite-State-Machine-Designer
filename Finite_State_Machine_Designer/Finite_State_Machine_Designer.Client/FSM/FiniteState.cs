@@ -14,10 +14,10 @@
 			get => _radius;
 			set
 			{
-				if (value >= 0)
+				if (value >= 10)
 					_radius = value;
 				else
-					_radius = 10;
+					_radius = 10f;
 			}
 		}
 		private float _radius;
