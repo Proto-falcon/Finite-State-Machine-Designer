@@ -5,6 +5,8 @@
         public List<FiniteState> States { get => _states; }
         private readonly List<FiniteState> _states = [];
 
+        public List<FiniteState> FinalSates { get => _states.Where(x => x.IsFinalState).ToList(); }
+
         public FiniteState? SelectedState
         {
             get => _selectedState;

@@ -2,6 +2,7 @@
 const CANVASHEIGHTRATIO = 0.8;
 const STATETEXTNEWLINE = 20;
 const CANVASTEXTFONTSTYLE = '20px "Times New Roman", serif';
+const FINALSTATECIRCLERATIO = 0.8;
 
 /** @type {?CanvasRenderingContext2D}*/
 let canvasCtx;
@@ -80,15 +81,24 @@ function updateCanvasDimensions(event) {
  * @param {string} colour Colour when drawn
  * @param {string[]} textLines Array of text strings within the state. Each string is a line
  * @param {boolean} editable Flag to show vertical bar appear and reappear in popular text editors.
+ * @param {boolean} isFinalState Flag to show that the current is the final state and will have an inner circle.
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawState(x, y, radius, colour, textLines, editable) {
+export function drawState(x, y, radius, colour, textLines, editable, isFinalState) {
     if (checkCanvas()) {
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = colour;
         canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvasCtx.closePath();
         canvasCtx.stroke();
+
+        if (isFinalState) {
+            canvasCtx.beginPath();
+            canvasCtx.arc(x, y, radius * FINALSTATECIRCLERATIO, 0, 2 * Math.PI);
+            canvasCtx.closePath();
+            canvasCtx.stroke();
+        }
+
 
         let caretX = 0;
         let caretY = 0;

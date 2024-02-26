@@ -149,15 +149,23 @@
 			var coordinate = new CanvasCoordinate(_lastClickXPos, _lastClickYPos);
 			FiniteState? existingState = _fSM.FindState(coordinate);
 
-			if (existingState == null && mouseEventArgs.Detail == 2)
+			if (mouseEventArgs.Detail == 2)
 			{
-				bool isCreated = await CreateState(coordinate);
-				_stopTimer = !isCreated;
-				if (!isCreated)
-					logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
+				if (existingState == null)
+				{
+					bool isCreated = await CreateState(coordinate);
+					_stopTimer = !isCreated;
+					if (!isCreated)
+						logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
 
-				return;
+					return;
+				}
+				else if (existingState != null && existingState == _fSM.SelectedState)
+				{
+					_fSM.SelectedState.IsFinalState = !_fSM.SelectedState.IsFinalState;
+				}
 			}
+
 
 			FiniteState? prevSelectedState = _fSM.SelectedState;
 
@@ -244,8 +252,9 @@
 					_defalutStateRadius,
 					_selectedStateColour,
 					Array.Empty<string>(),
-					true
-				}
+					true,
+					false
+		}
 			);
 
 			if (!isCreated)
@@ -300,7 +309,8 @@
 					state.Radius,
 					currentColour,
 					texts,
-					editable && _lineVisible
+					editable && _lineVisible,
+					state.IsFinalState
 				);
 			}
 			return true;
