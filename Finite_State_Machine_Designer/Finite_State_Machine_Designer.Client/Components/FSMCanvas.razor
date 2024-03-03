@@ -273,7 +273,7 @@
 		if (!_stopTimer)
 		{
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
-			_logger.LogInformation("State machine is redrawn at {Time} with caret {Visibilty}.",
+			_logger.LogDebug("State machine is redrawn at {Time} with caret {Visibilty}.",
 			DateTimeOffset.Now, _caretVisible ? "visible" : "not visible");
 		}
 		_caretVisible = !_caretVisible;
