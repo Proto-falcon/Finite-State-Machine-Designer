@@ -19,7 +19,7 @@ namespace Finite_State_Machine_Designer.Client
 			return true;
 		}
 
-		protected async ValueTask SetJsModule(params object?[]? jsPath)
+		protected async Task SetJsModule(params object?[]? jsPath)
 		{
 			_jsModule = await JS.InvokeAsync<IJSObjectReference>("import", jsPath);
 		}

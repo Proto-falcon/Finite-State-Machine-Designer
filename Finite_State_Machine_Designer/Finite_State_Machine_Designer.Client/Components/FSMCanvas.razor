@@ -1,7 +1,8 @@
 ﻿@using FSM
 @inherits ModuleCheckBaseComponent
 @implements IAsyncDisposable
-@inject ILogger<FSMCanvas> logger
+@inject IFSMDrawer _fsmDrawer
+@inject ILogger<FSMCanvas> _logger
 
 <div class="center">
 	Export as:
@@ -44,11 +45,9 @@
 
 	private ElementReference? _canvasElement;
 
-	private FiniteStateMachine _fSM = new FiniteStateMachine();
-
 	private Timer? _drawTimer;
-	private bool _stopTimer;
-	private bool _lineVisible = true;
+	private bool _stopTimer = true;
+	private bool _caretVisible = true;
 	private int _drawTimerInterval = 500;
 	private DateTime _lastDrawTimerCall = DateTime.Now;
 
@@ -106,7 +105,11 @@
 			await SetJsModule("./Components/FSMCanvas.razor.js");
 
 			if (CheckJsModule(JsModule))
+			{
+				_fsmDrawer.SetStateColours(_stateColour, _selectedStateColour);
+				_fsmDrawer.SetJsModule(JsModule);
 				await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
+			}
 		}
 		if (CheckJsModule(JsModule) && MustRetryContext)
 		{
@@ -115,7 +118,7 @@
 			if (isCreated)
 				MustRetryContext = false;
 			else
-				logger.LogError("Couldn't get 2d context");
+				_logger.LogError("Couldn't get 2d context");
 		}
 
 		if (_canvasElement != null && _canvasHasFocus)
@@ -124,13 +127,14 @@
 			_canvasHasFocus = false;
 		}
 
-		if (_fSM.SelectedState != null
+		if (!_stopTimer && _fsmDrawer.FSM.SelectedState != null
 			&& _drawTimer != null
 			&& (DateTime.Now - _lastDrawTimerCall) > TimeSpan.FromMilliseconds(_drawTimerInterval * 1.1))
 		{
 			await _drawTimer.DisposeAsync();
 
 			_drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
+			_logger.LogInformation("Restarted the draw timer");
 		}
 	}
 
@@ -147,42 +151,43 @@
 		if (CheckJsModule(JsModule))
 		{
 			var coordinate = new CanvasCoordinate(_lastClickXPos, _lastClickYPos);
-			FiniteState? existingState = _fSM.FindState(coordinate);
+			FiniteState? existingState = _fsmDrawer.FSM.FindState(coordinate);
 
 			if (mouseEventArgs.Detail == 2)
 			{
 				if (existingState == null)
 				{
-					bool isCreated = await CreateState(coordinate);
-					_stopTimer = !isCreated;
-					if (!isCreated)
-						logger.LogError("State to be created at {Coordinate} failed to be created", coordinate);
+					CanvasCoordinate? createdCoords = await _fsmDrawer.CreateState(
+						_lastClickXPos,
+						_lastClickYPos,
+						_defalutStateRadius,
+						_selectedStateColour
+					);
+					_stopTimer = !(createdCoords != null);
+					if (_stopTimer)
+						_logger.LogError("State to be created at {Coordinate} failed to be created", createdCoords);
 
 					return;
 				}
-				else if (existingState != null && existingState == _fSM.SelectedState)
-				{
-					_fSM.SelectedState.IsFinalState = !_fSM.SelectedState.IsFinalState;
-				}
+				else if (existingState != null && existingState == _fsmDrawer.FSM.SelectedState)
+					_fsmDrawer.FSM.SelectedState.IsFinalState = !_fsmDrawer.FSM.SelectedState.IsFinalState;
 			}
 
+			FiniteState? prevSelectedState = _fsmDrawer.FSM.SelectedState;
+			_fsmDrawer.FSM.SelectedState = existingState;
 
-			FiniteState? prevSelectedState = _fSM.SelectedState;
-
-			_fSM.SelectedState = existingState;
-
-			if (prevSelectedState != _fSM.SelectedState)
+			if (prevSelectedState != _fsmDrawer.FSM.SelectedState)
 			{
-				switch (_fSM.SelectedState)
+				switch (_fsmDrawer.FSM.SelectedState)
 				{
 					case null:
 						_stopTimer = true;
-						await DrawMachineAsync();
+						await _fsmDrawer.DrawMachineAsync();
 						break;
 					default:
 						_stopTimer = false;
-						_lineVisible = true;
-						await DrawMachineAsync();
+						_caretVisible = true;
+						await _fsmDrawer.DrawMachineAsync(_caretVisible);
 						break;
 				}
 			}
@@ -194,33 +199,33 @@
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(JsModule) && _fSM.SelectedState != null)
+		if (CheckJsModule(JsModule) && _fsmDrawer.FSM.SelectedState != null)
 		{
 			switch (keyboardEventArgs.Key.ToLower())
 			{
 				case "backspace":
-					if (_fSM.SelectedState.Text.Length > 0)
+					if (_fsmDrawer.FSM.SelectedState.Text.Length > 0)
 					{
-						var text = _fSM.SelectedState.Text;
-						_fSM.SelectedState.Text = text.Substring(0, text.Length-1);
-						var coordinate = _fSM.SelectedState.Coordinate;
+						var text = _fsmDrawer.FSM.SelectedState.Text;
+						_fsmDrawer.FSM.SelectedState.Text = text.Substring(0, text.Length-1);
+						var coordinate = _fsmDrawer.FSM.SelectedState.Coordinate;
 
-						_lineVisible = true;
+						_caretVisible = true;
 					}
 					break;
 				case "delete":
-					_fSM.RemoveState(_fSM.SelectedState);
+					_fsmDrawer.FSM.RemoveState(_fsmDrawer.FSM.SelectedState);
 					break;
 				case "return":
 				case "enter":
 				case "↵":
-					_fSM.SelectedState.Text += '\n';
-					_lineVisible = true;
+					_fsmDrawer.FSM.SelectedState.Text += '\n';
+					_caretVisible = true;
 					break;
 				case "spacebar":
 				case " ":
-					_fSM.SelectedState.Text += ' ';
-					_lineVisible = true;
+					_fsmDrawer.FSM.SelectedState.Text += ' ';
+					_caretVisible = true;
 					break;
 				default:
 					bool hasNoSpecialKeys = !keyboardEventArgs.MetaKey
@@ -230,92 +235,13 @@
 					if (hasNoSpecialKeys
 						&& keyboardEventArgs.Key.Length == 1)
 					{
-						_fSM.SelectedState.Text += keyboardEventArgs.Key;
-						_lineVisible = true;
+						_fsmDrawer.FSM.SelectedState.Text += keyboardEventArgs.Key;
+						_caretVisible = true;
 					}
 					break;
 			}
-			await DrawMachineAsync();
+			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
-	}
-
-	private async Task<bool> CreateState(CanvasCoordinate coordinate)
-	{
-		if (CheckJsModule(JsModule))
-		{
-			bool isCreated = await JsModule.InvokeAsync<bool>(
-				"drawState",
-				new object?[]
-				{
-					_lastClickXPos,
-					_lastClickYPos,
-					_defalutStateRadius,
-					_selectedStateColour,
-					Array.Empty<string>(),
-					true,
-					false
-		}
-			);
-
-			if (!isCreated)
-				return false;
-
-			coordinate = new CanvasCoordinate(_lastClickXPos, _lastClickYPos);
-			_fSM.AddState(coordinate, _defalutStateRadius);
-
-			return true;
-		}
-		return false;
-	}
-
-	private async void DrawMachineTimer(object? obj)
-	{
-		if (!_stopTimer)
-			await DrawMachineAsync();
-		_lineVisible = !_lineVisible;
-		_lastDrawTimerCall = DateTime.Now;
-	}
-
-	private async Task<bool> DrawMachineAsync()
-	{
-		if (CheckJsModule(JsModule)
-		&& await JsModule.InvokeAsync<bool>("clearCanvas"))
-		{
-			bool editable = false;
-			string currentColour = _stateColour;
-
-			foreach (FiniteState state in _fSM.States)
-			{
-				editable = false;
-				currentColour = _stateColour;
-
-				if (state == _fSM.SelectedState)
-				{
-					currentColour = _selectedStateColour;
-					editable = true;
-				}
-
-				string[] texts;
-
-				if (string.IsNullOrEmpty(state.Text))
-					texts = Array.Empty<string>();
-				else
-					texts = state.Text.Split('\n');
-
-				await JsModule.InvokeAsync<bool>(
-					"drawState",
-					state.Coordinate.X,
-					state.Coordinate.Y,
-					state.Radius,
-					currentColour,
-					texts,
-					editable && _lineVisible,
-					state.IsFinalState
-				);
-			}
-			return true;
-		}
-		return false;
 	}
 
 	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
@@ -325,50 +251,46 @@
 			// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
 			// where (a,b) are x and y coordinates of the centre of the circle respectively
 			// r is radius of circle
-			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fSM.SelectedState != null)
+			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fsmDrawer.FSM.SelectedState != null)
 			{
-				var coords = _fSM.SelectedState.Coordinate;
+				var coords = _fsmDrawer.FSM.SelectedState.Coordinate;
 
 				float newRadius = (float) Math.Sqrt(
 					Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
 					+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
 				);
 
-				_fSM.SelectedState.Radius = newRadius;
+				_fsmDrawer.FSM.SelectedState.Radius = newRadius;
 			}
 			else
-			{
-				await MoveState(mouseEventArgs);
-			}
+				_fsmDrawer.MoveState(mouseEventArgs);
+			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
 	}
 
-	private async Task MoveState(MouseEventArgs mouseEventArgs)
+	private async void DrawMachineTimer(object? obj)
 	{
-		if (CheckJsModule(JsModule)
-		&& _fSM.SelectedState != null
-		&& mouseEventArgs.Buttons > 0
-		&& mouseEventArgs.Buttons <= 3)
+		if (!_stopTimer)
 		{
-			var coords = new CanvasCoordinate((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
-
-			_fSM.SelectedState.Coordinate = coords;
-
-			await DrawMachineAsync();
-
+			await _fsmDrawer.DrawMachineAsync(_caretVisible);
+			_logger.LogInformation("State machine is redrawn at {Time} with caret {Visibilty}.",
+			DateTimeOffset.Now, _caretVisible ? "visible" : "not visible");
 		}
+		_caretVisible = !_caretVisible;
+		_lastDrawTimerCall = DateTime.Now;
 	}
 
 	private async Task DeselectState(FocusEventArgs focusEventArgs)
 	{
-		_fSM.SelectedState = null;
-		_lineVisible = false;
+		_fsmDrawer.FSM.SelectedState = null;
+		_caretVisible = false;
 		_stopTimer = false;
 
 		if (_drawTimer != null)
 			await _drawTimer.DisposeAsync();
 
-		await DrawMachineAsync();
+		await _fsmDrawer.DrawMachineAsync(_caretVisible);
+		_logger.LogInformation("Canvas isn't the focused element in the page.");
 	}
 
 	async ValueTask IAsyncDisposable.DisposeAsync()
