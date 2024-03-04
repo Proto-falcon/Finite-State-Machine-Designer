@@ -51,14 +51,16 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return null;
 		}
 
-		public void MoveState(MouseEventArgs mouseEventArgs)
+		public void MoveState(MouseEventArgs mouseEventArgs, int lastX, int lastY)
 		{
 			if (_fsm.SelectedState != null
 			&& mouseEventArgs.Buttons > 0
 			&& mouseEventArgs.Buttons <= 3)
 			{
-				var coords = new CanvasCoordinate((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
-				_fsm.SelectedState.Coordinate = coords;
+				int xDiff = (int)mouseEventArgs.OffsetX - lastX;
+				int yDiff = (int)mouseEventArgs.OffsetY - lastY;
+				_fsm.SelectedState.Coordinate.X += xDiff;
+				_fsm.SelectedState.Coordinate.Y += yDiff;
 			}
 		}
 

@@ -52,13 +52,13 @@
 	private DateTime _lastDrawTimerCall = DateTime.Now;
 
 	/// <summary>
-	/// The last click X co-ordinate relative in the canvas space.
+	/// The last X co-ordinate of pointer relative in the canvas space.
 	/// </summary>
-	private int _lastClickXPos;
+	private int _lastXPos;
 	/// <summary>
-	/// The last click Y co-ordinate relative in the canvas space.
+	/// The last Y co-ordinate of pointer relative in the canvas space.
 	/// </summary>
-	private int _lastClickYPos;
+	private int _lastYPos;
 
 	private float _defalutStateRadius = 30;
 	private bool _canvasHasFocus = false;
@@ -140,8 +140,8 @@
 
 	private void SetLastClickCoords(double x, double y)
 	{
-		_lastClickXPos = (int)x;
-		_lastClickYPos = (int)y;
+		_lastXPos = (int)x;
+		_lastYPos = (int)y;
 	}
 
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
@@ -150,7 +150,7 @@
 
 		if (CheckJsModule(JsModule))
 		{
-			var coordinate = new CanvasCoordinate(_lastClickXPos, _lastClickYPos);
+			var coordinate = new CanvasCoordinate(_lastXPos, _lastYPos);
 			FiniteState? existingState = _fsmDrawer.FSM.FindState(coordinate);
 
 			if (mouseEventArgs.Detail == 2)
@@ -158,8 +158,8 @@
 				if (existingState == null)
 				{
 					CanvasCoordinate? createdCoords = await _fsmDrawer.CreateState(
-						_lastClickXPos,
-						_lastClickYPos,
+						_lastXPos,
+						_lastYPos,
 						_defalutStateRadius,
 						_selectedStateColour
 					);
@@ -263,7 +263,9 @@
 				_fsmDrawer.FSM.SelectedState.Radius = newRadius;
 			}
 			else
-				_fsmDrawer.MoveState(mouseEventArgs);
+				_fsmDrawer.MoveState(mouseEventArgs, _lastXPos, _lastYPos);
+
+			SetLastClickCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
 	}

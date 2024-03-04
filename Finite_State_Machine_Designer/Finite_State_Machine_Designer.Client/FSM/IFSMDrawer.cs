@@ -13,7 +13,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public Task<CanvasCoordinate?> CreateState(int x, int y, float radius, string colour);
 
-		public void MoveState(MouseEventArgs mouseEventArgs);
+		public void MoveState(MouseEventArgs mouseEventArgs, int lastX, int lastY);
 
 		public Task<bool> DrawMachineAsync(bool lineVisible = false);
 	}
