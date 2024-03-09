@@ -5,26 +5,14 @@
 		public int X
 		{
 			get => _x;
-			set
-			{
-				if (value >= 0)
-					_x = value;
-				else
-					_x = 0;
-			}
+			set => _x = value;
 		}
 		private int _x;
 
 		public int Y
 		{
 			get => _y;
-			set
-			{
-				if (value >= 0)
-					_y = value;
-				else
-					_y = 0;
-			}
+			set => _y = value;
 		}
 		private int _y;
 

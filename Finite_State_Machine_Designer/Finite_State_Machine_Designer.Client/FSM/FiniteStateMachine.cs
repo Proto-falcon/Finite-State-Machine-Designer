@@ -7,23 +7,9 @@
 
 		public List<FiniteState> FinalSates { get => _states.Where(x => x.IsFinalState).ToList(); }
 
-		public FiniteState? SelectedState
-		{
-			get => _selectedState;
-			set => _selectedState = value;
-		}
-		private FiniteState? _selectedState;
-
 		public void AddState(FiniteState state)
 		{
 			_states.Add(state);
-			_selectedState = state;
-		}
-
-		public void AddState(CanvasCoordinate coordinate, float radius)
-		{
-			var state = new FiniteState(coordinate, radius);
-			AddState(state);
 		}
 
 		public FiniteState? FindState(CanvasCoordinate coordinate)

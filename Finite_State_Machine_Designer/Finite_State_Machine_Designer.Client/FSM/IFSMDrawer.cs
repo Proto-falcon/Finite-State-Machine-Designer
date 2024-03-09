@@ -7,6 +7,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 	{
 		public IFiniteStateMachine FSM { get; }
 
+		public FiniteState? SelectedState { get; set; }
+
 		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff");
 
 		public void SetJsModule(IJSObjectReference jsObjectRef);

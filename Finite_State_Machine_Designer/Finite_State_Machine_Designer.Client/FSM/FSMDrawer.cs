@@ -11,6 +11,13 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
 
+		public FiniteState? SelectedState
+		{
+			get => _selectedState;
+			set => _selectedState = value;
+		}
+		private FiniteState? _selectedState;
+
 		public FSMDrawer(ILogger<IFSMDrawer> logger, IFiniteStateMachine fsm)
         {
             _logger = logger;
@@ -44,7 +51,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					return null;
 
 				CanvasCoordinate coordinate = new (x, y);
-				_fsm.AddState(coordinate, radius);
+				var newState = new FiniteState(coordinate, radius);
+				_selectedState = newState;
+				_fsm.AddState(newState);
 				_logger.LogInformation("Created state at canvas position: {Coordinate}", coordinate);
 				return coordinate;
 			}
@@ -53,14 +62,14 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public void MoveState(MouseEventArgs mouseEventArgs, int lastX, int lastY)
 		{
-			if (_fsm.SelectedState != null
+			if (_selectedState != null
 			&& mouseEventArgs.Buttons > 0
 			&& mouseEventArgs.Buttons <= 3)
 			{
 				int xDiff = (int)mouseEventArgs.OffsetX - lastX;
 				int yDiff = (int)mouseEventArgs.OffsetY - lastY;
-				_fsm.SelectedState.Coordinate.X += xDiff;
-				_fsm.SelectedState.Coordinate.Y += yDiff;
+				_selectedState.Coordinate.X += xDiff;
+				_selectedState.Coordinate.Y += yDiff;
 			}
 		}
 
@@ -76,7 +85,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					editable = false;
 					currentColour = _nonSelectedColour;
 
-					if (state == _fsm.SelectedState)
+					if (state == _selectedState)
 					{
 						currentColour = _selectedColour;
 						editable = true;

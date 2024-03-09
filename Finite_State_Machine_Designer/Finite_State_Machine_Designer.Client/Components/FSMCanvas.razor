@@ -46,6 +46,7 @@
 	private ElementReference? _canvasElement;
 
 	private Timer? _drawTimer;
+	private bool _canResizeState = false;
 	private bool _stopTimer = true;
 	private bool _caretVisible = true;
 	private int _drawTimerInterval = 500;
@@ -127,18 +128,18 @@
 			_canvasHasFocus = false;
 		}
 
-		if (!_stopTimer && _fsmDrawer.FSM.SelectedState != null
+		if (!_stopTimer && _fsmDrawer.SelectedState != null
 			&& _drawTimer != null
 			&& (DateTime.Now - _lastDrawTimerCall) > TimeSpan.FromMilliseconds(_drawTimerInterval * 1.1))
 		{
 			await _drawTimer.DisposeAsync();
 
 			_drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
-			_logger.LogInformation("Restarted the draw timer");
+			_logger.LogDebug("Restarted the draw timer");
 		}
 	}
 
-	private void SetLastClickCoords(double x, double y)
+	private void SetLastCoords(double x, double y)
 	{
 		_lastXPos = (int)x;
 		_lastYPos = (int)y;
@@ -146,7 +147,7 @@
 
 	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
 	{
-		SetLastClickCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+		SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
 		if (CheckJsModule(JsModule))
 		{
@@ -169,22 +170,23 @@
 
 					return;
 				}
-				else if (existingState != null && existingState == _fsmDrawer.FSM.SelectedState)
-					_fsmDrawer.FSM.SelectedState.IsFinalState = !_fsmDrawer.FSM.SelectedState.IsFinalState;
+				else if (existingState != null && existingState == _fsmDrawer.SelectedState)
+					_fsmDrawer.SelectedState.IsFinalState = !_fsmDrawer.SelectedState.IsFinalState;
 			}
 
-			FiniteState? prevSelectedState = _fsmDrawer.FSM.SelectedState;
-			_fsmDrawer.FSM.SelectedState = existingState;
+			FiniteState? prevSelectedState = _fsmDrawer.SelectedState;
+			_fsmDrawer.SelectedState = existingState;
 
-			if (prevSelectedState != _fsmDrawer.FSM.SelectedState)
+			if (prevSelectedState != _fsmDrawer.SelectedState)
 			{
-				switch (_fsmDrawer.FSM.SelectedState)
+				switch (_fsmDrawer.SelectedState)
 				{
 					case null:
 						_stopTimer = true;
 						await _fsmDrawer.DrawMachineAsync();
 						break;
 					default:
+
 						_stopTimer = false;
 						_caretVisible = true;
 						await _fsmDrawer.DrawMachineAsync(_caretVisible);
@@ -192,6 +194,20 @@
 				}
 			}
 
+			if (_fsmDrawer.SelectedState != null)
+			{
+				var coords = _fsmDrawer.SelectedState.Coordinate;
+				float radius = (float)Math.Sqrt(
+					Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
+					+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
+				);
+
+				_logger.LogInformation("Radius difference: {Difference}", Math.Abs(radius - _fsmDrawer.SelectedState.Radius));
+				if (Math.Abs(radius - _fsmDrawer.SelectedState.Radius) <= 10)
+					_canResizeState = true;
+				else
+					_canResizeState = false;
+			}
 		}
 		if (_canvasElement != null)
 			_canvasHasFocus = true;
@@ -199,32 +215,32 @@
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(JsModule) && _fsmDrawer.FSM.SelectedState != null)
+		if (CheckJsModule(JsModule) && _fsmDrawer.SelectedState != null)
 		{
 			switch (keyboardEventArgs.Key.ToLower())
 			{
 				case "backspace":
-					if (_fsmDrawer.FSM.SelectedState.Text.Length > 0)
+					if (_fsmDrawer.SelectedState.Text.Length > 0)
 					{
-						var text = _fsmDrawer.FSM.SelectedState.Text;
-						_fsmDrawer.FSM.SelectedState.Text = text.Substring(0, text.Length-1);
-						var coordinate = _fsmDrawer.FSM.SelectedState.Coordinate;
+						var text = _fsmDrawer.SelectedState.Text;
+						_fsmDrawer.SelectedState.Text = text.Substring(0, text.Length-1);
+						var coordinate = _fsmDrawer.SelectedState.Coordinate;
 
 						_caretVisible = true;
 					}
 					break;
 				case "delete":
-					_fsmDrawer.FSM.RemoveState(_fsmDrawer.FSM.SelectedState);
+					_fsmDrawer.FSM.RemoveState(_fsmDrawer.SelectedState);
 					break;
 				case "return":
 				case "enter":
 				case "↵":
-					_fsmDrawer.FSM.SelectedState.Text += '\n';
+					_fsmDrawer.SelectedState.Text += '\n';
 					_caretVisible = true;
 					break;
 				case "spacebar":
 				case " ":
-					_fsmDrawer.FSM.SelectedState.Text += ' ';
+					_fsmDrawer.SelectedState.Text += ' ';
 					_caretVisible = true;
 					break;
 				default:
@@ -235,7 +251,7 @@
 					if (hasNoSpecialKeys
 						&& keyboardEventArgs.Key.Length == 1)
 					{
-						_fsmDrawer.FSM.SelectedState.Text += keyboardEventArgs.Key;
+						_fsmDrawer.SelectedState.Text += keyboardEventArgs.Key;
 						_caretVisible = true;
 					}
 					break;
@@ -251,21 +267,22 @@
 			// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
 			// where (a,b) are x and y coordinates of the centre of the circle respectively
 			// r is radius of circle
-			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fsmDrawer.FSM.SelectedState != null)
+			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fsmDrawer.SelectedState != null)
 			{
-				var coords = _fsmDrawer.FSM.SelectedState.Coordinate;
-
-				float newRadius = (float) Math.Sqrt(
-					Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
-					+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
-				);
-
-				_fsmDrawer.FSM.SelectedState.Radius = newRadius;
+				if (_canResizeState)
+				{
+					var coords = _fsmDrawer.SelectedState.Coordinate;
+					float newRadius = (float) Math.Sqrt(
+						Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
+						+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
+					);
+					_fsmDrawer.SelectedState.Radius = newRadius;
+				}
 			}
 			else
 				_fsmDrawer.MoveState(mouseEventArgs, _lastXPos, _lastYPos);
 
-			SetLastClickCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
 	}
@@ -284,7 +301,7 @@
 
 	private async Task DeselectState(FocusEventArgs focusEventArgs)
 	{
-		_fsmDrawer.FSM.SelectedState = null;
+		_fsmDrawer.SelectedState = null;
 		_caretVisible = false;
 		_stopTimer = false;
 
