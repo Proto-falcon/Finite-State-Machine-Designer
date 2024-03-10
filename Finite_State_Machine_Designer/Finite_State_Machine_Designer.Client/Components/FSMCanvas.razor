@@ -244,12 +244,7 @@
 					_caretVisible = true;
 					break;
 				default:
-					bool hasNoSpecialKeys = !keyboardEventArgs.MetaKey
-					&& !keyboardEventArgs.CtrlKey
-					&& !keyboardEventArgs.AltKey;
-
-					if (hasNoSpecialKeys
-						&& keyboardEventArgs.Key.Length == 1)
+					if (keyboardEventArgs.Key.Length == 1)
 					{
 						_fsmDrawer.SelectedState.Text += keyboardEventArgs.Key;
 						_caretVisible = true;
