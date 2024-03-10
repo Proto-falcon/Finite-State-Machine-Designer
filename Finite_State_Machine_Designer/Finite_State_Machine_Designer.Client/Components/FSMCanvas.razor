@@ -1,4 +1,5 @@
-﻿@using FSM
+﻿@using System.Text
+@using FSM
 @inherits ModuleCheckBaseComponent
 @implements IAsyncDisposable
 @inject IFSMDrawer _fsmDrawer
@@ -15,7 +16,20 @@
 	<a href="javascript:saveAsLaTeX()"
 	   download>LaTeX</a>
 </div>
-
+<div style="position:sticky;z-index:2;top:0.75rem" class="center">
+	<button
+		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
+		@onclick="ToggleSuperScriptHandler"
+	>
+		aˣ
+	</button>
+	<button 
+		style="background-color:@(_subScriptMode ? "#a45cbd": "#ffffff");"
+		@onclick="ToggleSubScriptHandler"
+	>
+		aₓ
+	</button>
+</div>
 <canvas
 	id="FSMCanvas"
 	@ref="_canvasElement"
@@ -34,19 +48,21 @@
 </canvas>
 
 @code {
-	[Parameter]
-	public int Height { get; set; } = 150;
+		[Parameter]
+		public int Height { get; set; } = 150;
 
-	[Parameter]
-	public int Width { get; set; } = 300;
+		[Parameter]
+		public int Width { get; set; } = 300;
 
-	[Parameter]
-	public bool MustRetryContext { get; set; } = false;
+		[Parameter]
+		public bool MustRetryContext { get; set; } = false;
 
 	private ElementReference? _canvasElement;
 
 	private Timer? _drawTimer;
 	private bool _canResizeState = false;
+	private bool _subScriptMode = false;
+	private bool _superScriptMode = false;
 	private bool _stopTimer = true;
 	private bool _caretVisible = true;
 	private int _drawTimerInterval = 500;
@@ -244,15 +260,84 @@
 					_caretVisible = true;
 					break;
 				default:
+					if (UpdateTextStyle(keyboardEventArgs))
+						break;
+
 					if (keyboardEventArgs.Key.Length == 1)
 					{
-						_fsmDrawer.SelectedState.Text += keyboardEventArgs.Key;
-						_caretVisible = true;
+						AddStateText(_fsmDrawer.SelectedState, keyboardEventArgs.Key);
 					}
 					break;
 			}
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
+	}
+
+	private bool UpdateTextStyle(KeyboardEventArgs keyboardEventArgs)
+	{
+		bool updatedStyle = false;
+		if (keyboardEventArgs.CtrlKey)
+		{
+			if (keyboardEventArgs.Key == ".")
+			{
+				_subScriptMode = !_subScriptMode;
+				_superScriptMode = false;
+				updatedStyle = true;
+			}
+			else if (keyboardEventArgs.Key == ",")
+			{
+				_superScriptMode = !_superScriptMode;
+				_subScriptMode = false;
+				updatedStyle = true;
+			}
+		}
+		return updatedStyle;
+	}
+
+	private void ToggleSuperScriptHandler(MouseEventArgs mouseEventArgs)
+	{
+		_subScriptMode = false;
+		_superScriptMode = !_superScriptMode;
+	}
+
+	private void ToggleSubScriptHandler(MouseEventArgs mouseEventArgs)
+	{
+		_superScriptMode = false;
+		_subScriptMode = !_subScriptMode;
+	}
+
+	private void AddStateText(FiniteState finiteState, string newText)
+	{
+		// For superscript numbers ⁰ and ⁷, numbers 1-3 are in U+00B9, U+00B2, U+00B3 respectively
+		// However subscript numbers are within U+208x where 0 < x < 9
+		// Instead of typing '_0' to get ₀ why press 'ctrl ,' for superscript mode and 'ctrl .' for subscript mode
+		int utfSubSuperRange = 0x2080;
+		if (_superScriptMode)
+		{
+			utfSubSuperRange = 0x2070;
+		}
+		if (_superScriptMode || _subScriptMode)
+		{
+			char[] characters = newText.ToCharArray();
+			for (int i = 0; i < characters.Length; i++)
+			{
+				if (char.IsDigit(characters[i]))
+				{
+					int newUtfCode = 0;
+					int keyNum = int.Parse(newText[i].ToString());
+					if (_superScriptMode && (characters[i] == '2' || characters[i] == '3'))
+						newUtfCode = 0x00B0 + keyNum;
+					else if (_superScriptMode && characters[i] == '1')
+						newUtfCode = 0x00B9;
+					else
+						newUtfCode = utfSubSuperRange + keyNum;
+					characters[i] = char.ConvertFromUtf32(newUtfCode)[0];
+				}
+			}
+			newText = string.Concat(characters);
+		}
+		finiteState.Text += newText;
+		_caretVisible = true;
 	}
 
 	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
