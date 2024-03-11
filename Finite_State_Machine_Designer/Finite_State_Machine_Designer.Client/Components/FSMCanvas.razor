@@ -1,4 +1,5 @@
 ﻿@using System.Text
+@using System.Text.RegularExpressions
 @using FSM
 @inherits ModuleCheckBaseComponent
 @implements IAsyncDisposable
@@ -48,14 +49,14 @@
 </canvas>
 
 @code {
-		[Parameter]
-		public int Height { get; set; } = 150;
+	[Parameter]
+	public int Height { get; set; } = 150;
 
-		[Parameter]
-		public int Width { get; set; } = 300;
+	[Parameter]
+	public int Width { get; set; } = 300;
 
-		[Parameter]
-		public bool MustRetryContext { get; set; } = false;
+	[Parameter]
+	public bool MustRetryContext { get; set; } = false;
 
 	private ElementReference? _canvasElement;
 
@@ -83,7 +84,14 @@
 	private const string _selectedStateColour = "#0000ff";
 	private const string _stateColour = "#000000";
 
-	private readonly string[] _specialSymbolNames = new string[] { 
+	/// <summary>
+	/// <para>Lowercase greek symbols in unicode range: U+03b1 to U+03c9</para>
+	/// <para>Uppercase greek symbols in unicode range: U+0391 to U+03a9</para>
+	/// <para>Unicode for empty set (∅): U+2205</para>
+	/// <para>Unicdoe for rightarrow (→): U+2192</para>
+	/// <para>Unicode for leftarrow (←): U+2190</para>
+	/// </summary>
+	private readonly string[] _greekAlphabet = new string[] { 
 		"Alpha",
 		"Beta",
 		"Gamma",
@@ -107,10 +115,7 @@
 		"Phi",
 		"Chi",
 		"Psi",
-		"Omega",
-		"emptyset",
-		"rightarrow",
-		"leftarrow",
+		"Omega"
 	};
 
 	protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -310,12 +315,10 @@
 	{
 		// For superscript numbers ⁰ and ⁷, numbers 1-3 are in U+00B9, U+00B2, U+00B3 respectively
 		// However subscript numbers are within U+208x where 0 < x < 9
-		// Instead of typing '_0' to get ₀ why press 'ctrl ,' for superscript mode and 'ctrl .' for subscript mode
+		// Instead of typing '_0' to get '₀', just press 'ctrl ,' for superscript mode and 'ctrl .' for subscript mode
 		int utfSubSuperRange = 0x2080;
 		if (_superScriptMode)
-		{
 			utfSubSuperRange = 0x2070;
-		}
 		if (_superScriptMode || _subScriptMode)
 		{
 			char[] characters = newText.ToCharArray();
@@ -336,7 +339,25 @@
 			}
 			newText = string.Concat(characters);
 		}
-		finiteState.Text += newText;
+
+		newText = finiteState.Text + newText;
+		for (int i = 0; i < _greekAlphabet.Length; i++)
+		{
+			Regex greekRegex = new(@$"\\{_greekAlphabet[i]}",RegexOptions.IgnoreCase);
+			newText = newText.Replace(@$"\{_greekAlphabet[i]}", char.ConvertFromUtf32(0x0391 + i));
+			newText = greekRegex.Replace(newText, char.ConvertFromUtf32(0x003b1 + i));
+		}
+
+		/*
+		 * Unicode for empty set (∅): U+2205
+		 * Unicdoe for rightarrow (→): U+2192
+		 * Unicode for leftarrow (←): U+2190
+		 */
+		newText = newText.Replace(@"\emptyset", char.ConvertFromUtf32(0x2205));
+		newText = newText.Replace(@"\rightarrow", char.ConvertFromUtf32(0x2192));
+		newText = newText.Replace(@"\leftarrow", char.ConvertFromUtf32(0x2190));
+
+		finiteState.Text = newText;
 		_caretVisible = true;
 	}
 
