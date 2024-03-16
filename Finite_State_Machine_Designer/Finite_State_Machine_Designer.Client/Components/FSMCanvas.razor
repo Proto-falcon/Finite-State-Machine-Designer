@@ -92,30 +92,30 @@
 	/// <para>Unicode for leftarrow (←): U+2190</para>
 	/// </summary>
 	private readonly string[] _greekAlphabet = new string[] { 
-		"Alpha",
-		"Beta",
-		"Gamma",
-		"Delta",
-		"Epsilon",
-		"Zeta",
-		"Eta",
-		"Theta",
-		"Iota",
-		"Kappa",
-		"Lambda",
-		"Mu",
-		"Nu",
-		"Xi",
-		"Omicron",
-		"Pi",
-		"Rho",
-		"Sigma",
-		"Tau",
-		"Upsilon",
-		"Phi",
-		"Chi",
-		"Psi",
-		"Omega"
+		"alpha",
+		"beta",
+		"gamma",
+		"delta",
+		"epsilon",
+		"zeta",
+		"eta",
+		"theta",
+		"iota",
+		"kappa",
+		"lambda",
+		"mu",
+		"nu",
+		"xi",
+		"omicron",
+		"pi",
+		"rho",
+		"sigma",
+		"tau",
+		"upsilon",
+		"phi",
+		"chi",
+		"psi",
+		"omega"
 	};
 
 	protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -343,9 +343,9 @@
 		newText = finiteState.Text + newText;
 		for (int i = 0; i < _greekAlphabet.Length; i++)
 		{
-			Regex greekRegex = new(@$"\\{_greekAlphabet[i]}",RegexOptions.IgnoreCase);
-			newText = newText.Replace(@$"\{_greekAlphabet[i]}", char.ConvertFromUtf32(0x0391 + i));
-			newText = greekRegex.Replace(newText, char.ConvertFromUtf32(0x003b1 + i));
+			Regex greekRegex = new(@$"\\{_greekAlphabet[i]}", RegexOptions.IgnoreCase);
+			newText = newText.Replace(@$"\{_greekAlphabet[i]}", char.ConvertFromUtf32(0x003b1 + i));
+			newText = greekRegex.Replace(newText, char.ConvertFromUtf32(0x0391 + i));
 		}
 
 		/*
