@@ -6,7 +6,7 @@
 @inject IFSMDrawer _fsmDrawer
 @inject ILogger<FSMCanvas> _logger
 
-<div class="center">
+<div style="position:sticky;z-index:2;top:0.75rem" class="center">
 	Export as:
 	<a href="javascript:saveAsPNG()"
 	   download>PNG</a>
@@ -16,8 +16,6 @@
 	   |
 	<a href="javascript:saveAsLaTeX()"
 	   download>LaTeX</a>
-</div>
-<div style="position:sticky;z-index:2;top:0.75rem" class="center">
 	<button
 		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
 		@onclick="ToggleSuperScriptHandler"
