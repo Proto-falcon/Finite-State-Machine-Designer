@@ -6,8 +6,9 @@
 @rendermode InteractiveWebAssembly
 
 <PageTitle>Auth</PageTitle>
-
-<h1>You are authenticated</h1>
+<SectionContent SectionId="MainLayout.TopBarSection">
+    <h1>You are authenticated</h1>
+</SectionContent>
 
 <AuthorizeView>
     Hello @context.User.Identity?.Name!

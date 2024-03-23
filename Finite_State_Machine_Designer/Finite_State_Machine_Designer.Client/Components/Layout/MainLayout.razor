@@ -6,10 +6,11 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-        </div>
+        <TopBar>
+            <SectionOutlet SectionId="TopBarSection" />
+        </TopBar>
 
-        <article class="content px-4 dynamic-bg-colour main-content">
+        <article class="content px-4">
             @Body
         </article>
     </main>
@@ -20,3 +21,8 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code
+{
+    public static Object? TopBarSection = new();
+}

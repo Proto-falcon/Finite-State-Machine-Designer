@@ -1,7 +1,10 @@
 ﻿@inherits LayoutComponentBase
-@layout Finite_State_Machine_Designer.Components.Layout.MainLayout
+@layout MainLayout
 @inject NavigationManager NavigationManager
 
+<SectionContent SectionId="Client.Components.Layout.MainLayout.TopBarSection">
+    <h1>Account Management</h1>
+</SectionContent>
 @if (HttpContext is null)
 {
     <p>Loading...</p>

@@ -1,11 +1,14 @@
 ﻿@page "/designer"
-@using Components
 @using FSM
 @inherits ModuleCheckBaseComponent
 @rendermode InteractiveWebAssembly
 @inject NavigationManager Navigation
 
 <PageTitle>Finite State Machine Designer</PageTitle>
+
+<SectionContent SectionId="MainLayout.TopBarSection">
+	<h1>Finite State Designer</h1>
+</SectionContent>
 
 <DynamicComponent Type="@_canvasLoaded" Parameters="_canvasParams" />
 
