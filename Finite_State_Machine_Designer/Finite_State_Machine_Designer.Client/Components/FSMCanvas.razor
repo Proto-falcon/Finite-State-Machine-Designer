@@ -2,11 +2,12 @@
 @using System.Text.RegularExpressions
 @using FSM
 @inherits ModuleCheckBaseComponent
+@rendermode InteractiveWebAssembly
 @implements IAsyncDisposable
 @inject IFSMDrawer _fsmDrawer
 @inject ILogger<FSMCanvas> _logger
 
-<div style="position:sticky;z-index:2;top:0.75rem" class="center">
+<div class="center canvas-top-buttons">
 	Export as:
 	<a href="javascript:saveAsPNG()"
 	   download>PNG</a>
@@ -79,8 +80,8 @@
 	private float _defalutStateRadius = 30;
 	private bool _canvasHasFocus = false;
 
-	private const string _selectedStateColour = "#0000ff";
-	private const string _stateColour = "#000000";
+	private const string _selectedStateColour = "#4d4dff";
+	private const string _stateColour = "#ffffff";
 
 	/// <summary>
 	/// <para>Lowercase greek symbols in unicode range: U+03b1 to U+03c9</para>
@@ -388,7 +389,7 @@
 
 	private async void DrawMachineTimer(object? obj)
 	{
-		if (!_stopTimer)
+		if (!_stopTimer && _fsmDrawer.SelectedState != null)
 		{
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 			_logger.LogDebug("State machine is redrawn at {Time} with caret {Visibilty}.",

@@ -8,6 +8,12 @@
     border-width:thin;
 }
 
+.canvas-top-buttons {
+    position: sticky;
+    z-index: 2;
+    top: 0.75rem;
+}
+
 .center {
     text-align: center;
 }

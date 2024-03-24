@@ -1,16 +1,24 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
 
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
 
-    <main>
-        <TopBar>
-            <SectionOutlet SectionId="TopBarSection" />
-        </TopBar>
+    <!--
+        When placing custom components in layout components keep in mind that the generated attribute while
+        debugging or in production will be different from the attribute that the produced css selectors will try to match.
+        for example - .shrek-life[a-sdav490ai8n0era]
+    -->
 
-        <article class="content px-4">
+    <main class="dark-mode">
+        <div class="top-row dark-mode-top-row">
+            <SectionOutlet SectionId="TopBarSection" />
+        </div>
+
+        <article class="content px-4 dark-mode-main">
             @Body
         </article>
     </main>
