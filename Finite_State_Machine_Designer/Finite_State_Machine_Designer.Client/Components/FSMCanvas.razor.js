@@ -99,43 +99,46 @@ export function drawState(x, y, radius, colour, textLines, editable, isFinalStat
             canvasCtx.stroke();
         }
 
-
-        let caretX = 0;
-        let caretY = 0;
-        let textX = 0;
-        let textY = 0;
-
-
-        if (textLines.length <= 0) {
-            caretX = x + 0.5;
-            caretY = y + 10;
-        }
-        else {
-            let initialY = y - ((textLines.length-1) * (STATETEXTNEWLINE/2));
-            textY = initialY + 10;
-            canvasCtx.fillStyle = colour;
-
-            for (var i = 0; i < textLines.length; i++) {
-                let textMetric = canvasCtx.measureText(textLines[i]);
-
-                let halfWidth = Math.round(textMetric.width / 2);
-
-                textX = x - halfWidth;
-                canvasCtx.fillText(textLines[i], textX, textY);
-
-                caretX = x + halfWidth;
-                caretY = textY
-                textY += STATETEXTNEWLINE
-            }
-        }
-
-        if (editable) {
-            drawTextLine(caretX, caretY, textLines.length > 0);
-        }
+        drawCanvasText(x, y, colour, textLines, editable);
 
         return true;
     }
     return false;
+}
+
+function drawCanvasText(x, y, colour, textLines, editable) {
+    let caretX = 0;
+    let caretY = 0;
+    let textX = 0;
+    let textY = 0;
+
+
+    if (textLines.length <= 0) {
+        caretX = x + 0.5;
+        caretY = y + 10;
+    }
+    else {
+        let initialY = y - ((textLines.length - 1) * (STATETEXTNEWLINE / 2));
+        textY = initialY + 10;
+        canvasCtx.fillStyle = colour;
+
+        for (var i = 0; i < textLines.length; i++) {
+            let textMetric = canvasCtx.measureText(textLines[i]);
+
+            let halfWidth = Math.round(textMetric.width / 2);
+
+            textX = x - halfWidth;
+            canvasCtx.fillText(textLines[i], textX, textY);
+
+            caretX = x + halfWidth;
+            caretY = textY
+            textY += STATETEXTNEWLINE
+        }
+    }
+
+    if (editable) {
+        drawTextLine(caretX, caretY, textLines.length > 0);
+    }
 }
 
 /**
