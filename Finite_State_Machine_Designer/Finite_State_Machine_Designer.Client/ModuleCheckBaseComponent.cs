@@ -27,7 +27,7 @@ namespace Finite_State_Machine_Designer.Client
 		async ValueTask IAsyncDisposable.DisposeAsync()
 		{
 			GC.SuppressFinalize(this);
-			if (_jsModule != null)
+			if (_jsModule is not null)
 			{
 				await _jsModule.DisposeAsync();
 			}

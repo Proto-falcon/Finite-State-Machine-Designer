@@ -34,7 +34,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public async Task<CanvasCoordinate?> CreateState(int x, int y, float radius, string colour)
 		{
-			if (_jsModule != null)
+			if (_jsModule is not null)
 			{
 				bool isCreated = await _jsModule.InvokeAsync<bool>(
 					"drawState", [x, y, radius, colour, Array.Empty<string>(), true, false]
@@ -55,7 +55,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public void MoveState(MouseEventArgs mouseEventArgs, int lastX, int lastY)
 		{
-			if (_selectedState != null
+			if (_selectedState is not null
 			&& mouseEventArgs.Buttons > 0
 			&& mouseEventArgs.Buttons <= 3)
 			{
@@ -68,7 +68,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
 		{
-			if (_jsModule != null && await _jsModule.InvokeAsync<bool>("clearCanvas"))
+			if (_jsModule is not null && await _jsModule.InvokeAsync<bool>("clearCanvas"))
 			{
 				bool editable;
 				string currentColour;

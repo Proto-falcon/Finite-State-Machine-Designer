@@ -8,7 +8,7 @@
 @inject ILogger<FSMCanvas> _logger
 
 <div class="center canvas-top-buttons">
-	Export as:
+	<!--Export as:
 	<a href="javascript:saveAsPNG()"
 	   download>PNG</a>
 	   |
@@ -17,6 +17,7 @@
 	   |
 	<a href="javascript:saveAsLaTeX()"
 	   download>LaTeX</a>
+	-->
 	<button title="ctrl+."
 		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
 		@onclick="ToggleSuperScriptHandler"
@@ -37,7 +38,7 @@
 	height="@Height"
 	width="@Width"
 	@onmousedown:preventDefault
-	@onmousedown="ClicksStateHandler"
+	@onmousedown="MouseDownHandler"
 	@onkeydown:preventDefault
 	@onkeydown="KeyHandler"
 	@onmousemove="MoveMouseHandler"
@@ -67,6 +68,10 @@
 	private bool _caretVisible = true;
 	private int _drawTimerInterval = 500;
 	private DateTime _lastDrawTimerCall = DateTime.Now;
+	/// <summary>
+	/// Previous state of <see cref="FSMDrawer.SelectedState"/>.
+	/// </summary>
+	private FiniteState? _prevSelectedState;
 
 	/// <summary>
 	/// The last X co-ordinate of pointer relative in the canvas space.
@@ -142,14 +147,14 @@
 				_logger.LogError("Couldn't get 2d context");
 		}
 
-		if (_canvasElement != null && _canvasHasFocus)
+		if (_canvasElement is not null && _canvasHasFocus)
 		{
 			await _canvasElement.Value.FocusAsync(true);
 			_canvasHasFocus = false;
 		}
 
-		if (!_stopTimer && _fsmDrawer.SelectedState != null
-			&& _drawTimer != null
+		if (!_stopTimer && _fsmDrawer.SelectedState is not null
+			&& _drawTimer is not null
 			&& (DateTime.Now - _lastDrawTimerCall) > TimeSpan.FromMilliseconds(_drawTimerInterval * 1.1))
 		{
 			await _drawTimer.DisposeAsync();
@@ -165,7 +170,7 @@
 		_lastYPos = (int)y;
 	}
 
-	private async Task ClicksStateHandler(MouseEventArgs mouseEventArgs)
+	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
 		SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
@@ -176,66 +181,104 @@
 
 			if (mouseEventArgs.Detail == 2)
 			{
-				if (existingState == null)
-				{
-					CanvasCoordinate? createdCoords = await _fsmDrawer.CreateState(
-						_lastXPos,
-						_lastYPos,
-						_defalutStateRadius,
-						_selectedStateColour
-					);
-					_stopTimer = !(createdCoords != null);
-					if (_stopTimer)
-						_logger.LogError("State to be created at {Coordinate} failed to be created", createdCoords);
-
-					return;
-				}
-				else if (existingState != null && existingState == _fsmDrawer.SelectedState)
-					_fsmDrawer.SelectedState.IsFinalState = !_fsmDrawer.SelectedState.IsFinalState;
+				bool exist = await DrawStateOrFinal(existingState);
+				return;
 			}
 
-			FiniteState? prevSelectedState = _fsmDrawer.SelectedState;
+			_prevSelectedState = _fsmDrawer.SelectedState;
 			_fsmDrawer.SelectedState = existingState;
 
-			if (prevSelectedState != _fsmDrawer.SelectedState)
+			await UpdateDrawTimer();
+
+			ToggleResizeState(_fsmDrawer.SelectedState);
+		}
+		if (_canvasElement is not null)
+			_canvasHasFocus = true;
+	}
+
+	/// <summary>
+	/// Stops the draw timer when <see cref="FSMDrawer.SelectedState"/> is <see langword="null"/>
+	/// or restarts it when it's not <see langword="null"/>.
+	/// </summary>
+	private async Task UpdateDrawTimer()
+	{
+		if (_prevSelectedState != _fsmDrawer.SelectedState)
+		{
+			switch (_fsmDrawer.SelectedState)
 			{
-				switch (_fsmDrawer.SelectedState)
-				{
-					case null:
-						_stopTimer = true;
-						await _fsmDrawer.DrawMachineAsync();
-						break;
-					default:
-
-						_stopTimer = false;
-						_caretVisible = true;
-						await _fsmDrawer.DrawMachineAsync(_caretVisible);
-						break;
-				}
-			}
-
-			if (_fsmDrawer.SelectedState != null)
-			{
-				var coords = _fsmDrawer.SelectedState.Coordinate;
-				float radius = (float)Math.Sqrt(
-					Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
-					+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
-				);
-
-				_logger.LogInformation("Radius difference: {Difference}", Math.Abs(radius - _fsmDrawer.SelectedState.Radius));
-				if (Math.Abs(radius - _fsmDrawer.SelectedState.Radius) <= 10)
-					_canResizeState = true;
-				else
-					_canResizeState = false;
+				case null:
+					_stopTimer = true;
+					await _fsmDrawer.DrawMachineAsync();
+					return;
+				default:
+					_stopTimer = false;
+					_caretVisible = true;
+					await _fsmDrawer.DrawMachineAsync(_caretVisible);
+					break;
 			}
 		}
-		if (_canvasElement != null)
-			_canvasHasFocus = true;
+	}
+
+	/// <summary>
+	/// Creates a new state or make an existing state final
+	/// </summary>
+	/// <param name="existingState">A possible existing state</param>
+	/// <returns>
+	///  <see langword="true"/> for when the <paramref name="existingState"/> exists,
+	///  otherwise <see langword="false"/>.
+	/// </returns>
+	private async Task<bool> DrawStateOrFinal(FiniteState? existingState)
+	{
+		if (existingState == null)
+		{
+			CanvasCoordinate? createdCoords = await _fsmDrawer.CreateState(
+				_lastXPos,
+				_lastYPos,
+				_defalutStateRadius,
+				_selectedStateColour
+			);
+			_stopTimer = !(createdCoords is not null);
+			if (_stopTimer)
+			{
+				_logger.LogError("State to be created at {Coordinate} failed to be created", createdCoords);
+				return false;
+			}
+			return true;
+		}
+		else if (existingState is not null && existingState == _fsmDrawer.SelectedState)
+		{
+			_fsmDrawer.SelectedState.IsFinalState = !_fsmDrawer.SelectedState.IsFinalState;
+			await _fsmDrawer.DrawMachineAsync(true);
+			return true;
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Makes the <paramref name="state"/> resizable
+	/// </summary>
+	/// <param name="state">A finite state</param>
+	private void ToggleResizeState(FiniteState? state)
+	{
+		if (state is null)
+			return;
+
+		var coords = state.Coordinate;
+		float radius = (float)Math.Sqrt(
+			Math.Pow(_lastXPos - coords.X, 2)
+			+ Math.Pow(_lastYPos - coords.Y, 2)
+		);
+
+		_logger.LogDebug("Radius difference: {Difference}", Math.Abs(radius - state.Radius));
+		if (Math.Abs(radius - state.Radius) <= 10)
+			_canResizeState = true;
+		else
+			_canResizeState = false;
 	}
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(JsModule) && _fsmDrawer.SelectedState != null)
+		if (CheckJsModule(JsModule) && _fsmDrawer.SelectedState is not null)
 		{
 			switch (keyboardEventArgs.Key.ToLower())
 			{
@@ -367,7 +410,7 @@
 			// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
 			// where (a,b) are x and y coordinates of the centre of the circle respectively
 			// r is radius of circle
-			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fsmDrawer.SelectedState != null)
+			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fsmDrawer.SelectedState is not null)
 			{
 				if (_canResizeState)
 				{
@@ -389,7 +432,7 @@
 
 	private async void DrawMachineTimer(object? obj)
 	{
-		if (!_stopTimer && _fsmDrawer.SelectedState != null)
+		if (!_stopTimer && _fsmDrawer.SelectedState is not null)
 		{
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 			_logger.LogDebug("State machine is redrawn at {Time} with caret {Visibilty}.",
@@ -405,7 +448,7 @@
 		_caretVisible = false;
 		_stopTimer = false;
 
-		if (_drawTimer != null)
+		if (_drawTimer is not null)
 			await _drawTimer.DisposeAsync();
 
 		await _fsmDrawer.DrawMachineAsync(_caretVisible);
@@ -415,10 +458,10 @@
 	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		GC.SuppressFinalize(this);
-		if (JsModule != null)
+		if (JsModule is not null)
 			await JsModule.DisposeAsync();
 
-		if (_drawTimer != null)
+		if (_drawTimer is not null)
 			await _drawTimer.DisposeAsync();
 	}
 }
