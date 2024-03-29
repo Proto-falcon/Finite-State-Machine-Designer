@@ -74,13 +74,9 @@
 	private FiniteState? _prevSelectedState;
 
 	/// <summary>
-	/// The last X co-ordinate of pointer relative in the canvas space.
+	/// The last co-ordinate of the pointer relative in the canvas space.
 	/// </summary>
-	private int _lastXPos;
-	/// <summary>
-	/// The last Y co-ordinate of pointer relative in the canvas space.
-	/// </summary>
-	private int _lastYPos;
+	private CanvasCoordinate _lastMouseDownPos = new (0, 0);
 
 	private float _defalutStateRadius = 30;
 	private bool _canvasHasFocus = false;
@@ -166,8 +162,8 @@
 
 	private void SetLastCoords(double x, double y)
 	{
-		_lastXPos = (int)x;
-		_lastYPos = (int)y;
+		_lastMouseDownPos.X = (int)x;
+		_lastMouseDownPos.Y = (int)y;
 	}
 
 	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
@@ -176,8 +172,7 @@
 
 		if (CheckJsModule(JsModule))
 		{
-			var coordinate = new CanvasCoordinate(_lastXPos, _lastYPos);
-			FiniteState? existingState = _fsmDrawer.FSM.FindState(coordinate);
+			FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMouseDownPos);
 
 			if (mouseEventArgs.Detail == 2)
 			{
@@ -232,8 +227,8 @@
 		if (existingState == null)
 		{
 			CanvasCoordinate? createdCoords = await _fsmDrawer.CreateState(
-				_lastXPos,
-				_lastYPos,
+				_lastMouseDownPos.X,
+				_lastMouseDownPos.Y,
 				_defalutStateRadius,
 				_selectedStateColour
 			);
@@ -265,8 +260,8 @@
 
 		var coords = state.Coordinate;
 		float radius = (float)Math.Sqrt(
-			Math.Pow(_lastXPos - coords.X, 2)
-			+ Math.Pow(_lastYPos - coords.Y, 2)
+			Math.Pow(_lastMouseDownPos.X - coords.X, 2)
+			+ Math.Pow(_lastMouseDownPos.Y - coords.Y, 2)
 		);
 
 		_logger.LogDebug("Radius difference: {Difference}", Math.Abs(radius - state.Radius));
@@ -423,7 +418,7 @@
 				}
 			}
 			else
-				_fsmDrawer.MoveState(mouseEventArgs, _lastXPos, _lastYPos);
+				_fsmDrawer.MoveState(mouseEventArgs, _lastMouseDownPos.X, _lastMouseDownPos.Y);
 
 			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
