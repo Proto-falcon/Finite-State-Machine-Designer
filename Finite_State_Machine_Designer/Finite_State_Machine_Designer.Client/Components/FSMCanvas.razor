@@ -17,13 +17,13 @@
 	   |
 	<a href="javascript:saveAsLaTeX()"
 	   download>LaTeX</a>
-	<button
+	<button title="ctrl+."
 		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
 		@onclick="ToggleSuperScriptHandler"
 	>
 		aˣ
 	</button>
-	<button 
+	<button title="ctrl+,"
 		style="background-color:@(_subScriptMode ? "#a45cbd": "#ffffff");"
 		@onclick="ToggleSubScriptHandler"
 	>
@@ -80,7 +80,7 @@
 	private float _defalutStateRadius = 30;
 	private bool _canvasHasFocus = false;
 
-	private const string _selectedStateColour = "#4d4dff";
+	private const string _selectedStateColour = "#9999ff";
 	private const string _stateColour = "#ffffff";
 
 	/// <summary>
