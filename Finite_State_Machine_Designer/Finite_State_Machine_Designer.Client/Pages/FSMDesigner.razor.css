@@ -1,4 +1,8 @@
-﻿div {
+﻿.top-bar-title {
+    width: 100%;
+}
+
+.instruction {
     margin: 30px auto;
     text-align: left;
     max-width: 800px;

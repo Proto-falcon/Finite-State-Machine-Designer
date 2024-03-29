@@ -7,12 +7,14 @@
 <PageTitle>Finite State Machine Designer</PageTitle>
 
 <SectionContent SectionId="MainLayout.TopBarSection">
-	<h1>Finite State Designer</h1>
+	<div class="top-bar-title">
+		<h1>Finite State Designer</h1>
+	</div>
 </SectionContent>
 
 <DynamicComponent Type="@_canvasLoaded" Parameters="_canvasParams" />
 
-<div>
+<div class="instruction">
 	<p>
 		The big white box above is the FSM designer.&nbsp; Here's how to
 		use it:
@@ -47,16 +49,18 @@
 		This was made in Blazor and JavaScript Interop using the canvas element.
 	</p>
 </div>
-<p>Created by <b>Tobi Adeniji</b> in 2024</p>
-<p>
-	Inspired by <a href="https://madebyevan.com/">Evan Wallace's</a>
-	<a href="https://madebyevan.com/fsm/">Finite Machine Designer</a> in 2010
-</p>
-<p>
-	And modifications from
-	<a href="https://www.cs.unc.edu/~otternes/">Nathan Otterness's</a> - 
-	<a href="https://www.cs.unc.edu/~otternes/comp455/fsm_designer/">FSM Designer</a> in 2019
-</p>
+<footer>
+	<p>Created by <b>Tobi Adeniji</b> in 2024</p>
+	<p>
+		Inspired by <a href="https://madebyevan.com/">Evan Wallace's</a>
+		<a href="https://madebyevan.com/fsm/">Finite Machine Designer</a> in 2010
+	</p>
+	<p>
+		And modifications from
+		<a href="https://www.cs.unc.edu/~otternes/">Nathan Otterness's</a> - 
+		<a href="https://www.cs.unc.edu/~otternes/comp455/fsm_designer/">FSM Designer</a> in 2019
+	</p>
+</footer>
 
 @code {
 	private Dictionary<string, object> _canvasParams = new();
