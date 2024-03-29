@@ -3,11 +3,10 @@ using Microsoft.JSInterop;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
-    public class FSMDrawer : IFSMDrawer
+    public class FSMDrawer(ILogger<IFSMDrawer> logger, IFiniteStateMachine fsm) : IFSMDrawer
     {
-        private readonly ILogger _logger;
+        private readonly ILogger _logger = logger;
         private IJSObjectReference? _jsModule;
-        private readonly IFiniteStateMachine _fsm;
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
 
@@ -18,13 +17,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		}
 		private FiniteState? _selectedState;
 
-		public FSMDrawer(ILogger<IFSMDrawer> logger, IFiniteStateMachine fsm)
-        {
-            _logger = logger;
-			_fsm = fsm;
-		}
-
-		public IFiniteStateMachine FSM { get => _fsm; }
+		public IFiniteStateMachine FSM { get => fsm; }
 
 		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff")
 		{
@@ -53,7 +46,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				CanvasCoordinate coordinate = new (x, y);
 				var newState = new FiniteState(coordinate, radius);
 				_selectedState = newState;
-				_fsm.AddState(newState);
+				fsm.AddState(newState);
 				_logger.LogInformation("Created state at canvas position: {Coordinate}", coordinate);
 				return coordinate;
 			}
@@ -80,7 +73,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				bool editable;
 				string currentColour;
 
-				foreach (FiniteState state in _fsm.States)
+				foreach (FiniteState state in fsm.States)
 				{
 					editable = false;
 					currentColour = _nonSelectedColour;
