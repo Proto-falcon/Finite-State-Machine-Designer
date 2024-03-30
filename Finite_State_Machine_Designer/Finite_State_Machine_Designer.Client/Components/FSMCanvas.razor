@@ -39,6 +39,7 @@
 	width="@Width"
 	@onmousedown:preventDefault
 	@onmousedown="MouseDownHandler"
+	@onmouseup="MouseUpHandler"
 	@onkeydown:preventDefault
 	@onkeydown="KeyHandler"
 	@onmousemove="MoveMouseHandler"
@@ -72,6 +73,10 @@
 	/// Previous state of <see cref="FSMDrawer.SelectedState"/>.
 	/// </summary>
 	private FiniteState? _prevSelectedState;
+	/// <summary>
+	/// Previous state of <see cref="FSMDrawer.SelectedTransition"/>.
+	/// </summary>
+	private StateTransition? _prevSelectedTransition;
 
 	/// <summary>
 	/// The last co-ordinate of the pointer relative in the canvas space.
@@ -172,28 +177,98 @@
 
 		if (CheckJsModule(JsModule))
 		{
-			FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMouseDownPos);
-
-			if (mouseEventArgs.Detail == 2)
+			switch (mouseEventArgs.ShiftKey)
 			{
-				bool exist = await DrawStateOrFinal(existingState);
-				return;
+				case false:
+					FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMouseDownPos);
+
+					if (mouseEventArgs.Detail == 2)
+					{
+						bool exist = await DrawStateOrFinal(existingState);
+						return;
+					}
+
+					_prevSelectedState = _fsmDrawer.SelectedState;
+					_fsmDrawer.SelectedState = existingState;
+
+					ToggleResizeState(_fsmDrawer.SelectedState);
+					break;
+				case true:
+					StateTransition? existingTransition = null;
+
+					if (_fsmDrawer.SelectedState is null && existingTransition is null)
+					{
+						// CanvasCoordinate coords = _lastMouseDownPos;
+						// if (_fsmDrawer.SelectedState is not null)
+						// {
+						// 	coords = _fsmDrawer.SelectedState.Coordinate;
+						// }
+						existingTransition = await _fsmDrawer.CreateTransitionAsync(
+							_lastMouseDownPos, _lastMouseDownPos
+						);
+					}
+
+					_prevSelectedTransition = _fsmDrawer.SelectedTransition;
+					_fsmDrawer.SelectedTransition = existingTransition;
+					break;
 			}
 
-			_prevSelectedState = _fsmDrawer.SelectedState;
-			_fsmDrawer.SelectedState = existingState;
 
 			await UpdateDrawTimer();
-
-			ToggleResizeState(_fsmDrawer.SelectedState);
 		}
 		if (_canvasElement is not null)
 			_canvasHasFocus = true;
 	}
 
+	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+		{
+			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+			if (mouseEventArgs.Buttons > 0)
+			{
+				// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
+				// where (a,b) are x and y coordinates of the centre of the circle respectively
+				// r is radius of circle
+				if (_fsmDrawer.SelectedState is not null && mouseEventArgs.CtrlKey)
+				{
+					if (_canResizeState)
+					{
+						var coords = _fsmDrawer.SelectedState.Coordinate;
+						float newRadius = (float) Math.Sqrt(
+							Math.Pow(_lastMouseDownPos.X - coords.X, 2)
+							+ Math.Pow(_lastMouseDownPos.Y - coords.Y, 2)
+						);
+						_fsmDrawer.SelectedState.Radius = newRadius;
+					}
+				}
+				else if (_fsmDrawer.SelectedTransition is not null && mouseEventArgs.ShiftKey)
+				{
+					_fsmDrawer.SelectedTransition.To = _lastMouseDownPos;
+				}
+				else
+					_fsmDrawer.MoveState(mouseEventArgs, _lastMouseDownPos.X, _lastMouseDownPos.Y);
+			}
+
+			await _fsmDrawer.DrawMachineAsync(_caretVisible);
+		}
+	}
+
+	private void MouseUpHandler(MouseEventArgs mouseEventArgs)
+	{
+		FiniteState? existingState = null;
+
+		if (existingState is null && _fsmDrawer.SelectedTransition is not null)
+		{
+			_fsmDrawer.FSM.RemoveTransition(_fsmDrawer.SelectedTransition);
+
+		}
+	}
+
 	/// <summary>
-	/// Stops the draw timer when <see cref="FSMDrawer.SelectedState"/> is <see langword="null"/>
-	/// or restarts it when it's not <see langword="null"/>.
+	/// Stops the draw timer when both <see cref="FSMDrawer.SelectedState"/>
+	///  and <see cref="FSMDrawer.SelectedTransition"/> are <see langword="null"/>.
+	/// <para>Restarts timer when either aren't <see langword="null"/>.</para>
 	/// </summary>
 	private async Task UpdateDrawTimer()
 	{
@@ -203,15 +278,29 @@
 			{
 				case null:
 					_stopTimer = true;
-					await _fsmDrawer.DrawMachineAsync();
-					return;
+					_caretVisible = false;
+					break;
 				default:
 					_stopTimer = false;
 					_caretVisible = true;
-					await _fsmDrawer.DrawMachineAsync(_caretVisible);
 					break;
 			}
 		}
+		else if (_prevSelectedTransition != _fsmDrawer.SelectedTransition)
+		{
+			switch (_fsmDrawer.SelectedTransition)
+			{
+				case null:
+					_stopTimer = true;
+					_caretVisible = false;
+					break;
+				default:
+					_stopTimer = false;
+					_caretVisible = true;
+					break;
+			}
+		}
+		await _fsmDrawer.DrawMachineAsync(_caretVisible);
 	}
 
 	/// <summary>
@@ -224,14 +313,15 @@
 	/// </returns>
 	private async Task<bool> DrawStateOrFinal(FiniteState? existingState)
 	{
+		CanvasCoordinate? createdCoords = null;
 		if (existingState == null)
 		{
-			CanvasCoordinate? createdCoords = await _fsmDrawer.CreateState(
+			createdCoords = await _fsmDrawer.CreateStateAsync(
 				_lastMouseDownPos.X,
 				_lastMouseDownPos.Y,
-				_defalutStateRadius,
-				_selectedStateColour
+				_defalutStateRadius
 			);
+			await UpdateDrawTimer();
 			_stopTimer = !(createdCoords is not null);
 			if (_stopTimer)
 			{
@@ -240,7 +330,7 @@
 			}
 			return true;
 		}
-		else if (existingState is not null && existingState == _fsmDrawer.SelectedState)
+		else if (existingState == _fsmDrawer.SelectedState)
 		{
 			_fsmDrawer.SelectedState.IsFinalState = !_fsmDrawer.SelectedState.IsFinalState;
 			await _fsmDrawer.DrawMachineAsync(true);
@@ -386,43 +476,16 @@
 		}
 
 		/*
-		 * Unicode for empty set (∅): U+2205
-		 * Unicdoe for rightarrow (→): U+2192
-		 * Unicode for leftarrow (←): U+2190
-		 */
+		* Unicode for empty set (∅): U+2205
+		* Unicdoe for rightarrow (→): U+2192
+		* Unicode for leftarrow (←): U+2190
+		*/
 		newText = newText.Replace(@"\emptyset", char.ConvertFromUtf32(0x2205));
 		newText = newText.Replace(@"\rightarrow", char.ConvertFromUtf32(0x2192));
 		newText = newText.Replace(@"\leftarrow", char.ConvertFromUtf32(0x2190));
 
 		finiteState.Text = newText;
 		_caretVisible = true;
-	}
-
-	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
-	{
-		if (CheckJsModule(JsModule))
-		{
-			// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
-			// where (a,b) are x and y coordinates of the centre of the circle respectively
-			// r is radius of circle
-			if (mouseEventArgs.CtrlKey && mouseEventArgs.Buttons > 0 && _fsmDrawer.SelectedState is not null)
-			{
-				if (_canResizeState)
-				{
-					var coords = _fsmDrawer.SelectedState.Coordinate;
-					float newRadius = (float) Math.Sqrt(
-						Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
-						+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
-					);
-					_fsmDrawer.SelectedState.Radius = newRadius;
-				}
-			}
-			else
-				_fsmDrawer.MoveState(mouseEventArgs, _lastMouseDownPos.X, _lastMouseDownPos.Y);
-
-			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-			await _fsmDrawer.DrawMachineAsync(_caretVisible);
-		}
 	}
 
 	private async void DrawMachineTimer(object? obj)

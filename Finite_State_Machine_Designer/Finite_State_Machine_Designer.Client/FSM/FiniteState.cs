@@ -20,8 +20,21 @@
 			}
 		}
 
-		public bool IsFinalState { get; set; } = false;
-		public string Text { get; set; } = string.Empty;
+		private bool _isFinalState = false;
+
+		public bool IsFinalState
+		{
+			get => _isFinalState;
+			set => _isFinalState = value;
+		}
+
+		private string _text = string.Empty;
+
+		public string Text
+		{
+			get => _text;
+			set => _text = value;
+		}
 
 		public void SetCoordinate(int newX, int newY)
 		{
@@ -31,7 +44,7 @@
 
 		public override string ToString()
 		{
-			return $"(co-ordinate: {coordinate}, Radius: {radius})";
+			return $"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
 		}
 	}
 }

@@ -106,6 +106,34 @@ export function drawState(x, y, radius, colour, textLines, editable, isFinalStat
     return false;
 }
 
+/**
+ * Draws a transition on the canvas.
+ * @param {number} fromX
+ * @param {number} fromY
+ * @param {number} toX
+ * @param {number} toY
+ * @param {number} angle
+ * @param {string} colour
+ * @param {string[]} textLines
+ * @param {boolean} editable
+ * @param {boolean} isCurved
+ */
+export function drawTransition(fromX, fromY, toX, toY, angle, colour, textLines, editable, isCurved) {
+    if (checkCanvas()) {
+        canvasCtx.strokeStyle = colour;
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(fromX, fromY);
+        if (!isCurved) {
+            canvasCtx.lineTo(toX, toY);
+        }
+        canvasCtx.closePath();
+        canvasCtx.stroke();
+        drawArrow(toX, toY, angle, colour);
+        return true;
+    }
+    return false;
+}
+
 function drawCanvasText(x, y, colour, textLines, editable) {
     let caretX = 0;
     let caretY = 0;
@@ -158,6 +186,27 @@ export function drawTextLine(x, y, hasOffset) {
     canvasCtx.lineTo(x, y + 5.5);
     canvasCtx.closePath();
     canvasCtx.stroke();
+}
+
+
+/**
+ * Draws an arrow
+ * @param {number} x X co-ordinate of the tip of the arrow
+ * @param {number} y Y co-ordinate of the tip of the arrow
+ * @param {number} angle Angle of the arrow
+ * @param {string} colour Colour of the arrow
+ */
+function drawArrow(x, y, angle, colour) {
+    var dx = Math.cos(angle);
+    var dy = Math.sin(angle);
+
+    canvasCtx.fillStyle = colour;
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(x, y);
+    canvasCtx.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
+    canvasCtx.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
+    canvasCtx.closePath();
+    canvasCtx.fill();
 }
 
 addEventListener("resize", updateCanvasDimensions);

@@ -17,6 +17,13 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		}
 		private FiniteState? _selectedState;
 
+		public StateTransition? SelectedTransition
+		{
+			get => _selectedTransition;
+			set => _selectedTransition = value;
+		}
+		private StateTransition? _selectedTransition;
+
 		public IFiniteStateMachine FSM { get => fsm; }
 
 		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff")
@@ -24,7 +31,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			_nonSelectedColour = colour;
 			_selectedColour = selectedColour;
 
-			_logger.LogInformation("Current state colours are:\nColour={Colour}\nSelected={Selected}", _nonSelectedColour, _selectedColour);
+			_logger.LogInformation("Current state colours are:\nColour={Colour}\nSelected={Selected}",
+				_nonSelectedColour,_selectedColour);
 		}
 
 		public void SetJsModule(IJSObjectReference jsObjectRef)
@@ -32,18 +40,22 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			_jsModule = jsObjectRef;
 		}
 
-		public async Task<CanvasCoordinate?> CreateState(int x, int y, float radius, string colour)
+		public async Task<CanvasCoordinate?> CreateStateAsync(int x, int y, float radius)
 		{
 			if (_jsModule is not null)
 			{
 				bool isCreated = await _jsModule.InvokeAsync<bool>(
-					"drawState", [x, y, radius, colour, Array.Empty<string>(), true, false]
+					"drawState", x, y, radius, _selectedColour, Array.Empty<string>(), true, false
 				);
 
-				if (!isCreated)
-					return null;
-
 				CanvasCoordinate coordinate = new (x, y);
+
+				if (!isCreated)
+				{
+					_logger.LogInformation("Couldn't create state at canvas position: {Coordinate}", coordinate);
+					return null;
+				}
+
 				var newState = new FiniteState(coordinate, radius);
 				_selectedState = newState;
 				fsm.AddState(newState);
@@ -61,9 +73,44 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			{
 				int xDiff = (int)mouseEventArgs.OffsetX - lastX;
 				int yDiff = (int)mouseEventArgs.OffsetY - lastY;
-				_selectedState.Coordinate.X += xDiff;
-				_selectedState.Coordinate.Y += yDiff;
+				var coord = _selectedState.Coordinate;
+				coord.X += xDiff;
+				coord.Y += yDiff;
+				_selectedState.Coordinate = coord;
 			}
+		}
+
+		public async Task<StateTransition?> CreateTransitionAsync(CanvasCoordinate fromPos, CanvasCoordinate toPos)
+		{
+			if (_jsModule is not null)
+			{
+				int dx = toPos.X - fromPos.X;
+				int dy = toPos.Y - fromPos.Y;
+
+				bool isCreated = await _jsModule.InvokeAsync<bool>("drawTransition",
+					fromPos.X, fromPos.Y, toPos.X, toPos.Y,
+					Math.Atan2(dy, dx), _selectedColour, Array.Empty<string>(),
+					true, false
+					);
+
+				if (!isCreated)
+				{
+					_logger.LogInformation("Couldn't create transition between points: {From} -> {To}",
+						fromPos, toPos);
+					return null;
+				}
+				StateTransition newTransition = new (fromPos, toPos);
+				fsm.AddTransition(newTransition);
+				_selectedTransition = newTransition;
+				return newTransition;
+			}
+
+			return null;
+		}
+
+		public void MoveTransition(CanvasCoordinate coord)
+		{
+			throw new NotImplementedException();
 		}
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
@@ -72,6 +119,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			{
 				bool editable;
 				string currentColour;
+				string[] texts;
 
 				foreach (FiniteState state in fsm.States)
 				{
@@ -83,8 +131,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						currentColour = _selectedColour;
 						editable = true;
 					}
-
-					string[] texts;
 
 					if (string.IsNullOrEmpty(state.Text))
 						texts = [];
@@ -102,7 +148,43 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						state.IsFinalState
 					);
 				}
-				return true;
+				int dx;
+				int dy;
+				foreach (StateTransition transition in fsm.Transitions)
+                {
+					editable = false;
+					currentColour = _nonSelectedColour;
+
+					if (transition == _selectedTransition)
+					{
+						editable = true;
+						currentColour = _selectedColour;
+					}
+
+					if (string.IsNullOrEmpty(transition.Text))
+						texts = [];
+					else
+						texts = transition.Text.Split('\n');
+
+					dx = transition.To.X - transition.From.X;
+					dy = transition.To.Y - transition.From.Y;
+
+					await _jsModule.InvokeAsync<bool>(
+						"drawTransition",
+						transition.From.X,
+						transition.From.Y,
+						transition.To.X,
+						transition.To.Y,
+						// Could also do Math.Atan2(dy, dx) but I like doing the more mathematical way
+						// Plus the underlying implementation is this.
+						Math.Atan2(dy, dx),
+						currentColour,
+						texts,
+						editable && lineVisible,
+						transition.IsCurved
+					);
+				}
+                return true;
 			}
 			return false;
 		}

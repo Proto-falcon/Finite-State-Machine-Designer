@@ -2,10 +2,13 @@
 {
 	public class FiniteStateMachine : IFiniteStateMachine
 	{
-		public List<FiniteState> States { get => _states; }
+		public List<FiniteState> States => _states;
 		private readonly List<FiniteState> _states = [];
+		private readonly List<StateTransition> _transitions = [];
 
-		public List<FiniteState> FinalSates { get => _states.Where(x => x.IsFinalState).ToList(); }
+		public List<FiniteState> FinalSates => _states.Where(x => x.IsFinalState).ToList();
+
+		public List<StateTransition> Transitions => _transitions;
 
 		public void AddState(FiniteState state)
 		{
@@ -23,9 +26,7 @@
 				var leftSide = Math.Pow(coordinate.X - coord.X, 2) + Math.Pow(coordinate.Y - coord.Y, 2);
 				var rightSide = Math.Pow(state.Radius, 2);
 				if (leftSide <= rightSide)
-				{
 					return state;
-				}
 			}
 			return null;
 		}
@@ -33,14 +34,24 @@
 		public bool RemoveState(FiniteState stateToBeRemoved)
 		{
 			foreach (var state in _states)
-			{
 				if (stateToBeRemoved == state)
-				{
-					_states.Remove(state);
-					return true;
-				}
-			}
+					return _states.Remove(state);
 			return false;
+		}
+
+		public void AddTransition(StateTransition stateTransition)
+		{
+			_transitions.Add(stateTransition);
+		}
+
+		public bool RemoveTransition(StateTransition transition)
+		{
+			return _transitions.Remove(transition);
+		}
+
+		public StateTransition? FindTransition(CanvasCoordinate coordinate)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }
