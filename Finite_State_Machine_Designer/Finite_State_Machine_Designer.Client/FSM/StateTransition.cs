@@ -1,17 +1,38 @@
 ﻿namespace Finite_State_Machine_Designer.Client.FSM
 {
-	public class StateTransition(CanvasCoordinate from, CanvasCoordinate to)
+	public class StateTransition(FiniteState fromState, FiniteState toState)
 	{
-		public CanvasCoordinate From
+		private readonly FiniteState _toState = toState;
+		private readonly FiniteState _fromState = fromState;
+
+		public CanvasCoordinate FromCoord
 		{
-			get => from;
-			set => from = value;
+			get
+			{
+				if (_fromState is not null)
+					return _fromState.Coordinate;
+				return default;
+			}
+			set
+			{
+				if (_fromState is not null)
+					_fromState.Coordinate = value;
+			}
 		}
 
-		public CanvasCoordinate To
+		public CanvasCoordinate ToCoord
 		{
-			get => to;
-			set => to = value;
+			get
+			{
+				if (_toState is not null)
+					return _toState.Coordinate;
+				return default;
+			}
+			set
+			{
+				if (_toState is not null)
+					_toState.Coordinate = value;
+			}
 		}
 
 		private CanvasCoordinate? _centerArc = null;
@@ -51,19 +72,9 @@
 			set => _text = value;
 		}
 
-		public override int GetHashCode() => HashCode.Combine(from, to);
+		public override int GetHashCode() => HashCode.Combine(_fromState, _toState);
 
-		public override string ToString()
-		{
-			string textTransition = $"( {from} -> {to}";
-			if (!string.IsNullOrWhiteSpace(_text))
-				textTransition += $", Text: '{_text}'";
-			if (_centerArc is not null)
-				textTransition += $", Center Arc: {_centerArc}";
-			if (_radius > 0)
-				textTransition += $", Radius: {_radius}";
-
-			return textTransition + " )";
-		}
+		public override string ToString() =>
+			$"( {_fromState} -> {_toState}, Text: '{_text}', Center Arc: {_centerArc}, Radius: {_radius} )";
 	}
 }

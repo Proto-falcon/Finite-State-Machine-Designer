@@ -8,6 +8,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		public IFiniteStateMachine FSM { get; }
 
 		public FiniteState? SelectedState { get; set; }
+
+		public float MinStateRadius { get; set; }
+
 		public StateTransition? SelectedTransition { get; set; }
 
 		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff");
@@ -18,7 +21,10 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public void MoveState(MouseEventArgs mouseEventArgs, int lastX, int lastY);
 
-		public Task<StateTransition?> CreateTransitionAsync(CanvasCoordinate fromPos, CanvasCoordinate toPos);
+		public Task<StateTransition?> CreateTransitionAsync(
+			CanvasCoordinate fromPos = default, CanvasCoordinate toPos = default,
+			FiniteState? fromState = null, FiniteState? toState = null
+			);
 
 		public void MoveTransition(CanvasCoordinate coord);
 

@@ -8,16 +8,12 @@
 			set => coordinate = value;
 		}
 
+		public bool IsDrawable { get; set; } = true;
+
 		public float Radius
 		{
 			get => radius;
-			set
-			{
-				if (value >= 10)
-					radius = value;
-				else
-					radius = 10f;
-			}
+			set => radius = value;
 		}
 
 		private bool _isFinalState = false;
@@ -36,15 +32,10 @@
 			set => _text = value;
 		}
 
-		public void SetCoordinate(int newX, int newY)
-		{
-			coordinate.X = newX;
-			coordinate.Y = newY;
-		}
+		public override int GetHashCode() =>
+			HashCode.Combine(coordinate, _isFinalState, _text);
 
-		public override string ToString()
-		{
-			return $"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
-		}
+		public override string ToString() => 
+			$"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
 	}
 }
