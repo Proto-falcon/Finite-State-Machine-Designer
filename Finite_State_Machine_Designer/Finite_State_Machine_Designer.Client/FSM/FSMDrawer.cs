@@ -102,12 +102,10 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				CanvasCoordinate fromCoord = newTransition.FromCoord;
 				CanvasCoordinate toCoord = newTransition.ToCoord;
 
-				int dx = toCoord.X - fromCoord.X;
-				int dy = toCoord.Y - fromCoord.Y;
-
+				CanvasCoordinate dCoord = toCoord - fromCoord;
 				bool isCreated = await _jsModule.InvokeAsync<bool>("drawTransition",
 					fromCoord.X, fromCoord.Y, toCoord.X, toCoord.Y,
-					Math.Atan2(dy, dx), _selectedColour, Array.Empty<string>(),
+					Math.Atan2(dCoord.Y, dCoord.X), _selectedColour, Array.Empty<string>(),
 					true, false
 					);
 
@@ -169,8 +167,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						state.IsFinalState
 					);
 				}
-				int dx;
-				int dy;
+				CanvasCoordinate dCoord;
 				foreach (StateTransition transition in fsm.Transitions)
                 {
 					editable = false;
@@ -187,16 +184,14 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					else
 						texts = transition.Text.Split('\n');
 
-					dx = transition.ToCoord.X - transition.FromCoord.X;
-					dy = transition.ToCoord.Y - transition.FromCoord.Y;
-
+					dCoord = transition.ToCoord - transition.FromCoord;
 					await _jsModule.InvokeAsync<bool>(
 						"drawTransition",
 						transition.FromCoord.X,
 						transition.FromCoord.Y,
 						transition.ToCoord.X,
 						transition.ToCoord.Y,
-						Math.Atan2(dy, dx),
+						Math.Atan2(dCoord.Y, dCoord.X),
 						currentColour,
 						texts,
 						editable && lineVisible,
