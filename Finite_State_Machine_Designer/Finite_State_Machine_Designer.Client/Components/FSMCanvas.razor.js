@@ -108,15 +108,15 @@ export function drawState(x, y, radius, colour, textLines, editable, isFinalStat
 
 /**
  * Draws a transition on the canvas.
- * @param {number} fromX
- * @param {number} fromY
- * @param {number} toX
- * @param {number} toY
- * @param {number} angle
- * @param {string} colour
- * @param {string[]} textLines
- * @param {boolean} editable
- * @param {boolean} isCurved
+ * @param {number} fromX X co-ordinate of the from point
+ * @param {number} fromY Y co-ordinate of the from point
+ * @param {number} toX X co-ordinate of the to point
+ * @param {number} toY Y co-ordinate of the to point
+ * @param {number} angle Anti-clockwise angle between from and to points
+ * @param {string} colour Colour of the transition
+ * @param {string[]} textLines Text alongside the transition
+ * @param {boolean} editable Flag to tell that there should be caret appear
+ * @param {boolean} isCurved Flag to tell that the transtion should be drawn in an arc
  */
 export function drawTransition(fromX, fromY, toX, toY, angle, colour, textLines, editable, isCurved) {
     if (checkCanvas()) {
