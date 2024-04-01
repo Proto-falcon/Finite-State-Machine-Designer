@@ -15,7 +15,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			set => _transitionSearchRadius = value;
 		}
 
-		public List<FiniteState> FinalSates => _states.Where(x => x.IsFinalState).ToList();
+		public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
 
 		public List<StateTransition> Transitions => _transitions;
 

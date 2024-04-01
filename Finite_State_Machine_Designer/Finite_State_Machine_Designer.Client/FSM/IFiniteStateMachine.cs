@@ -4,7 +4,7 @@
 	{
 		public List<FiniteState> States { get; }
 
-		public List<FiniteState> FinalSates { get; }
+		public List<FiniteState> FinalStates { get; }
 		
 		public List<StateTransition> Transitions { get; }
 

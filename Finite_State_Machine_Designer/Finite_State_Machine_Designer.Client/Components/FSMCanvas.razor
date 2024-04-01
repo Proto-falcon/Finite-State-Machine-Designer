@@ -193,12 +193,18 @@
 
 					ToggleResizeState(_fsmDrawer.SelectedState);
 
-					existingTransition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
-
-					if (existingTransition is not null)
-						_fsmDrawer.SelectedTransition = existingTransition;
-					else
+					if (existingState is not null)
 						_fsmDrawer.SelectedTransition = null;
+					else
+					{
+						existingTransition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
+						Console.WriteLine(existingTransition);
+						if (existingTransition is not null)
+							_fsmDrawer.SelectedTransition = existingTransition;
+						else
+							_fsmDrawer.SelectedTransition = null;
+					}
+
 					break;
 				case true:
 					FiniteState? fromState = _fsmDrawer.FSM.FindState(_lastMousePos);
@@ -220,7 +226,6 @@
 					_fsmDrawer.SelectedTransition = existingTransition;
 					break;
 			}
-
 
 			await UpdateDrawTimer();
 		}
@@ -383,32 +388,44 @@
 
 	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
-		if (CheckJsModule(JsModule) && _fsmDrawer.SelectedState is not null)
+		if (CheckJsModule(JsModule))
+		{
+			if (_fsmDrawer.SelectedState is not null)
+				StateKeyHandler(keyboardEventArgs, _fsmDrawer.SelectedState);
+			else if (_fsmDrawer.SelectedTransition is not null)
+				TransitionKeyHandler(keyboardEventArgs, _fsmDrawer.SelectedTransition);
+			await _fsmDrawer.DrawMachineAsync(_caretVisible);
+		}
+	}
+
+	private void StateKeyHandler(KeyboardEventArgs keyboardEventArgs, FiniteState state)
+	{
+		if (CheckJsModule(JsModule))
 		{
 			switch (keyboardEventArgs.Key.ToLower())
 			{
 				case "backspace":
-					if (_fsmDrawer.SelectedState.Text.Length > 0)
+					if (state.Text.Length > 0)
 					{
-						var text = _fsmDrawer.SelectedState.Text;
-						_fsmDrawer.SelectedState.Text = text.Substring(0, text.Length-1);
-						var coordinate = _fsmDrawer.SelectedState.Coordinate;
+						var text = state.Text;
+						state.Text = text.Substring(0, text.Length - 1);
+						var coordinate = state.Coordinate;
 
 						_caretVisible = true;
 					}
 					break;
 				case "delete":
-					_fsmDrawer.FSM.RemoveState(_fsmDrawer.SelectedState);
+					_fsmDrawer.FSM.RemoveState(state);
 					break;
 				case "return":
 				case "enter":
 				case "↵":
-					_fsmDrawer.SelectedState.Text += '\n';
+					state.Text += '\n';
 					_caretVisible = true;
 					break;
 				case "spacebar":
 				case " ":
-					_fsmDrawer.SelectedState.Text += ' ';
+					state.Text += ' ';
 					_caretVisible = true;
 					break;
 				default:
@@ -417,11 +434,25 @@
 
 					if (keyboardEventArgs.Key.Length == 1)
 					{
-						AddStateText(_fsmDrawer.SelectedState, keyboardEventArgs.Key);
+						AddStateText(state, keyboardEventArgs.Key);
 					}
 					break;
 			}
-			await _fsmDrawer.DrawMachineAsync(_caretVisible);
+		}
+	}
+
+	private void TransitionKeyHandler(KeyboardEventArgs keyboardEventArgs, StateTransition transition)
+	{
+		if (CheckJsModule(JsModule))
+		{
+			switch (keyboardEventArgs.Key.ToLower())
+			{
+				case "delete":
+					_fsmDrawer.FSM.RemoveTransition(transition);
+					break;
+				default:
+					break;
+			}
 		}
 	}
 
