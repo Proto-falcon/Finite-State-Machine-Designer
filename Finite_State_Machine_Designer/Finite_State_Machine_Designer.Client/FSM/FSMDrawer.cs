@@ -73,18 +73,15 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return null;
 		}
 
-		public void MoveState(MouseEventArgs mouseEventArgs, int lastX, int lastY)
+		public void MoveState(MouseEventArgs mouseEventArgs, CanvasCoordinate lastCoord)
 		{
 			if (_selectedState is not null
 			&& mouseEventArgs.Buttons > 0
 			&& mouseEventArgs.Buttons <= 3)
 			{
-				int xDiff = (int)mouseEventArgs.OffsetX - lastX;
-				int yDiff = (int)mouseEventArgs.OffsetY - lastY;
-				var coord = _selectedState.Coordinate;
-				coord.X += xDiff;
-				coord.Y += yDiff;
-				_selectedState.Coordinate = coord;
+				CanvasCoordinate newCoord = new((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
+				CanvasCoordinate dCoord = newCoord - lastCoord;
+				_selectedState.Coordinate += dCoord;
 			}
 		}
 
@@ -191,7 +188,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						transition.FromCoord.Y,
 						transition.ToCoord.X,
 						transition.ToCoord.Y,
-						Math.Atan2(dCoord.Y, dCoord.X),
+						transition.Angle,
 						currentColour,
 						texts,
 						editable && lineVisible,

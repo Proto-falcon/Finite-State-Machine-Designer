@@ -197,14 +197,14 @@ export function drawTextLine(x, y, hasOffset) {
  * @param {string} colour Colour of the arrow
  */
 function drawArrow(x, y, angle, colour) {
-    var dx = Math.cos(angle);
-    var dy = Math.sin(angle);
+    var cosAngle = Math.cos(angle);
+    var sineAngle = Math.sin(angle);
 
     canvasCtx.fillStyle = colour;
     canvasCtx.beginPath();
     canvasCtx.moveTo(x, y);
-    canvasCtx.lineTo(x - 8 * dx + 5 * dy, y - 8 * dy - 5 * dx);
-    canvasCtx.lineTo(x - 8 * dx - 5 * dy, y - 8 * dy + 5 * dx);
+    canvasCtx.lineTo(x - 8 * cosAngle + 5 * sineAngle, y - 8 * sineAngle - 5 * cosAngle);
+    canvasCtx.lineTo(x - 8 * cosAngle - 5 * sineAngle, y - 8 * sineAngle + 5 * cosAngle);
     canvasCtx.closePath();
     canvasCtx.fill();
 }

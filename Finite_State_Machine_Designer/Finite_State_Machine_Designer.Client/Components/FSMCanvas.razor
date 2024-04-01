@@ -167,11 +167,7 @@
 		}
 	}
 
-	private void SetLastCoords(double x, double y)
-	{
-		_lastMouseDownPos.X = (int)x;
-		_lastMouseDownPos.Y = (int)y;
-	}
+	private void SetLastCoords(double x, double y) => _lastMouseDownPos = new((int)x, (int)y);
 
 	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
@@ -250,7 +246,7 @@
 					_fsmDrawer.SelectedTransition.ToCoord = new ((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
 				}
 				else
-					_fsmDrawer.MoveState(mouseEventArgs, _lastMouseDownPos.X, _lastMouseDownPos.Y);
+					_fsmDrawer.MoveState(mouseEventArgs, _lastMouseDownPos);
 			}
 			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
