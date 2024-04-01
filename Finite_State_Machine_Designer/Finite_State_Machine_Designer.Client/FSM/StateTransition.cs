@@ -2,11 +2,19 @@
 {
 	public class StateTransition(FiniteState fromState, FiniteState toState)
 	{
-		private readonly FiniteState _toState = toState;
-		private readonly FiniteState _fromState = fromState;
+		private FiniteState _toState = toState;
+		private FiniteState _fromState = fromState;
 
-		public FiniteState FromState => _fromState;
-		public FiniteState ToState => _toState;
+		public FiniteState FromState
+		{
+			get => _fromState;
+			set => _fromState = value;
+		}
+		public FiniteState ToState
+		{
+			get => _toState;
+			set => _toState = value;
+		}
 
 		/// <summary>
 		/// It's the <see cref="CanvasCoordinate"/> that the transition originates from the edge
@@ -51,8 +59,8 @@
 					float radius = 1;
 					if (_toState.Radius > 0)
 						radius = _toState.Radius;
-					int y = (int)(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
-					int x = (int)(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
+					int y = -(int)(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
+					int x = -(int)(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
 					return new(x, y);
 				}
 				return default;

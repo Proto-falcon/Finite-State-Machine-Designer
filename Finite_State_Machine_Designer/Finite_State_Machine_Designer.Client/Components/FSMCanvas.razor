@@ -81,7 +81,7 @@
 	/// <summary>
 	/// The last co-ordinate of the pointer relative in the canvas space.
 	/// </summary>
-	private CanvasCoordinate _lastMouseDownPos = new (0, 0);
+	private CanvasCoordinate _lastMousePos = new (0, 0);
 
 	private float _defalutStateRadius = 30;
 	private float _minstateRadius = 10;
@@ -167,7 +167,7 @@
 		}
 	}
 
-	private void SetLastCoords(double x, double y) => _lastMouseDownPos = new((int)x, (int)y);
+	private void SetLastCoords(double x, double y) => _lastMousePos = new((int)x, (int)y);
 
 	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
@@ -178,7 +178,7 @@
 			switch (mouseEventArgs.ShiftKey)
 			{
 				case false:
-					FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMouseDownPos);
+					FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
 
 					if (mouseEventArgs.Detail == 2)
 					{
@@ -192,19 +192,19 @@
 					ToggleResizeState(_fsmDrawer.SelectedState);
 					break;
 				case true:
-					FiniteState? fromState = _fsmDrawer.FSM.FindState(_lastMouseDownPos);
+					FiniteState? fromState = _fsmDrawer.FSM.FindState(_lastMousePos);
 					StateTransition? existingTransition = null;
 
 					if (fromState is null)
 					{
 						existingTransition = await _fsmDrawer.CreateTransitionAsync(
-							_lastMouseDownPos, _lastMouseDownPos
+							_lastMousePos, _lastMousePos
 						);
 					}
 					else
 					{
 						existingTransition = await _fsmDrawer.CreateTransitionAsync(
-							fromState: fromState, toPos: _lastMouseDownPos
+							fromState: fromState, toState: fromState
 						);
 					}
 
@@ -233,7 +233,7 @@
 				{
 					if (_canResizeState)
 					{
-						var coords = _fsmDrawer.SelectedState.Coordinate;
+						CanvasCoordinate coords = _fsmDrawer.SelectedState.Coordinate;
 						float newRadius = (float) Math.Sqrt(
 							Math.Pow(mouseEventArgs.OffsetX - coords.X, 2)
 							+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
@@ -243,10 +243,19 @@
 				}
 				else if (_fsmDrawer.SelectedTransition is not null && mouseEventArgs.ShiftKey)
 				{
-					_fsmDrawer.SelectedTransition.ToCoord = new ((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
+					CanvasCoordinate newCoord = new((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
+					FiniteState? toState = _fsmDrawer.FSM.FindState(newCoord);
+					if (toState is not null)
+						_fsmDrawer.SelectedTransition.ToState = toState;
+					else
+					{
+						FiniteState emptyState = new(newCoord, 0) { IsDrawable = false };
+						_fsmDrawer.SelectedTransition.ToState = emptyState;
+					}
+
 				}
 				else
-					_fsmDrawer.MoveState(mouseEventArgs, _lastMouseDownPos);
+					_fsmDrawer.MoveState(mouseEventArgs, _lastMousePos);
 			}
 			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
@@ -256,12 +265,14 @@
 
 	private void MouseUpHandler(MouseEventArgs mouseEventArgs)
 	{
-		FiniteState? existingState = null;
-
-		if (existingState is null && _fsmDrawer.SelectedTransition is not null)
+		SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+		FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
+		if (_fsmDrawer.SelectedTransition is not null)
 		{
-			_fsmDrawer.FSM.RemoveTransition(_fsmDrawer.SelectedTransition);
-
+			if (existingState is null)
+				_fsmDrawer.FSM.RemoveTransition(_fsmDrawer.SelectedTransition);
+			else
+				_fsmDrawer.SelectedTransition = null;
 		}
 	}
 
@@ -317,8 +328,8 @@
 		if (existingState == null)
 		{
 			createdCoords = await _fsmDrawer.CreateStateAsync(
-				_lastMouseDownPos.X,
-				_lastMouseDownPos.Y,
+				_lastMousePos.X,
+				_lastMousePos.Y,
 				_defalutStateRadius
 			);
 			await UpdateDrawTimer();
@@ -350,8 +361,8 @@
 
 		var coords = state.Coordinate;
 		float radius = (float)Math.Sqrt(
-			Math.Pow(_lastMouseDownPos.X - coords.X, 2)
-			+ Math.Pow(_lastMouseDownPos.Y - coords.Y, 2)
+			Math.Pow(_lastMousePos.X - coords.X, 2)
+			+ Math.Pow(_lastMousePos.Y - coords.Y, 2)
 		);
 
 		_logger.LogDebug("Radius difference: {Difference}", Math.Abs(radius - state.Radius));
