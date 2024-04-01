@@ -8,6 +8,8 @@
 		
 		public List<StateTransition> Transitions { get; }
 
+		public int TransitionSearchRadius { get; set; }
+
 		public void AddTransition(StateTransition transition);
 
 		public bool RemoveTransition(StateTransition transition);

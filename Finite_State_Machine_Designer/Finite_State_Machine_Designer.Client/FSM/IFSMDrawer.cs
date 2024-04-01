@@ -9,15 +9,13 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public FiniteState? SelectedState { get; set; }
 
-		public float MinStateRadius { get; set; }
-
 		public StateTransition? SelectedTransition { get; set; }
 
 		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff");
 
 		public void SetJsModule(IJSObjectReference jsObjectRef);
 
-		public Task<CanvasCoordinate?> CreateStateAsync(int x, int y, float radius);
+		public Task<CanvasCoordinate?> CreateStateAsync(CanvasCoordinate coordinate, float radius);
 
 		public void MoveState(MouseEventArgs mouseEventArgs, CanvasCoordinate newCoord);
 

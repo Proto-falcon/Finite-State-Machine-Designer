@@ -84,7 +84,7 @@
 	private CanvasCoordinate _lastMousePos = new (0, 0);
 
 	private float _defalutStateRadius = 30;
-	private float _minstateRadius = 10;
+	private int _transitionSearchRadius = 10;
 	private bool _canvasHasFocus = false;
 
 	private const string _selectedStateColour = "#9999ff";
@@ -135,7 +135,7 @@
 			if (CheckJsModule(JsModule))
 			{
 				_fsmDrawer.SetStateColours(_stateColour, _selectedStateColour);
-				_fsmDrawer.MinStateRadius = _minstateRadius;
+				_fsmDrawer.FSM.TransitionSearchRadius = _transitionSearchRadius;
 				_fsmDrawer.SetJsModule(JsModule);
 				await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
 			}
@@ -175,10 +175,12 @@
 
 		if (CheckJsModule(JsModule))
 		{
+			FiniteState? existingState = null;
+			StateTransition? existingTransition = null;
 			switch (mouseEventArgs.ShiftKey)
 			{
 				case false:
-					FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
+					existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
 
 					if (mouseEventArgs.Detail == 2)
 					{
@@ -190,10 +192,16 @@
 					_fsmDrawer.SelectedState = existingState;
 
 					ToggleResizeState(_fsmDrawer.SelectedState);
+
+					existingTransition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
+
+					if (existingTransition is not null)
+						_fsmDrawer.SelectedTransition = existingTransition;
+					else
+						_fsmDrawer.SelectedTransition = null;
 					break;
 				case true:
 					FiniteState? fromState = _fsmDrawer.FSM.FindState(_lastMousePos);
-					StateTransition? existingTransition = null;
 
 					if (fromState is null)
 					{
@@ -269,10 +277,12 @@
 		FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
 		if (_fsmDrawer.SelectedTransition is not null)
 		{
-			if (existingState is null)
+			StateTransition transition = _fsmDrawer.SelectedTransition;
+			if (!transition.ToState.IsDrawable)
+			{
 				_fsmDrawer.FSM.RemoveTransition(_fsmDrawer.SelectedTransition);
-			else
 				_fsmDrawer.SelectedTransition = null;
+			}
 		}
 	}
 
@@ -328,8 +338,7 @@
 		if (existingState == null)
 		{
 			createdCoords = await _fsmDrawer.CreateStateAsync(
-				_lastMousePos.X,
-				_lastMousePos.Y,
+				_lastMousePos,
 				_defalutStateRadius
 			);
 			await UpdateDrawTimer();

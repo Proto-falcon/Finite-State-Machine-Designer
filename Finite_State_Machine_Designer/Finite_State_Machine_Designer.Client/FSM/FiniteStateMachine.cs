@@ -1,10 +1,19 @@
-﻿namespace Finite_State_Machine_Designer.Client.FSM
+﻿using System.Drawing;
+
+namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
 	{
 		public List<FiniteState> States => _states;
 		private readonly List<FiniteState> _states = [];
 		private readonly List<StateTransition> _transitions = [];
+
+		private int _transitionSearchRadius;
+		public int TransitionSearchRadius
+		{
+			get => _transitionSearchRadius;
+			set => _transitionSearchRadius = value;
+		}
 
 		public List<FiniteState> FinalSates => _states.Where(x => x.IsFinalState).ToList();
 
@@ -22,9 +31,9 @@
 			// r is radius of circle
 			foreach (var state in _states)
 			{
-				var coord = state.Coordinate;
-				var leftSide = Math.Pow(coordinate.X - coord.X, 2) + Math.Pow(coordinate.Y - coord.Y, 2);
-				var rightSide = Math.Pow(state.Radius, 2);
+				CanvasCoordinate coord = state.Coordinate;
+				double leftSide = Math.Pow(coordinate.X - coord.X, 2) + Math.Pow(coordinate.Y - coord.Y, 2);
+				double rightSide = Math.Pow(state.Radius, 2);
 				if (leftSide <= rightSide)
 					return state;
 			}
@@ -33,7 +42,7 @@
 
 		public bool RemoveState(FiniteState stateToBeRemoved)
 		{
-			foreach (var state in _states)
+			foreach (FiniteState state in _states)
 				if (stateToBeRemoved == state)
 					return _states.Remove(state);
 			return false;
@@ -51,7 +60,30 @@
 
 		public StateTransition? FindTransition(CanvasCoordinate coordinate)
 		{
-			throw new NotImplementedException();
+			double squaredSearchRadius = _transitionSearchRadius * _transitionSearchRadius;
+			foreach (StateTransition transition in _transitions)
+			{
+				// mx + c = -x/m + d
+				// xm^2 + cm = -x + dm
+				// x(m^2 + 1) = dm - cm
+				// x = m(d - c)/(m^2 + 1)
+				// where c = 0, x = md/(m^2 + 1)
+				CanvasCoordinate dCoordTransition = transition.ToCoord - transition.FromCoord;
+				double gradient = dCoordTransition.Y / dCoordTransition.X;
+				double perdendicularGradient = -1 / gradient;
+				CanvasCoordinate dCoord = coordinate - transition.FromCoord;
+				double yIntercept = dCoord.Y - (perdendicularGradient * dCoord.X);
+
+				double x = (gradient * yIntercept) / (Math.Pow(gradient, 2) + 1);
+				double y = gradient * x;
+				
+				double distance = Math.Pow(x - dCoord.X, 2) + Math.Pow(y - dCoord.Y, 2);
+
+				if (distance <= squaredSearchRadius)
+					return transition;
+
+			}
+			return null;
 		}
 	}
 }

@@ -1,13 +1,13 @@
 ﻿namespace Finite_State_Machine_Designer.Client.FSM
 {
-	public struct CanvasCoordinate(int x, int y)
+	public struct CanvasCoordinate(double x, double y)
 	{
-		public int X
+		public double X
 		{ readonly get => x;
 			set => x = value;
 		}
 
-		public int Y
+		public double Y
 		{ readonly get => y;
 			set => y = value;
 		}

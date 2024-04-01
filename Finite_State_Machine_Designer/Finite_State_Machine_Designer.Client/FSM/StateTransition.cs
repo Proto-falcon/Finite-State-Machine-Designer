@@ -31,8 +31,8 @@
 					float radius = 1;
 					if (_fromState.Radius > 0)
 						radius = _fromState.Radius;
-					int y = (int)(Math.Sin(Angle) * radius) + _fromState.Coordinate.Y;
-					int x = (int)(Math.Cos(Angle) * radius) + _fromState.Coordinate.X;
+					double y = (Math.Sin(Angle) * radius) + _fromState.Coordinate.Y;
+					double x = (Math.Cos(Angle) * radius) + _fromState.Coordinate.X;
 					return new (x, y);
 				}
 				return default;
@@ -59,8 +59,8 @@
 					float radius = 1;
 					if (_toState.Radius > 0)
 						radius = _toState.Radius;
-					int y = -(int)(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
-					int x = -(int)(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
+					double y = -(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
+					double x = -(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
 					return new(x, y);
 				}
 				return default;

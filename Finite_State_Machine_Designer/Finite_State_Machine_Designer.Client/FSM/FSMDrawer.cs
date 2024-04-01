@@ -9,13 +9,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
         private IJSObjectReference? _jsModule;
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
-		private float _minStateRadius;
-
-		public float MinStateRadius
-		{
-			get => _minStateRadius;
-			set => _minStateRadius = value;
-		}
 
 		public FiniteState? SelectedState
 		{
@@ -47,15 +40,14 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			_jsModule = jsObjectRef;
 		}
 
-		public async Task<CanvasCoordinate?> CreateStateAsync(int x, int y, float radius)
+		public async Task<CanvasCoordinate?> CreateStateAsync(CanvasCoordinate coordinate, float radius)
 		{
 			if (_jsModule is not null)
 			{
 				bool isCreated = await _jsModule.InvokeAsync<bool>(
-					"drawState", x, y, radius, _selectedColour, Array.Empty<string>(), true, false
+					"drawState", coordinate.X, coordinate.Y, radius, _selectedColour, Array.Empty<string>(), true, false
 				);
 
-				CanvasCoordinate coordinate = new (x, y);
 
 				if (!isCreated)
 				{
