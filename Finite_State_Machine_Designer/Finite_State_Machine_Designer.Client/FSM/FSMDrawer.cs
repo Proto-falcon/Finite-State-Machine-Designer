@@ -65,16 +65,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return null;
 		}
 
-		public void MoveState(MouseEventArgs mouseEventArgs, CanvasCoordinate lastCoord)
+		public void MoveState(FiniteState state, CanvasCoordinate newCoord, CanvasCoordinate lastCoord)
 		{
-			if (_selectedState is not null
-			&& mouseEventArgs.Buttons > 0
-			&& mouseEventArgs.Buttons <= 3)
-			{
-				CanvasCoordinate newCoord = new((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
-				CanvasCoordinate dCoord = newCoord - lastCoord;
-				_selectedState.Coordinate += dCoord;
-			}
+			state.Coordinate += newCoord - lastCoord;
 		}
 
 		public async Task<StateTransition?> CreateTransitionAsync(

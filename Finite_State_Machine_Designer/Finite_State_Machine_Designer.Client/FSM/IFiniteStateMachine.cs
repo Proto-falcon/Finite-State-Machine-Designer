@@ -20,6 +20,8 @@
 		
 		public StateTransition? FindTransition(CanvasCoordinate coordinate);
 
+		public List<StateTransition> FindTransitions(FiniteState state);
+
 		public bool RemoveState(FiniteState stateToBeRemoved);
 	}
 }

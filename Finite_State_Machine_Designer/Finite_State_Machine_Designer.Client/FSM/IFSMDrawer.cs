@@ -17,7 +17,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public Task<CanvasCoordinate?> CreateStateAsync(CanvasCoordinate coordinate, float radius);
 
-		public void MoveState(MouseEventArgs mouseEventArgs, CanvasCoordinate newCoord);
+		public void MoveState(FiniteState state, CanvasCoordinate newCoord, CanvasCoordinate lastCoord);
 
 		public Task<StateTransition?> CreateTransitionAsync(
 			CanvasCoordinate fromPos = default, CanvasCoordinate toPos = default,

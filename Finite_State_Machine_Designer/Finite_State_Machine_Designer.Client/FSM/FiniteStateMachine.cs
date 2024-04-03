@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace Finite_State_Machine_Designer.Client.FSM
+﻿namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
 	{
@@ -84,6 +82,13 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 			}
 			return null;
+		}
+
+		public List<StateTransition> FindTransitions(FiniteState state)
+		{
+			return _transitions
+				.Where(x => x.FromState == state || x.ToState == state)
+				.ToList();
 		}
 	}
 }

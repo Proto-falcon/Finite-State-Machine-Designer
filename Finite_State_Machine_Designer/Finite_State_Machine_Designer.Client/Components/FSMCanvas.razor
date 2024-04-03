@@ -267,8 +267,17 @@
 					}
 
 				}
-				else
-					_fsmDrawer.MoveState(mouseEventArgs, _lastMousePos);
+				else if (_fsmDrawer.SelectedState is not null
+					&& mouseEventArgs.Buttons > 0
+					&& mouseEventArgs.Buttons <= 3)
+				{
+					CanvasCoordinate newCoord = new (mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+					_fsmDrawer.MoveState(_fsmDrawer.SelectedState, newCoord, _lastMousePos);
+					List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(_fsmDrawer.SelectedState);
+					foreach (var transition in transitions)
+						if (!transition.FromState.IsDrawable)
+							_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
+				}
 			}
 			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
