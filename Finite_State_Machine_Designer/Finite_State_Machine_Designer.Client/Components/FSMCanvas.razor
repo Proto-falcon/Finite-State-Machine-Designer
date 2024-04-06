@@ -424,7 +424,12 @@
 					}
 					break;
 				case "delete":
-					_fsmDrawer.FSM.RemoveState(state);
+					if (_fsmDrawer.FSM.RemoveState(state))
+					{
+						List<StateTransition> connectedTransitions = _fsmDrawer.FSM.FindTransitions(state);
+						foreach (StateTransition transition in connectedTransitions)
+							_fsmDrawer.FSM.Transitions.Remove(transition);
+					}
 					break;
 				case "return":
 				case "enter":

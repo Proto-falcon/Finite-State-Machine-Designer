@@ -4,7 +4,7 @@
 	{
 		public List<FiniteState> States => _states;
 		private readonly List<FiniteState> _states = [];
-		private readonly List<StateTransition> _transitions = [];
+		private List<StateTransition> _transitions = [];
 
 		private int _transitionSearchRadius;
 		public int TransitionSearchRadius
@@ -15,7 +15,11 @@
 
 		public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
 
-		public List<StateTransition> Transitions => _transitions;
+		public List<StateTransition> Transitions
+		{
+			get => _transitions;
+			set => _transitions = value;
+		}
 
 		public void AddState(FiniteState state)
 		{

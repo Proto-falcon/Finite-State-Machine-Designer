@@ -6,7 +6,7 @@
 
 		public List<FiniteState> FinalStates { get; }
 		
-		public List<StateTransition> Transitions { get; }
+		public List<StateTransition> Transitions { get; set; }
 
 		public int TransitionSearchRadius { get; set; }
 
