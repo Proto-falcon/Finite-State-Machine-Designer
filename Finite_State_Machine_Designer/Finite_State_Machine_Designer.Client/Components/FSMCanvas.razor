@@ -242,9 +242,9 @@
 				// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
 				// where (a,b) are x and y coordinates of the centre of the circle respectively
 				// r is radius of circle
-				if (_fsmDrawer.SelectedState is not null && mouseEventArgs.CtrlKey)
+				if (_fsmDrawer.SelectedState is not null)
 				{
-					if (_canResizeState)
+					if (mouseEventArgs.CtrlKey && _canResizeState)
 					{
 						CanvasCoordinate coords = _fsmDrawer.SelectedState.Coordinate;
 						float newRadius = (float) Math.Sqrt(
@@ -253,30 +253,36 @@
 						);
 						_fsmDrawer.SelectedState.Radius = newRadius;
 					}
+					else if (mouseEventArgs.Buttons <= 3)
+					{
+						CanvasCoordinate newCoord = new(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+						_fsmDrawer.MoveState(_fsmDrawer.SelectedState, newCoord, _lastMousePos);
+						List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(_fsmDrawer.SelectedState);
+						foreach (var transition in transitions)
+							if (!transition.FromState.IsDrawable)
+								_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
+					}
 				}
-				else if (_fsmDrawer.SelectedTransition is not null && mouseEventArgs.ShiftKey)
+				else if (_fsmDrawer.SelectedTransition is not null)
 				{
 					CanvasCoordinate newCoord = new((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
-					FiniteState? toState = _fsmDrawer.FSM.FindState(newCoord);
-					if (toState is not null)
-						_fsmDrawer.SelectedTransition.ToState = toState;
-					else
+					switch (mouseEventArgs.ShiftKey)
 					{
-						FiniteState emptyState = new(newCoord, 0) { IsDrawable = false };
-						_fsmDrawer.SelectedTransition.ToState = emptyState;
+						case false:
+							if (!_fsmDrawer.SelectedTransition.FromState.IsDrawable)
+								_fsmDrawer.SelectedTransition.FromCoord = newCoord;
+							break;
+						case true:
+							FiniteState? tempToState = _fsmDrawer.FSM.FindState(newCoord);
+							if (tempToState is not null)
+								_fsmDrawer.SelectedTransition.ToState = tempToState;
+							else
+							{
+								FiniteState emptyState = new(newCoord, 0) { IsDrawable = false };
+								_fsmDrawer.SelectedTransition.ToState = emptyState;
+							}
+							break;
 					}
-
-				}
-				else if (_fsmDrawer.SelectedState is not null
-					&& mouseEventArgs.Buttons > 0
-					&& mouseEventArgs.Buttons <= 3)
-				{
-					CanvasCoordinate newCoord = new (mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-					_fsmDrawer.MoveState(_fsmDrawer.SelectedState, newCoord, _lastMousePos);
-					List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(_fsmDrawer.SelectedState);
-					foreach (var transition in transitions)
-						if (!transition.FromState.IsDrawable)
-							_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
 				}
 			}
 			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
