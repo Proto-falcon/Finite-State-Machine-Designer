@@ -4,6 +4,56 @@ const STATETEXTNEWLINE = 20;
 const CANVASTEXTFONTSTYLE = '20px "Times New Roman", serif';
 const FINALSTATECIRCLERATIO = 0.8;
 
+
+class CanvasCoordinate {
+    x = 0;
+    y = 0;
+
+    /**
+     * 
+     * @param {number} x
+     * @param {number} y
+     */
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+
+class FiniteState {
+    coordinate = new CanvasCoordinate();
+    radius = 1;
+    isFinalState = false;
+    text = "";
+
+    /**
+     * 
+     * @param {CanvasCoordinate} coordinate
+     * @param {number} radius
+     */
+    constructor(coordinate, radius) {
+        this.coordinate = coordinate;
+        this.radius = radius;
+    }
+}
+
+
+class StateTransition {
+    fromState = new FiniteState();
+    fromCoord = new CanvasCoordinate();
+    fromAngle = 0;
+    toState = new FiniteState();
+    toCoord = new CanvasCoordinate();
+    toAngle = 0;
+    angle = 0;
+    centerPoint = new CanvasCoordinate();
+    radius = 0;
+    isCurved = false;
+    text = "";
+}
+
+
 /** @type {?CanvasRenderingContext2D}*/
 let canvasCtx;
 
@@ -75,31 +125,29 @@ function updateCanvasDimensions(event) {
 
 /**
  * Creates a state at a position within the canvas with colour.
- * @param {number} x X co-ordinate in canvas space
- * @param {number} y Y co-ordinate in canvas space
- * @param {number} radius Radius of the state
+ * @param {FiniteState} state A state in Finite State Machine.
  * @param {string} colour Colour when drawn
- * @param {string[]} textLines Array of text strings within the state. Each string is a line
  * @param {boolean} editable Flag to show vertical bar appear and reappear in popular text editors.
- * @param {boolean} isFinalState Flag to show that the current is the final state and will have an inner circle.
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawState(x, y, radius, colour, textLines, editable, isFinalState) {
+export function drawState(state, colour, editable) {
     if (checkCanvas()) {
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = colour;
-        canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
+        let stateCoord = state.coordinate;
+        canvasCtx.arc(stateCoord.x, stateCoord.y, state.radius, 0, 2 * Math.PI);
+        //canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvasCtx.closePath();
         canvasCtx.stroke();
 
-        if (isFinalState) {
+        if (state.isFinalState) {
             canvasCtx.beginPath();
-            canvasCtx.arc(x, y, radius * FINALSTATECIRCLERATIO, 0, 2 * Math.PI);
+            canvasCtx.arc(stateCoord.x, stateCoord.y, state.radius * FINALSTATECIRCLERATIO, 0, 2 * Math.PI);
             canvasCtx.closePath();
             canvasCtx.stroke();
         }
 
-        drawCanvasText(x, y, colour, textLines, editable);
+        drawCanvasText(stateCoord.x, stateCoord.y, colour, state.text.split("\n"), editable);
 
         return true;
     }
@@ -108,27 +156,22 @@ export function drawState(x, y, radius, colour, textLines, editable, isFinalStat
 
 /**
  * Draws a transition on the canvas.
- * @param {number} fromX X co-ordinate of the from point
- * @param {number} fromY Y co-ordinate of the from point
- * @param {number} toX X co-ordinate of the to point
- * @param {number} toY Y co-ordinate of the to point
- * @param {number} angle Anti-clockwise angle between from and to points
+ * @param {StateTransition} transition Transition between 2 states
  * @param {string} colour Colour of the transition
- * @param {string[]} textLines Text alongside the transition
  * @param {boolean} editable Flag to tell that there should be caret appear
- * @param {boolean} isCurved Flag to tell that the transtion should be drawn in an arc
+ * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawTransition(fromX, fromY, toX, toY, angle, colour, textLines, editable, isCurved) {
+export function drawTransition(transition, colour, editable) {
     if (checkCanvas()) {
         canvasCtx.strokeStyle = colour;
         canvasCtx.beginPath();
-        canvasCtx.moveTo(fromX, fromY);
-        if (!isCurved) {
-            canvasCtx.lineTo(toX, toY);
+        canvasCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
+        if (!transition.isCurved) {
+            canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
         }
         canvasCtx.closePath();
         canvasCtx.stroke();
-        drawArrow(toX, toY, angle, colour);
+        drawArrow(transition.toCoord.x, transition.toCoord.y, transition.angle, colour);
         return true;
     }
     return false;

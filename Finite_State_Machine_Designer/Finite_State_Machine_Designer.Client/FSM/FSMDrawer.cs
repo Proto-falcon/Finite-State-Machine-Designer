@@ -44,9 +44,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		{
 			if (_jsModule is not null)
 			{
-				bool isCreated = await _jsModule.InvokeAsync<bool>(
-					"drawState", coordinate.X, coordinate.Y, radius, _selectedColour, Array.Empty<string>(), true, false
-				);
+				var newState = new FiniteState(coordinate, radius);
+				bool isCreated = await _jsModule.InvokeAsync<bool>("drawState", newState, _selectedColour, true);
 
 
 				if (!isCreated)
@@ -55,7 +54,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					return null;
 				}
 
-				var newState = new FiniteState(coordinate, radius);
 				_selectedState = newState;
 				fsm.AddState(newState);
 				_logger.LogInformation("Created state at canvas position: {Coordinate}", coordinate);
@@ -84,12 +82,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				CanvasCoordinate fromCoord = newTransition.FromCoord;
 				CanvasCoordinate toCoord = newTransition.ToCoord;
 
-				CanvasCoordinate dCoord = toCoord - fromCoord;
-				bool isCreated = await _jsModule.InvokeAsync<bool>("drawTransition",
-					fromCoord.X, fromCoord.Y, toCoord.X, toCoord.Y,
-					Math.Atan2(dCoord.Y, dCoord.X), _selectedColour, Array.Empty<string>(),
-					true, false
-					);
+				bool isCreated = await _jsModule
+					.InvokeAsync<bool>("drawTransition", newTransition, _selectedColour, true);
 
 				if (!isCreated)
 				{
@@ -140,16 +134,11 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 					await _jsModule.InvokeAsync<bool>(
 						"drawState",
-						state.Coordinate.X,
-						state.Coordinate.Y,
-						state.Radius,
+						state,
 						currentColour,
-						texts,
-						editable && lineVisible,
-						state.IsFinalState
+						editable && lineVisible
 					);
 				}
-				CanvasCoordinate dCoord;
 				foreach (StateTransition transition in fsm.Transitions)
                 {
 					editable = false;
@@ -166,18 +155,12 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					else
 						texts = transition.Text.Split('\n');
 
-					dCoord = transition.ToCoord - transition.FromCoord;
+					// TODO: Implement curved transition
 					await _jsModule.InvokeAsync<bool>(
 						"drawTransition",
-						transition.FromCoord.X,
-						transition.FromCoord.Y,
-						transition.ToCoord.X,
-						transition.ToCoord.Y,
-						transition.Angle,
+						transition,
 						currentColour,
-						texts,
-						editable && lineVisible,
-						transition.IsCurved
+						editable && lineVisible
 					);
 				}
                 return true;
