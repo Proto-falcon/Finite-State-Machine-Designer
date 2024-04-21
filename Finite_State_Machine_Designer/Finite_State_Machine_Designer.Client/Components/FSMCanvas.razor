@@ -156,9 +156,10 @@
 			_canvasHasFocus = false;
 		}
 
-		if (!_stopTimer && _fsmDrawer.SelectedState is not null
+		if (!_stopTimer && (_fsmDrawer.SelectedState is not null || _fsmDrawer.SelectedTransition is not null)
 			&& _drawTimer is not null
-			&& (DateTime.Now - _lastDrawTimerCall) > TimeSpan.FromMilliseconds(_drawTimerInterval * 1.1))
+			&& (DateTime.Now - _lastDrawTimerCall) > TimeSpan.FromMilliseconds(_drawTimerInterval * 1.1)
+		)
 		{
 			await _drawTimer.DisposeAsync();
 

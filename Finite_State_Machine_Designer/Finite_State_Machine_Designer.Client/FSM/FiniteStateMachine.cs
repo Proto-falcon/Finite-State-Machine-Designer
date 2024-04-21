@@ -4,7 +4,7 @@
 	{
 		public List<FiniteState> States => _states;
 		private readonly List<FiniteState> _states = [];
-		private List<StateTransition> _transitions = [];
+		private readonly List<StateTransition> _transitions = [];
 
 		private int _transitionSearchRadius;
 		public int TransitionSearchRadius
@@ -13,13 +13,12 @@
 			set => _transitionSearchRadius = value;
 		}
 
+		public List<FiniteState> InitialStates => _transitions.Where(x => !x.FromState.IsDrawable && x.ToState.IsDrawable)
+			.Select(x => x.ToState).ToList();
+
 		public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
 
-		public List<StateTransition> Transitions
-		{
-			get => _transitions;
-			set => _transitions = value;
-		}
+		public List<StateTransition> Transitions => _transitions;
 
 		public void AddState(FiniteState state)
 		{
