@@ -47,10 +47,12 @@ class StateTransition {
     toCoord = new CanvasCoordinate();
     toAngle = 0;
     angle = 0;
-    centerPoint = new CanvasCoordinate();
+    centerArc = new CanvasCoordinate();
     radius = 0;
     isCurved = false;
     text = "";
+
+    anchor = new CanvasCoordinate();
 }
 
 
@@ -163,15 +165,29 @@ export function drawState(state, colour, editable) {
  */
 export function drawTransition(transition, colour, editable) {
     if (checkCanvas()) {
+        let arrowCoord = new CanvasCoordinate();
+        let arrowAngle = transition.angle;
+
         canvasCtx.strokeStyle = colour;
         canvasCtx.beginPath();
-        canvasCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
         if (!transition.isCurved) {
+            canvasCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
             canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
+            arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
+            canvasCtx.closePath();
+            canvasCtx.stroke();
+            drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
         }
-        canvasCtx.closePath();
-        canvasCtx.stroke();
-        drawArrow(transition.toCoord.x, transition.toCoord.y, transition.angle, colour);
+        else {
+            let centreCoord = transition.centerArc;
+            canvasCtx.arc(centreCoord.x, centreCoord.y, transition.radius, transition.fromAngle, transition.toAngle, false);
+            canvasCtx.stroke();
+            canvasCtx.closePath();
+            arrowAngle = transition.toAngle;
+            arrowCoord.x = centreCoord.x + (Math.cos(arrowAngle) * transition.radius);
+            arrowCoord.y = centreCoord.y + (Math.sin(arrowAngle) * transition.radius);
+            drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle + (Math.PI / 2), colour);
+        }
         return true;
     }
     return false;

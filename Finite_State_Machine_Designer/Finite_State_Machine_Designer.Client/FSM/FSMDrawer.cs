@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
+﻿using Microsoft.JSInterop;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
@@ -101,9 +100,72 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return null;
 		}
 
-		public void MoveTransition(CanvasCoordinate coord)
+		/// <summary>
+		/// Finds the determinant of 3x3 matrix
+		/// </summary>
+		/// <param name="a">1 row, column 1 cell</param>
+		/// <param name="b">1 row, column 2 cell</param>
+		/// <param name="c">1 row, column 3 cell</param>
+		/// <param name="d">2 row, column 1 cell</param>
+		/// <param name="e">2 row, column 2 cell</param>
+		/// <param name="f">2 row, column 3 cell</param>
+		/// <param name="g">3 row, column 1 cell</param>
+		/// <param name="h">3 row, column 2 cell</param>
+		/// <param name="i">3 row, column 3 cell</param>
+		/// <returns>Determinant of 3x3 matrix</returns>
+		private static double Determinant(
+			double a, double b, double c,
+			double d, double e, double f,
+			double g, double h, double i) => a*e*i + b*f*g + c*d*h - a*f*h - b*d*i - c*e*g;
+
+		/// <summary>
+		/// Uses <a href="https://en.wikipedia.org/wiki/Laplace_expansion">Laplace Expansion</a>
+		/// and <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">one of the formulae of segment</a>
+		/// to find the curve of the transition.
+		/// </summary>
+		/// <param name="coord">mouse Coordinate</param>
+		/// <param name="transition">The transition to be curved</param>
+		/// <param name="useAngle"><see langword="false"/> to use the ratio between state radius and transiton radius
+		/// to find the coordinate of transition touch the state for efficiency.
+		/// <see langword="true"/> to calculate the actual angle.</param>
+		public void CurveTransition(CanvasCoordinate coord, StateTransition transition, bool useAngle = false)
 		{
-			throw new NotImplementedException();
+			transition.Anchor = coord;
+
+			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
+			CanvasCoordinate toCoord = transition.ToState.Coordinate;
+
+			double a = Determinant(
+				fromCoord.X, fromCoord.Y, 1,
+				toCoord.X,   toCoord.Y,   1,
+				coord.X,     coord.Y,     1);
+
+			double mouseLengthSquare = (coord.X*coord.X) + (coord.Y*coord.Y);
+			double fromLengthSquare = (fromCoord.X*fromCoord.X) + (fromCoord.Y*fromCoord.Y);
+			double toLengthSquare = (toCoord.X*toCoord.X) + (toCoord.Y*toCoord.Y);
+
+			double bx = Determinant(
+				fromLengthSquare,  fromCoord.Y, 1,
+				toLengthSquare,    toCoord.Y,   1,
+				mouseLengthSquare, coord.Y,     1);
+
+			double by = Determinant(
+				fromLengthSquare,  fromCoord.X, 1,
+				toLengthSquare,    toCoord.X,   1,
+				mouseLengthSquare, coord.X,     1);
+
+			double c = Determinant(
+				fromLengthSquare,  fromCoord.X, fromCoord.Y,
+				toLengthSquare,    toCoord.X,   toCoord.Y,
+				mouseLengthSquare, coord.X,     coord.Y);
+
+			double circleX = bx / (2*a);
+			double circleY = -(by / (2*a));
+			double circleRadius = Math.Sqrt((circleX*circleX) + (circleY*circleY) + (c/a));
+			
+			transition.IsCurved = true;
+			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
+			transition.Radius = circleRadius;
 		}
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
@@ -112,7 +174,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			{
 				bool editable;
 				string currentColour;
-				string[] texts;
 
 				foreach (FiniteState state in fsm.States)
 				{
@@ -126,11 +187,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						currentColour = _selectedColour;
 						editable = true;
 					}
-
-					if (string.IsNullOrEmpty(state.Text))
-						texts = [];
-					else
-						texts = state.Text.Split('\n');
 
 					await _jsModule.InvokeAsync<bool>(
 						"drawState",
@@ -150,12 +206,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						currentColour = _selectedColour;
 					}
 
-					if (string.IsNullOrEmpty(transition.Text))
-						texts = [];
-					else
-						texts = transition.Text.Split('\n');
-
-					// TODO: Implement curved transition
 					await _jsModule.InvokeAsync<bool>(
 						"drawTransition",
 						transition,

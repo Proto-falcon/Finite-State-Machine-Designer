@@ -270,7 +270,12 @@
 					switch (mouseEventArgs.ShiftKey)
 					{
 						case false:
-							if (!_fsmDrawer.SelectedTransition.FromState.IsDrawable)
+							if (_fsmDrawer.SelectedTransition.FromState.IsDrawable
+								&& _fsmDrawer.SelectedTransition.ToState.IsDrawable)
+							{
+								_fsmDrawer.CurveTransition(_lastMousePos, _fsmDrawer.SelectedTransition);
+							}
+							else if (!_fsmDrawer.SelectedTransition.FromState.IsDrawable)
 								_fsmDrawer.SelectedTransition.FromCoord = newCoord;
 							break;
 						case true:
