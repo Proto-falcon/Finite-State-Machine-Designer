@@ -119,53 +119,66 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			double g, double h, double i) => a*e*i + b*f*g + c*d*h - a*f*h - b*d*i - c*e*g;
 
 		/// <summary>
-		/// Uses <a href="https://en.wikipedia.org/wiki/Laplace_expansion">Laplace Expansion</a>
-		/// and <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">one of the formulae of segment</a>
-		/// to find the curve of the transition.
+		/// Curves the transitions.
 		/// </summary>
 		/// <param name="coord">mouse Coordinate</param>
 		/// <param name="transition">The transition to be curved</param>
-		/// <param name="useAngle"><see langword="false"/> to use the ratio between state radius and transiton radius
 		/// to find the coordinate of transition touch the state for efficiency.
 		/// <see langword="true"/> to calculate the actual angle.</param>
-		public void CurveTransition(CanvasCoordinate coord, StateTransition transition, bool useAngle = false)
+		public void CurveTransition(CanvasCoordinate coord, StateTransition transition)
 		{
 			transition.Anchor = coord;
 
 			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
 			CanvasCoordinate toCoord = transition.ToState.Coordinate;
 
-			double a = Determinant(
-				fromCoord.X, fromCoord.Y, 1,
-				toCoord.X,   toCoord.Y,   1,
-				coord.X,     coord.Y,     1);
+			var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(fromCoord, toCoord, coord);
 
-			double mouseLengthSquare = (coord.X*coord.X) + (coord.Y*coord.Y);
-			double fromLengthSquare = (fromCoord.X*fromCoord.X) + (fromCoord.Y*fromCoord.Y);
-			double toLengthSquare = (toCoord.X*toCoord.X) + (toCoord.Y*toCoord.Y);
-
-			double bx = Determinant(
-				fromLengthSquare,  fromCoord.Y, 1,
-				toLengthSquare,    toCoord.Y,   1,
-				mouseLengthSquare, coord.Y,     1);
-
-			double by = Determinant(
-				fromLengthSquare,  fromCoord.X, 1,
-				toLengthSquare,    toCoord.X,   1,
-				mouseLengthSquare, coord.X,     1);
-
-			double c = Determinant(
-				fromLengthSquare,  fromCoord.X, fromCoord.Y,
-				toLengthSquare,    toCoord.X,   toCoord.Y,
-				mouseLengthSquare, coord.X,     coord.Y);
-
-			double circleX = bx / (2*a);
-			double circleY = -(by / (2*a));
-			double circleRadius = Math.Sqrt((circleX*circleX) + (circleY*circleY) + (c/a));
-			
 			transition.IsCurved = true;
 			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
 			transition.Radius = circleRadius;
+		}
+
+		/// <summary>
+		/// Generates a circles from 3 points using
+		/// <a href="https://en.wikipedia.org/wiki/Laplace_expansion">Laplace Expansion</a>
+		/// to find the curve of the transition.
+		/// </summary>
+		/// <param name="coord1"></param>
+		/// <param name="coord2"></param>
+		/// <param name="coord3"></param>
+		/// <returns></returns>
+		private static Tuple<double, double, double> CircleCentreRadiiFrom3Points(
+			CanvasCoordinate coord1, CanvasCoordinate coord2, CanvasCoordinate coord3)
+		{
+			double a = Determinant(
+				coord1.X, coord1.Y, 1,
+				coord2.X, coord2.Y, 1,
+				coord3.X, coord3.Y, 1);
+
+			double mouseLengthSquare = (coord3.X * coord3.X) + (coord3.Y * coord3.Y);
+			double fromLengthSquare = (coord1.X * coord1.X) + (coord1.Y * coord1.Y);
+			double toLengthSquare = (coord2.X * coord2.X) + (coord2.Y * coord2.Y);
+			double bx = Determinant(
+				fromLengthSquare, coord1.Y, 1,
+				toLengthSquare, coord2.Y, 1,
+				mouseLengthSquare, coord3.Y, 1);
+
+			double by = Determinant(
+				fromLengthSquare, coord1.X, 1,
+				toLengthSquare, coord2.X, 1,
+				mouseLengthSquare, coord3.X, 1);
+
+			double c = Determinant(
+				fromLengthSquare, coord1.X, coord1.Y,
+				toLengthSquare, coord2.X, coord2.Y,
+				mouseLengthSquare, coord3.X, coord3.Y);
+
+			double circleX = bx / (2 * a);
+			double circleY = -(by / (2 * a));
+			double circleRadius = Math.Sqrt((circleX * circleX) + (circleY * circleY) + (c / a));
+
+			return new Tuple<double, double, double>(circleX, circleY, circleRadius);
 		}
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
