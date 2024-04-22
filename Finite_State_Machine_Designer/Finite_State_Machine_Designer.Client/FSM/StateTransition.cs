@@ -26,25 +26,32 @@
 		{
 			get
 			{
-				float radius = 1;
-				if (_fromState.Radius > 0)
-					radius = _fromState.Radius;
-				double y = (Math.Sin(Angle) * radius) + _fromState.Coordinate.Y;
-				double x = (Math.Cos(Angle) * radius) + _fromState.Coordinate.X;
-				return new (x, y);
+				if (!_isCurved)
+				{
+					float radius = 1;
+					if (_fromState.Radius > 0)
+						radius = _fromState.Radius;
+					double angle = Angle;
+					double y = (Math.Sin(angle) * radius) + _fromState.Coordinate.Y;
+					double x = (Math.Cos(angle) * radius) + _fromState.Coordinate.X;
+					return new (x, y);
+				}
+				else
+				{
+					double fromAngle = FromAngle;
+					double x = _centerArc.X + (_radius * Math.Cos(fromAngle));
+					double y = _centerArc.Y + (_radius + Math.Sin(fromAngle));
+					return new (x, y);
+				}
 			}
 			set => _fromState.Coordinate = value;
 		}
 
-
-		/*
-		 * 
-		 * Add 2 new properties that give the angles from centre of centre to finite states between the positive x-axis
-		 * The angles are derived from Θ = 2 * Math.Asin(FiniteState.Radius / (2 * transitionCircleRadius))
-		 * where FiniteState.Radius is either state
-		 * 
-		 */
-
+		/// <summary>
+		/// Uses one of the formula of a
+		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
+		/// to get the angle.
+		/// </summary>
 		public double FromAngle
 		{
 			get
@@ -52,8 +59,8 @@
 				if (_isCurved)
 				{
 					CanvasCoordinate fromCoord = _fromState.Coordinate;
-					double toAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
-					return toAngle + (_fromState.Radius / _radius);
+					double fromAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
+					return fromAngle + (_fromState.Radius / _radius);
 				}
 				return Angle;
 			}
@@ -69,16 +76,31 @@
 		{
 			get
 			{
-				float radius = 1;
-				if (_toState.Radius > 0)
-					radius = _toState.Radius;
-				double y = -(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
-				double x = -(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
-				return new(x, y);
+				if (!_isCurved)
+				{
+					float radius = 1;
+					if (_toState.Radius > 0)
+						radius = _toState.Radius;
+					double y = -(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
+					double x = -(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
+					return new(x, y);
+				}
+				else
+				{
+					double toAngle = ToAngle;
+					double x = _centerArc.X + (_radius * Math.Cos(toAngle));
+					double y = _centerArc.Y + (_radius + Math.Sin(toAngle));
+					return new(x, y);
+				}
 			}
 			set => _toState.Coordinate = value;
 		}
 
+		/// <summary>
+		/// Uses one of the formula of a
+		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
+		/// to get the angle.
+		/// </summary>
 		public double ToAngle
 		{
 			get
@@ -123,7 +145,27 @@
 			}
 		}
 
-		public CanvasCoordinate Anchor { get; set; }
+		public CanvasCoordinate Anchor
+		{
+			get;
+			set;
+		}
+
+		public double ParrellelAxis
+		{
+			get => _parrallelAxis;
+			set => _parrallelAxis = value;
+		}
+
+		private double _parrallelAxis = 0;
+
+		public double PerpendicularAxis
+		{
+			get => _perpendicularAxis;
+			set => _perpendicularAxis = value;
+		}
+
+		private double _perpendicularAxis = 0;
 
 		private double _radius;
 

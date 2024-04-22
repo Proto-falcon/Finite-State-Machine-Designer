@@ -51,8 +51,6 @@ class StateTransition {
     radius = 0;
     isCurved = false;
     text = "";
-
-    anchor = new CanvasCoordinate();
 }
 
 
