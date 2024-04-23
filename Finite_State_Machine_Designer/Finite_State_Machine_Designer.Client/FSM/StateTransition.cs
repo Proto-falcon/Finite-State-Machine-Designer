@@ -26,7 +26,7 @@
 		{
 			get
 			{
-				if (!_isCurved)
+				if (!IsCurved)
 				{
 					float radius = 1;
 					if (_fromState.Radius > 0)
@@ -56,10 +56,13 @@
 		{
 			get
 			{
-				if (_isCurved)
+				if (IsCurved)
 				{
 					CanvasCoordinate fromCoord = _fromState.Coordinate;
 					double fromAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
+					/// 2 * Math.Asin(_fromState.Radius / (_radius * 2)) ≈ _fromState.Radius / _radius 
+					/// ≈ angle of the segment by around 3 sig figures
+					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
 					return fromAngle + (_fromState.Radius / _radius);
 				}
 				return Angle;
@@ -76,7 +79,7 @@
 		{
 			get
 			{
-				if (!_isCurved)
+				if (!IsCurved)
 				{
 					float radius = 1;
 					if (_toState.Radius > 0)
@@ -105,10 +108,13 @@
 		{
 			get
 			{
-				if (_isCurved)
+				if (IsCurved)
 				{
 					CanvasCoordinate toCoord = _toState.Coordinate;
 					double toAngle = Math.Atan2(toCoord.Y - _centerArc.Y, toCoord.X - _centerArc.X);
+					/// 2 * Math.Asin(_toState.Radius / (_radius * 2)) ≈ _toState.Radius / _radius 
+					/// ≈ angle of the segment by around 3 sig figures
+					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
 					return toAngle - (_toState.Radius / _radius);
 				}
 				return Angle;
@@ -133,39 +139,50 @@
 		{
 			get
 			{
-				if (_isCurved)
+				if (IsCurved)
 					return _centerArc;
 				else
 					return new ();
 			}
 			set
 			{
-				if (_isCurved)
+				if (IsCurved)
 					_centerArc = value;
 			}
 		}
 
 		public CanvasCoordinate Anchor
 		{
-			get;
-			set;
+			get
+			{
+				CanvasCoordinate dCoord = new(_toState.Coordinate.X - _fromState.Coordinate.X,
+					_toState.Coordinate.Y - _fromState.Coordinate.Y);
+				return new (_fromState.Coordinate.X + (dCoord.X * _parallelAxis) - (dCoord.Y * _perpendicularAxis),
+					_fromState.Coordinate.Y + (dCoord.Y * _parallelAxis) + (dCoord.X * _perpendicularAxis));
+			}
+			set
+			{
+				CanvasCoordinate dCoord = new (_toState.Coordinate.X - _fromState.Coordinate.X,
+					_toState.Coordinate.Y - _fromState.Coordinate.Y);
+				double squareLength = (dCoord.X * dCoord.X) + (dCoord.Y * dCoord.Y);
+
+				CanvasCoordinate dCoord2 = new (value.X - _fromState.Coordinate.X,
+					value.Y - _fromState.Coordinate.Y);
+
+				_parallelAxis = ((dCoord.X*dCoord2.X) + (dCoord.Y*dCoord2.Y)) / squareLength;
+				_perpendicularAxis = ((dCoord.X * dCoord2.Y) - (dCoord.Y * dCoord2.X)) / squareLength;
+
+				if (Math.Abs(_perpendicularAxis) < 0.02)
+				{
+					//IsCurved = false;
+					_radius = 0;
+					_perpendicularAxis = 0;
+				}
+			}
 		}
 
-		public double ParrellelAxis
-		{
-			get => _parrallelAxis;
-			set => _parrallelAxis = value;
-		}
-
-		private double _parrallelAxis = 0;
-
-		public double PerpendicularAxis
-		{
-			get => _perpendicularAxis;
-			set => _perpendicularAxis = value;
-		}
-
-		private double _perpendicularAxis = 0;
+		private double _parallelAxis;
+		private double _perpendicularAxis;
 
 		private double _radius;
 
@@ -175,15 +192,15 @@
 			set => _radius = value;
 		}
 
-		private bool _isCurved = false;
+		//private bool IsCurved = false;
 
 		public bool IsCurved
 		{
-			get => _isCurved;
-			set
-			{
-				_isCurved = value;
-			}
+			get => Math.Abs(_perpendicularAxis) >=  0.02;
+			//set
+			//{
+			//	IsCurved = value;
+			//}
 		}
 
 		private string _text = string.Empty;

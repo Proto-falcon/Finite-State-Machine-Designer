@@ -134,7 +134,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 			var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(fromCoord, toCoord, coord);
 
-			transition.IsCurved = true;
+			//transition.IsCurved = true;
 			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
 			transition.Radius = circleRadius;
 		}
