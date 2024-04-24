@@ -129,14 +129,35 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		{
 			transition.Anchor = coord;
 
+			if (!transition.IsCurved)
+				return;
+
 			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
 			CanvasCoordinate toCoord = transition.ToState.Coordinate;
 
-			var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(fromCoord, toCoord, coord);
+			var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(fromCoord, toCoord, transition.Anchor);
 
-			//transition.IsCurved = true;
 			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
 			transition.Radius = circleRadius;
+		}
+
+		/// <summary>
+		/// Updates all the transitions connected to the <see cref="SelectedState"/>.
+		/// </summary>
+		public void UpdateCurvedTransitions(FiniteState state)
+		{
+			List<StateTransition> transitions = fsm.FindTransitions(state, x => x.IsCurved);
+
+			foreach (var transition in transitions)
+			{
+				var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(
+					transition.FromState.Coordinate,
+					transition.ToState.Coordinate,
+					transition.Anchor);
+
+				transition.CenterArc = new CanvasCoordinate(circleX, circleY);
+				transition.Radius = circleRadius;
+			}
 		}
 
 		/// <summary>
@@ -144,10 +165,12 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// <a href="https://en.wikipedia.org/wiki/Laplace_expansion">Laplace Expansion</a>
 		/// to find the curve of the transition.
 		/// </summary>
-		/// <param name="coord1"></param>
-		/// <param name="coord2"></param>
-		/// <param name="coord3"></param>
-		/// <returns></returns>
+		/// <param name="coord1">Coordinate 1</param>
+		/// <param name="coord2">Coordinate 2</param>
+		/// <param name="coord3">Coordinate 3</param>
+		/// <returns>First and second numbers are x and y values respectively
+		/// and the last number is the radius of the circle.
+		/// </returns>
 		private static Tuple<double, double, double> CircleCentreRadiiFrom3Points(
 			CanvasCoordinate coord1, CanvasCoordinate coord2, CanvasCoordinate coord3)
 		{
@@ -218,7 +241,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						editable = true;
 						currentColour = _selectedColour;
 					}
-
+					Console.WriteLine(transition.ToString());
 					await _jsModule.InvokeAsync<bool>(
 						"drawTransition",
 						transition,

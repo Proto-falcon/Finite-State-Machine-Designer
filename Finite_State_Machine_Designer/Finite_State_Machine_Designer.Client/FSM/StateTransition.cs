@@ -48,28 +48,6 @@
 		}
 
 		/// <summary>
-		/// Uses one of the formula of a
-		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
-		/// to get the angle.
-		/// </summary>
-		public double FromAngle
-		{
-			get
-			{
-				if (IsCurved)
-				{
-					CanvasCoordinate fromCoord = _fromState.Coordinate;
-					double fromAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
-					/// 2 * Math.Asin(_fromState.Radius / (_radius * 2)) ≈ _fromState.Radius / _radius 
-					/// ≈ angle of the segment by around 3 sig figures
-					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
-					return fromAngle + (_fromState.Radius / _radius);
-				}
-				return Angle;
-			}
-		}
-
-		/// <summary>
 		/// It's the <see cref="CanvasCoordinate"/> that the transition goes to the edge
 		/// of the state's <see cref="FiniteState.Radius"/>.
 		/// <para>Note: If the <see cref="ToState"/> is <see langword="null"/>
@@ -104,6 +82,28 @@
 		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
 		/// to get the angle.
 		/// </summary>
+		public double FromAngle
+		{
+			get
+			{
+				if (IsCurved)
+				{
+					CanvasCoordinate fromCoord = _fromState.Coordinate;
+					double fromAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
+					/// 2 * Math.Asin(_fromState.Radius / (_radius * 2)) ≈ _fromState.Radius / _radius 
+					/// ≈ angle of the segment by around 3 sig figures
+					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
+					return fromAngle + ((IsReversed ? -1 : 1) * (_fromState.Radius / _radius));
+				}
+				return Angle;
+			}
+		}
+
+		/// <summary>
+		/// Uses one of the formula of a
+		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
+		/// to get the angle.
+		/// </summary>
 		public double ToAngle
 		{
 			get
@@ -115,7 +115,7 @@
 					/// 2 * Math.Asin(_toState.Radius / (_radius * 2)) ≈ _toState.Radius / _radius 
 					/// ≈ angle of the segment by around 3 sig figures
 					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
-					return toAngle - (_toState.Radius / _radius);
+					return toAngle - ((IsReversed ? -1 : 1) * (_toState.Radius / _radius));
 				}
 				return Angle;
 			}
@@ -142,13 +142,9 @@
 				if (IsCurved)
 					return _centerArc;
 				else
-					return new ();
+					return default;
 			}
-			set
-			{
-				if (IsCurved)
-					_centerArc = value;
-			}
+			set => _centerArc = value;
 		}
 
 		public CanvasCoordinate Anchor
@@ -174,7 +170,6 @@
 
 				if (Math.Abs(_perpendicularAxis) < 0.02)
 				{
-					//IsCurved = false;
 					_radius = 0;
 					_perpendicularAxis = 0;
 				}
@@ -183,6 +178,9 @@
 
 		private double _parallelAxis;
 		private double _perpendicularAxis;
+
+		public bool IsReversed => _perpendicularAxis > 0;
+
 
 		private double _radius;
 
@@ -213,7 +211,16 @@
 
 		public override int GetHashCode() => HashCode.Combine(_fromState, _toState);
 
-		public override string ToString() =>
-			$"( {_fromState} -> {_toState}, Text: '{_text}', Angle: {Angle}, Center Point: {_centerArc}, Radius: {_radius} )";
+		public override string ToString()
+		{
+			string text = $"( {_fromState} -> {_toState}, Text: '{_text}', ";
+
+			if (!IsCurved)
+				text += $"Angle: {Angle} )";
+			else
+				text += $"From Angle: {FromAngle}, To Angle: {ToAngle}, Center Point: {_centerArc}, Radius: {_radius}, Reversed: {IsReversed} )";
+
+            return text;
+		}
 	}
 }

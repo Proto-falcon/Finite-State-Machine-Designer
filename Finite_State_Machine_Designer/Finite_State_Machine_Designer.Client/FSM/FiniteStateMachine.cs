@@ -87,10 +87,13 @@
 			return null;
 		}
 
-		public List<StateTransition> FindTransitions(FiniteState state)
+		public List<StateTransition> FindTransitions(FiniteState state, Predicate<StateTransition>? filter = null)
 		{
+			if (filter is null)
+				filter = x => true;
+
 			return _transitions
-				.Where(x => x.FromState == state || x.ToState == state)
+				.Where(x => (x.FromState == state || x.ToState == state) && filter(x))
 				.ToList();
 		}
 	}

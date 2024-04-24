@@ -26,6 +26,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public void CurveTransition(CanvasCoordinate coord, StateTransition transition);
 
+		public void UpdateCurvedTransitions(FiniteState state);
+
 		public Task<bool> DrawMachineAsync(bool lineVisible = false);
 	}
 }

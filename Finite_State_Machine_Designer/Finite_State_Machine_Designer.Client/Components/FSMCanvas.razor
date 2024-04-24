@@ -196,15 +196,10 @@
 
 					if (existingState is not null)
 						_fsmDrawer.SelectedTransition = null;
+					else if (_fsmDrawer.FSM.FindTransition(_lastMousePos) is StateTransition existTransition)
+						_fsmDrawer.SelectedTransition = existTransition;
 					else
-					{
-						existingTransition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
-						Console.WriteLine(existingTransition);
-						if (existingTransition is not null)
-							_fsmDrawer.SelectedTransition = existingTransition;
-						else
-							_fsmDrawer.SelectedTransition = null;
-					}
+						_fsmDrawer.SelectedTransition = null;
 
 					break;
 				case true:
@@ -262,6 +257,8 @@
 						foreach (var transition in transitions)
 							if (!transition.FromState.IsDrawable)
 								_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
+							else
+								_fsmDrawer.UpdateCurvedTransitions(_fsmDrawer.SelectedState);
 					}
 				}
 				else if (_fsmDrawer.SelectedTransition is not null)

@@ -51,6 +51,8 @@ class StateTransition {
     radius = 0;
     isCurved = false;
     text = "";
+    anchor = new CanvasCoordinate();
+    isReversed = false;
 }
 
 
@@ -172,20 +174,18 @@ export function drawTransition(transition, colour, editable) {
             canvasCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
             canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
             arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
-            canvasCtx.closePath();
-            canvasCtx.stroke();
-            drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
         }
         else {
             let centreCoord = transition.centerArc;
-            canvasCtx.arc(centreCoord.x, centreCoord.y, transition.radius, transition.fromAngle, transition.toAngle, false);
-            canvasCtx.stroke();
-            canvasCtx.closePath();
+            canvasCtx.arc(centreCoord.x, centreCoord.y, transition.radius, transition.fromAngle, transition.toAngle, transition.isReversed);
             arrowAngle = transition.toAngle;
             arrowCoord.x = centreCoord.x + (Math.cos(arrowAngle) * transition.radius);
             arrowCoord.y = centreCoord.y + (Math.sin(arrowAngle) * transition.radius);
-            drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle + (Math.PI / 2), colour);
+            arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
         }
+        canvasCtx.stroke();
+        canvasCtx.closePath();
+        drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
         return true;
     }
     return false;
