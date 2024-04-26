@@ -80,7 +80,7 @@
 		/// <summary>
 		/// Uses one of the formula of a
 		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
-		/// to get the angle.
+		/// to get the angle from positive x axis.
 		/// </summary>
 		public double FromAngle
 		{
@@ -102,7 +102,7 @@
 		/// <summary>
 		/// Uses one of the formula of a
 		/// <a href="https://en.wikipedia.org/wiki/Circular_segment#Radius_and_central_angle">circle segment</a>
-		/// to get the angle.
+		/// to get the angle from positive x axis.
 		/// </summary>
 		public double ToAngle
 		{
@@ -165,7 +165,9 @@
 				CanvasCoordinate dCoord2 = new (value.X - _fromState.Coordinate.X,
 					value.Y - _fromState.Coordinate.Y);
 
+				/// Using Dot Product
 				_parallelAxis = ((dCoord.X*dCoord2.X) + (dCoord.Y*dCoord2.Y)) / squareLength;
+				/// Using Determinant
 				_perpendicularAxis = ((dCoord.X * dCoord2.Y) - (dCoord.Y * dCoord2.X)) / squareLength;
 
 				if (Math.Abs(_perpendicularAxis) < 0.02)

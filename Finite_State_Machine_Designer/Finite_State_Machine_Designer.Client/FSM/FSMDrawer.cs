@@ -241,7 +241,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						editable = true;
 						currentColour = _selectedColour;
 					}
-					Console.WriteLine(transition.ToString());
+					
 					await _jsModule.InvokeAsync<bool>(
 						"drawTransition",
 						transition,

@@ -62,26 +62,61 @@
 		public StateTransition? FindTransition(CanvasCoordinate coordinate)
 		{
 			double squaredSearchRadius = _transitionSearchRadius * _transitionSearchRadius;
+			double squareDistance;
+			CanvasCoordinate dCoord;
 			foreach (StateTransition transition in _transitions)
 			{
-				// mx + c = -x/m + d
-				// xm^2 + cm = -x + dm
-				// x(m^2 + 1) = dm - cm
-				// x = m(d - c)/(m^2 + 1)
-				// where c = 0, x = md/(m^2 + 1)
-				CanvasCoordinate dCoordTransition = transition.ToCoord - transition.FromCoord;
-				double gradient = dCoordTransition.Y / dCoordTransition.X;
-				double perdendicularGradient = -1 / gradient;
-				CanvasCoordinate dCoord = coordinate - transition.FromCoord;
-				double yIntercept = dCoord.Y - (perdendicularGradient * dCoord.X);
+				if (!transition.IsCurved)
+				{
+					// mx + c = -x/m + d
+					// xm^2 + cm = -x + dm
+					// x(m^2 + 1) = dm - cm
+					// x = m(d - c)/(m^2 + 1)
+					// where c = 0, x = md/(m^2 + 1)
+					CanvasCoordinate dCoordTransition = transition.ToCoord - transition.FromCoord;
+					double gradient = dCoordTransition.Y / dCoordTransition.X;
+					double perdendicularGradient = -1 / gradient;
+					dCoord = coordinate - transition.FromCoord;
+					double yIntercept = dCoord.Y - (perdendicularGradient * dCoord.X);
 
-				double x = (gradient * yIntercept) / (Math.Pow(gradient, 2) + 1);
-				double y = gradient * x;
-				
-				double distance = Math.Pow(x - dCoord.X, 2) + Math.Pow(y - dCoord.Y, 2);
+					double x = (gradient * yIntercept) / (Math.Pow(gradient, 2) + 1);
+					double y = gradient * x;
+					
+					squareDistance = Math.Pow(x - dCoord.X, 2) + Math.Pow(y - dCoord.Y, 2);
 
-				if (distance <= squaredSearchRadius)
-					return transition;
+					if (squareDistance <= squaredSearchRadius)
+						return transition;
+				}
+				else
+				{
+					dCoord = new(coordinate.X - transition.CenterArc.X, coordinate.Y - transition.CenterArc.Y);
+
+					/// Calculate the distance from CentreArc is within the limits
+					squareDistance = Math.Sqrt(Math.Pow(dCoord.X, 2) + Math.Pow(dCoord.Y, 2)) - transition.Radius;
+					if (Math.Abs(squareDistance) > _transitionSearchRadius)
+						continue;
+					
+					/// Calculate the angle from centreArc to dCoord to only click the segment of the circle
+					/// between FromAngle and ToAngle.
+
+					double angle = Math.Atan2(dCoord.Y, dCoord.X);
+
+					double startAngle = transition.FromAngle;
+					double endAngle = transition.ToAngle;
+
+					if (transition.IsReversed)
+						(startAngle, endAngle) = (endAngle, startAngle);
+
+					if (endAngle < startAngle)
+						endAngle += 2 * Math.PI;
+					if (angle < startAngle)
+						angle += 2 * Math.PI;
+					else if (angle > endAngle)
+						angle -= 2 * Math.PI;
+
+					if (angle > startAngle && angle < endAngle)
+						return transition;
+				}
 
 			}
 			return null;
