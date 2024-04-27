@@ -167,6 +167,10 @@ export function drawTransition(transition, colour, editable) {
     if (checkCanvas()) {
         let arrowCoord = new CanvasCoordinate();
         let arrowAngle = transition.angle;
+        let textX = 0;
+        let textY = 0;
+
+        let reversed = transition.isReversed ? -1 : 1;
 
         canvasCtx.strokeStyle = colour;
         canvasCtx.beginPath();
@@ -174,6 +178,12 @@ export function drawTransition(transition, colour, editable) {
             canvasCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
             canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
             arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
+
+            textX = transition.fromCoord.x + (reversed * (transition.toCoord.x - transition.fromCoord.x) / 2);
+            textY = transition.fromCoord.y + (reversed * (transition.toCoord.y - transition.fromCoord.y) / 2);
+
+            textY += reversed * 30 * Math.sin(transition.angle + (Math.PI / 4));
+
         }
         else {
             let centreCoord = transition.centerArc;
@@ -181,22 +191,45 @@ export function drawTransition(transition, colour, editable) {
             arrowAngle = transition.toAngle;
             arrowCoord.x = centreCoord.x + (Math.cos(arrowAngle) * transition.radius);
             arrowCoord.y = centreCoord.y + (Math.sin(arrowAngle) * transition.radius);
-            arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
+            arrowAngle += reversed * (Math.PI / 2);
+
+            let startAngle = transition.fromAngle;
+            let endAngle = transition.toAngle;
+            if (endAngle < startAngle) {
+                endAngle += 2 * Math.PI;
+            }
+
+            let textAngle = ((endAngle + startAngle) / 2) + (transition.isReversed * Math.PI);
+            textX = transition.centerArc.x + (transition.radius * Math.cos(textAngle) * 1.1);
+            textY = transition.centerArc.y + (transition.radius * Math.sin(textAngle) * 1.1);
         }
         canvasCtx.stroke();
         canvasCtx.closePath();
         drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
+
+
+        drawCanvasText(textX, textY, colour, transition.text.split("\n"), editable);
+
         return true;
     }
     return false;
 }
 
-function drawCanvasText(x, y, colour, textLines, editable) {
+/**
+ * Draws Canvas Text
+ * 
+ * @param {number} x
+ * @param {number} y
+ * @param {string} colour
+ * @param {string[]} textLines
+ * @param {boolean} editable
+ * @param {boolean} notHeightCentered
+ */
+function drawCanvasText(x, y, colour, textLines, editable, notHeightCentered) {
     let caretX = 0;
     let caretY = 0;
     let textX = 0;
     let textY = 0;
-
 
     if (textLines.length <= 0) {
         caretX = x + 0.5;

@@ -83,7 +83,7 @@
 					double y = gradient * x;
 					
 					squareDistance = Math.Pow(x - dCoord.X, 2) + Math.Pow(y - dCoord.Y, 2);
-
+					
 					if (squareDistance <= squaredSearchRadius)
 						return transition;
 				}
