@@ -171,6 +171,8 @@ export function drawTransition(transition, colour, editable) {
         let textLines = transition.text.split("\n");
         let reversed = transition.isReversed ? -1 : 1;
 
+        let dontCentre = transition.isCurved;
+
         canvasCtx.strokeStyle = colour;
         canvasCtx.beginPath();
         if (!transition.isCurved) {
@@ -182,8 +184,19 @@ export function drawTransition(transition, colour, editable) {
             let diffY = (transition.toCoord.y - transition.fromCoord.y);
             let midDistance = Math.sqrt((diffX * diffX) + (diffY * diffY)) / 2;
 
-            textX = transition.fromCoord.x + (midDistance * Math.cos(transition.angle)) + 10;
-            textY = transition.fromCoord.y + (midDistance * Math.sin(transition.angle)) + 10;
+            let textCos = Math.cos(transition.angle);
+            let textSin = Math.sin(transition.angle);
+
+            textX = transition.fromCoord.x + (midDistance * textCos) + (20 * textSin);
+            textY = transition.fromCoord.y + (midDistance * textSin) - (20 * textCos);
+
+            if (Math.abs(transition.angle) < 0.3) {
+                console.log(Math.abs(transition.angle))
+                dontCentre = false;
+            }
+            else {
+                dontCentre = true;
+            }
         }
         else {
             let centreCoord = transition.centerArc;
@@ -210,7 +223,7 @@ export function drawTransition(transition, colour, editable) {
         drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
 
         // add param to add text in reverse
-        drawCanvasText(textX, textY, colour, textLines, editable, transition.isCurved, transition.isReversed);
+        drawCanvasText(textX, textY, colour, textLines, editable, dontCentre, transition.isReversed);
 
         return true;
     }
