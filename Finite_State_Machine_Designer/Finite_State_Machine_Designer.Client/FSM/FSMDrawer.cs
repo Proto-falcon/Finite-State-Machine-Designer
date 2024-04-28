@@ -246,7 +246,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						"drawTransition",
 						transition,
 						currentColour,
-						editable && lineVisible
+						editable && lineVisible && transition.ToState.IsDrawable
 					);
 				}
                 return true;

@@ -200,8 +200,10 @@ export function drawTransition(transition, colour, editable) {
             }
 
             let textAngle = ((endAngle + startAngle) / 2) + (transition.isReversed * Math.PI);
-            textX = transition.centerArc.x + (transition.radius * Math.cos(textAngle) * 1.1);
-            textY = transition.centerArc.y + (transition.radius * Math.sin(textAngle) * 1.1);
+            let cos = Math.cos(textAngle);
+            let sin = Math.sin(textAngle);
+            textX = transition.centerArc.x + (transition.radius * cos) + (20 * cos);
+            textY = transition.centerArc.y + (transition.radius * sin) + (20 * sin);
         }
         canvasCtx.stroke();
         canvasCtx.closePath();
