@@ -77,7 +77,12 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				fromState ??= new(fromPos, 0) { IsDrawable = false };
 				toState ??= new(toPos, 0) { IsDrawable = false };
 
-				StateTransition newTransition = new (fromState, toState);
+				StateTransition newTransition = new(fromState, toState)
+				//{
+					//MinPerpendicularDistance = -1,
+					//CenterArc = new()
+				//}
+				;
 				CanvasCoordinate fromCoord = newTransition.FromCoord;
 				CanvasCoordinate toCoord = newTransition.ToCoord;
 

@@ -170,7 +170,7 @@
 				/// Using Determinant
 				_perpendicularAxis = ((dCoord.X * dCoord2.Y) - (dCoord.Y * dCoord2.X)) / squareLength;
 
-				if (Math.Abs(_perpendicularAxis) < 0.02)
+				if (Math.Abs(_perpendicularAxis) < _minPerpendicularDistance)
 				{
 					_radius = 0;
 					_perpendicularAxis = 0;
@@ -180,6 +180,14 @@
 
 		private double _parallelAxis;
 		private double _perpendicularAxis;
+
+		public double MinPerpendicularDistance
+		{
+			get => _minPerpendicularDistance;
+			set => _minPerpendicularDistance = value;
+		}
+
+		private double _minPerpendicularDistance = 0.02;
 
 		public bool IsReversed => _perpendicularAxis > 0;
 
@@ -192,16 +200,7 @@
 			set => _radius = value;
 		}
 
-		//private bool IsCurved = false;
-
-		public bool IsCurved
-		{
-			get => Math.Abs(_perpendicularAxis) >=  0.02;
-			//set
-			//{
-			//	IsCurved = value;
-			//}
-		}
+		public bool IsCurved => Math.Abs(_perpendicularAxis) >=  0.02;
 
 		private string _text = string.Empty;
 

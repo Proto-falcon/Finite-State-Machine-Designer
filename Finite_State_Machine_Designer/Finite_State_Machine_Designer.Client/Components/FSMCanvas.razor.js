@@ -138,7 +138,6 @@ export function drawState(state, colour, editable) {
         canvasCtx.strokeStyle = colour;
         let stateCoord = state.coordinate;
         canvasCtx.arc(stateCoord.x, stateCoord.y, state.radius, 0, 2 * Math.PI);
-        //canvasCtx.arc(x, y, radius, 0, 2 * Math.PI);
         canvasCtx.closePath();
         canvasCtx.stroke();
 
@@ -169,7 +168,7 @@ export function drawTransition(transition, colour, editable) {
         let arrowAngle = transition.angle;
         let textX = 0;
         let textY = 0;
-
+        let textLines = transition.text.split("\n");
         let reversed = transition.isReversed ? -1 : 1;
 
         canvasCtx.strokeStyle = colour;
@@ -179,11 +178,12 @@ export function drawTransition(transition, colour, editable) {
             canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
             arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
 
-            textX = transition.fromCoord.x + (reversed * (transition.toCoord.x - transition.fromCoord.x) / 2);
-            textY = transition.fromCoord.y + (reversed * (transition.toCoord.y - transition.fromCoord.y) / 2);
+            let diffX = (transition.toCoord.x - transition.fromCoord.x);
+            let diffY = (transition.toCoord.y - transition.fromCoord.y);
+            let midDistance = Math.sqrt((diffX * diffX) + (diffY * diffY)) / 2;
 
-            textY += reversed * 30 * Math.sin(transition.angle + (Math.PI / 4));
-
+            textX = transition.fromCoord.x + (midDistance * Math.cos(transition.angle)) + 10;
+            textY = transition.fromCoord.y + (midDistance * Math.sin(transition.angle)) + 10;
         }
         else {
             let centreCoord = transition.centerArc;
@@ -209,8 +209,8 @@ export function drawTransition(transition, colour, editable) {
         canvasCtx.closePath();
         drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
 
-
-        drawCanvasText(textX, textY, colour, transition.text.split("\n"), editable);
+        // add param to add text in reverse
+        drawCanvasText(textX, textY, colour, textLines, editable, transition.isCurved, transition.isReversed);
 
         return true;
     }
@@ -225,13 +225,16 @@ export function drawTransition(transition, colour, editable) {
  * @param {string} colour
  * @param {string[]} textLines
  * @param {boolean} editable
- * @param {boolean} notHeightCentered
+ * @param {boolean} dontCentre 
+ * @param {boolean} reversed 
  */
-function drawCanvasText(x, y, colour, textLines, editable, notHeightCentered) {
+function drawCanvasText(x, y, colour, textLines, editable, dontCentre, reversed) {
     let caretX = 0;
     let caretY = 0;
     let textX = 0;
     let textY = 0;
+
+    let reverse = reversed ? -1 : 1;
 
     if (textLines.length <= 0) {
         caretX = x + 0.5;
@@ -247,17 +250,23 @@ function drawCanvasText(x, y, colour, textLines, editable, notHeightCentered) {
 
             let halfWidth = Math.round(textMetric.width / 2);
 
-            textX = x - halfWidth;
+            if (!dontCentre) {
+                textX = x - halfWidth;
+                caretX = x + halfWidth;
+            }
+            else {
+                textX = x - (textMetric.width * reverse * !reversed);
+                caretX = x + (textMetric.width * !reverse);
+            }
             canvasCtx.fillText(textLines[i], textX, textY);
 
-            caretX = x + halfWidth;
             caretY = textY
             textY += STATETEXTNEWLINE
         }
     }
 
     if (editable) {
-        drawTextLine(caretX, caretY, textLines.length > 0);
+        drawCaret(caretX, caretY, textLines.length > 0);
     }
 }
 
@@ -267,7 +276,7 @@ function drawCanvasText(x, y, colour, textLines, editable, notHeightCentered) {
  * @param {number} y
  * @param {boolean} hasOffset
  */
-export function drawTextLine(x, y, hasOffset) {
+export function drawCaret(x, y, hasOffset) {
     canvasCtx.beginPath();
 
     if (hasOffset) {
