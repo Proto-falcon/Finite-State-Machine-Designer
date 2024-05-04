@@ -4,6 +4,13 @@ const STATETEXTNEWLINE = 20;
 const CANVASTEXTFONTSTYLE = '20px "Times New Roman", serif';
 const FINALSTATECIRCLERATIO = 0.8;
 
+const CANVASTEXTVERTICAL = Object.freeze(
+    {
+        Centre: 0,
+        Down: 1,
+        Up: 2
+    }
+);
 
 class CanvasCoordinate {
     x = 0;
@@ -168,10 +175,12 @@ export function drawTransition(transition, colour, editable) {
         let arrowAngle = transition.angle;
         let textX = 0;
         let textY = 0;
+        let textAngle = 0;
         let textLines = transition.text.split("\n");
-        let reversed = transition.isReversed ? -1 : 1;
-
-        let dontCentre = transition.isCurved;
+        let reverseScale = transition.isReversed ? -1 : 1;
+        let longestLine = "";
+        textLines.forEach(x => longestLine = x.length > longestLine.length ? x : longestLine);
+        let vertialAlignment = CANVASTEXTVERTICAL.Centre;
 
         canvasCtx.strokeStyle = colour;
         canvasCtx.beginPath();
@@ -180,23 +189,13 @@ export function drawTransition(transition, colour, editable) {
             canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
             arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
 
-            let diffX = (transition.toCoord.x - transition.fromCoord.x);
-            let diffY = (transition.toCoord.y - transition.fromCoord.y);
-            let midDistance = Math.sqrt((diffX * diffX) + (diffY * diffY)) / 2;
+            let fromCoord = transition.fromCoord;
+            let toCoord = transition.toCoord;
 
-            let textCos = Math.cos(transition.angle);
-            let textSin = Math.sin(transition.angle);
-
-            textX = transition.fromCoord.x + (midDistance * textCos) + (20 * textSin);
-            textY = transition.fromCoord.y + (midDistance * textSin) - (20 * textCos);
-
-            if (Math.abs(transition.angle) < 0.3) {
-                console.log(Math.abs(transition.angle))
-                dontCentre = false;
-            }
-            else {
-                dontCentre = true;
-            }
+            textX = ((toCoord.x + fromCoord.x) / 2);
+            textY = ((toCoord.y + fromCoord.y) / 2);
+            let invertedAngle = Math.atan2(toCoord.x - fromCoord.x, toCoord.y - fromCoord.y);
+            textAngle = (transition.isReversed * Math.PI) - invertedAngle;
         }
         else {
             let centreCoord = transition.centerArc;
@@ -204,27 +203,45 @@ export function drawTransition(transition, colour, editable) {
             arrowAngle = transition.toAngle;
             arrowCoord.x = centreCoord.x + (Math.cos(arrowAngle) * transition.radius);
             arrowCoord.y = centreCoord.y + (Math.sin(arrowAngle) * transition.radius);
-            arrowAngle += reversed * (Math.PI / 2);
+            arrowAngle += reverseScale * (Math.PI / 2);
 
             let startAngle = transition.fromAngle;
             let endAngle = transition.toAngle;
-            if (endAngle < startAngle) {
-                endAngle += 2 * Math.PI;
-            }
+            endAngle += (endAngle < startAngle) ? (2 * Math.PI) : 0;
 
-            let textAngle = ((endAngle + startAngle) / 2) + (transition.isReversed * Math.PI);
+            textAngle = (((endAngle + startAngle) / 2)) + (transition.isReversed * Math.PI);
             let cos = Math.cos(textAngle);
-            let sin = Math.sin(textAngle);
-            textX = transition.centerArc.x + (transition.radius * cos) + (20 * cos);
-            textY = transition.centerArc.y + (transition.radius * sin) + (20 * sin);
+            textX = transition.centerArc.x + (cos * (transition.radius + 10 + longestLine.length));
+            textY = transition.centerArc.y + (Math.sin(textAngle) * (transition.radius + 5));
         }
         canvasCtx.stroke();
         canvasCtx.closePath();
         drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
 
-        // add param to add text in reverse
-        drawCanvasText(textX, textY, colour, textLines, editable, dontCentre, transition.isReversed);
+        let cos = Math.cos(textAngle);
+        let sin = Math.sin(textAngle);
+        let cornerPointX = (canvasCtx.measureText(longestLine).width / 2 + 5) * (cos > 0 ? 1 : -1);
+        let cornerPointY = (10 + 5) * (sin > 0 ? 1 : -1);
+        let slide = (Math.pow(sin, 41) * cornerPointX)
+            - (Math.pow(cos, 11) * cornerPointY);
+        textX += cornerPointX - sin * slide;
+        textY += cornerPointY + (cos * slide) - 0;
 
+        if (Math.abs(transition.angle) < (Math.PI / 2 - 0.3) || Math.abs(transition.angle) > (Math.PI / 2 + 0.3)) {
+            if (textAngle > 2 * Math.PI) {
+                textAngle = textAngle - Math.PI;
+            }
+            else if (textAngle > Math.PI) {
+                textAngle = Math.PI - textAngle;
+            }
+            if (textAngle > 0) {
+                vertialAlignment = CANVASTEXTVERTICAL.Down;
+            }
+            else {
+                vertialAlignment = CANVASTEXTVERTICAL.Up;
+            }
+        }
+        drawCanvasText(textX, textY, colour, textLines, editable, vertialAlignment);
         return true;
     }
     return false;
@@ -238,23 +255,29 @@ export function drawTransition(transition, colour, editable) {
  * @param {string} colour
  * @param {string[]} textLines
  * @param {boolean} editable
- * @param {boolean} dontCentre 
- * @param {boolean} reversed 
+ * @param {number} [vertialAlignment=0] 
  */
-function drawCanvasText(x, y, colour, textLines, editable, dontCentre, reversed) {
+function drawCanvasText(x, y, colour, textLines, editable, vertialAlignment = 0) {
     let caretX = 0;
     let caretY = 0;
     let textX = 0;
     let textY = 0;
-
-    let reverse = reversed ? -1 : 1;
 
     if (textLines.length <= 0) {
         caretX = x + 0.5;
         caretY = y + 10;
     }
     else {
-        let initialY = y - ((textLines.length - 1) * (STATETEXTNEWLINE / 2));
+        let initialY = 0;
+        if (vertialAlignment == CANVASTEXTVERTICAL.Centre) {
+            initialY = y - ((textLines.length - 1) * (STATETEXTNEWLINE / 2));
+        }
+        else if (vertialAlignment == CANVASTEXTVERTICAL.Up) {
+            initialY = y - ((textLines.length - 1) * STATETEXTNEWLINE);
+        }
+        else {
+            initialY = y;
+        }
         textY = initialY + 10;
         canvasCtx.fillStyle = colour;
 
@@ -263,14 +286,8 @@ function drawCanvasText(x, y, colour, textLines, editable, dontCentre, reversed)
 
             let halfWidth = Math.round(textMetric.width / 2);
 
-            if (!dontCentre) {
-                textX = x - halfWidth;
-                caretX = x + halfWidth;
-            }
-            else {
-                textX = x - (textMetric.width * reverse * !reversed);
-                caretX = x + (textMetric.width * !reverse);
-            }
+            textX = x - halfWidth;
+            caretX = x + halfWidth;
             canvasCtx.fillText(textLines[i], textX, textY);
 
             caretY = textY

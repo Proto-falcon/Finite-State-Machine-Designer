@@ -62,8 +62,8 @@
 					float radius = 1;
 					if (_toState.Radius > 0)
 						radius = _toState.Radius;
-					double y = -(Math.Sin(Angle) * radius) + _toState.Coordinate.Y;
-					double x = -(Math.Cos(Angle) * radius) + _toState.Coordinate.X;
+					double y = (Math.Sin(Angle + Math.PI) * radius) + _toState.Coordinate.Y;
+					double x = (Math.Cos(Angle + Math.PI) * radius) + _toState.Coordinate.X;
 					return new(x, y);
 				}
 				else
@@ -170,6 +170,7 @@
 				/// Using Determinant
 				_perpendicularAxis = ((dCoord.X * dCoord2.Y) - (dCoord.Y * dCoord2.X)) / squareLength;
 
+				_isReversed = _perpendicularAxis > 0;
 				if (Math.Abs(_perpendicularAxis) < _minPerpendicularDistance)
 				{
 					_radius = 0;
@@ -189,8 +190,9 @@
 
 		private double _minPerpendicularDistance = 0.02;
 
-		public bool IsReversed => _perpendicularAxis > 0;
+		public bool IsReversed => _isReversed;
 
+		private bool _isReversed;
 
 		private double _radius;
 

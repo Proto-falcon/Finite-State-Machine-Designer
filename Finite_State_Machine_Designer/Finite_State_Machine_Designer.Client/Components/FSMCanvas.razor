@@ -207,6 +207,7 @@
 		}
 		if (_canvasElement is not null)
 			_canvasHasFocus = true;
+		await _fsmDrawer.DrawMachineAsync(_caretVisible);
 	}
 
 	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
@@ -268,10 +269,9 @@
 							break;
 					}
 				}
+				SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+				await _fsmDrawer.DrawMachineAsync(_caretVisible);
 			}
-			SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-
-			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
 	}
 
