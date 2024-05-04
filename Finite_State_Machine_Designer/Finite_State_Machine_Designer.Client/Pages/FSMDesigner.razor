@@ -103,8 +103,8 @@
 		{
 			int[] dimensions = await JsModule.InvokeAsync<int[]>("getWindowDimensions");
 
-			int width = (int)(dimensions[0] * 0.8);
-			int height = (int)(dimensions[1] * 0.8);
+			int width = (int)(dimensions[0] * 0.75);
+			int height = (int)(dimensions[1] * 0.75);
 
 			_canvasParams.TryAdd("Height", width);
 			_canvasParams.TryAdd("Width", height);
