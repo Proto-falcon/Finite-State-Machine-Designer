@@ -61,44 +61,34 @@
 
 		public StateTransition? FindTransition(CanvasCoordinate coordinate)
 		{
-			double squaredSearchRadius = _transitionSearchRadius * _transitionSearchRadius;
-			double squareDistance;
 			CanvasCoordinate dCoord;
 			foreach (StateTransition transition in _transitions)
 			{
 				if (!transition.IsCurved)
 				{
-					// mx + c = -x/m + d
-					// xm^2 + cm = -x + dm
-					// x(m^2 + 1) = dm - cm
-					// x = m(d - c)/(m^2 + 1)
-					// where c = 0, x = md/(m^2 + 1)
 					CanvasCoordinate dCoordTransition = transition.ToCoord - transition.FromCoord;
-					double gradient = dCoordTransition.Y / dCoordTransition.X;
-					double perdendicularGradient = -1 / gradient;
 					dCoord = coordinate - transition.FromCoord;
-					double yIntercept = dCoord.Y - (perdendicularGradient * dCoord.X);
-
-					double x = (gradient * yIntercept) / (Math.Pow(gradient, 2) + 1);
-					double y = gradient * x;
-					
-					squareDistance = Math.Pow(x - dCoord.X, 2) + Math.Pow(y - dCoord.Y, 2);
-					
-					if (squareDistance <= squaredSearchRadius)
+					/// Using dot product to find out what part of the line has the clicked
+					double squareDistance = (dCoordTransition.X * dCoordTransition.X) + (dCoordTransition.Y * dCoordTransition.Y);
+					double scaledLength = ((dCoord.X * dCoordTransition.X) + (dCoord.Y * dCoordTransition.Y)) / squareDistance;
+					if (scaledLength < 0 || scaledLength > 1)
+						return null;
+					/// Using determinant to find out how far away is the mouse perpendicular to the line
+					double perpendicularDistance = ((dCoord.X * dCoordTransition.Y) - (dCoord.Y * dCoordTransition.X))
+						/ Math.Sqrt(squareDistance);
+					if (Math.Abs(perpendicularDistance) <= _transitionSearchRadius)
 						return transition;
 				}
 				else
 				{
 					dCoord = new(coordinate.X - transition.CenterArc.X, coordinate.Y - transition.CenterArc.Y);
-
 					/// Calculate the distance from CentreArc is within the limits
-					squareDistance = Math.Sqrt(Math.Pow(dCoord.X, 2) + Math.Pow(dCoord.Y, 2)) - transition.Radius;
-					if (Math.Abs(squareDistance) > _transitionSearchRadius)
+					double radiiDiff = Math.Sqrt(Math.Pow(dCoord.X, 2) + Math.Pow(dCoord.Y, 2)) - transition.Radius;
+					if (Math.Abs(radiiDiff) > _transitionSearchRadius)
 						continue;
 					
 					/// Calculate the angle from centreArc to dCoord to only click the segment of the circle
 					/// between FromAngle and ToAngle.
-
 					double angle = Math.Atan2(dCoord.Y, dCoord.X);
 
 					double startAngle = transition.FromAngle;
