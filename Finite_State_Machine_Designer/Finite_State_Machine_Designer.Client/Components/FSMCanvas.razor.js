@@ -222,7 +222,7 @@ export function drawTransition(transition, colour, editable) {
 
             textAngle = (((endAngle + startAngle) / 2)) + (transition.isReversed * Math.PI);
             let cos = Math.cos(textAngle);
-            textX = transition.centerArc.x + (cos * (transition.radius + 10 + longestLine.length));
+            textX = transition.centerArc.x + (cos * (transition.radius + 5));
             textY = transition.centerArc.y + (Math.sin(textAngle) * (transition.radius + 5));
         }
         canvasCtx.stroke();
