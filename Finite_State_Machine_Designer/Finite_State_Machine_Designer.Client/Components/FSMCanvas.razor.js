@@ -33,6 +33,7 @@ class FiniteState {
     radius = 1;
     isFinalState = false;
     text = "";
+    isDrawable = false;
 
     /**
      * 
@@ -185,17 +186,27 @@ export function drawTransition(transition, colour, editable) {
         canvasCtx.strokeStyle = colour;
         canvasCtx.beginPath();
         if (!transition.isCurved) {
+            if (!transition.fromState.isDrawable) {
+                textX = transition.fromCoord.x - ((canvasCtx.measureText(longestLine).width / 2 + 20) * Math.cos(transition.angle));
+                textY = transition.fromCoord.y - ((STATETEXTNEWLINE/2) * textLines.length * Math.sin(transition.angle));
+            }
+            else {
+                let fromCoord = transition.fromCoord;
+                let toCoord = transition.toCoord;
+
+                textX = ((toCoord.x + fromCoord.x) / 2);
+                textY = ((toCoord.y + fromCoord.y) / 2);
+                /**
+                 * Gives the angle between the transition and positive y-axis
+                 * (positive y is down when dealing with position in webpages)
+                 */
+                let invertedAngle = Math.atan2(toCoord.x - fromCoord.x, toCoord.y - fromCoord.y);
+                textAngle = (transition.isReversed * Math.PI) - invertedAngle;
+            }
+
             canvasCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
             canvasCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
             arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
-
-            let fromCoord = transition.fromCoord;
-            let toCoord = transition.toCoord;
-
-            textX = ((toCoord.x + fromCoord.x) / 2);
-            textY = ((toCoord.y + fromCoord.y) / 2);
-            let invertedAngle = Math.atan2(toCoord.x - fromCoord.x, toCoord.y - fromCoord.y);
-            textAngle = (transition.isReversed * Math.PI) - invertedAngle;
         }
         else {
             let centreCoord = transition.centerArc;
@@ -218,29 +229,32 @@ export function drawTransition(transition, colour, editable) {
         canvasCtx.closePath();
         drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
 
-        let cos = Math.cos(textAngle);
-        let sin = Math.sin(textAngle);
-        let cornerPointX = (canvasCtx.measureText(longestLine).width / 2 + 5) * (cos > 0 ? 1 : -1);
-        let cornerPointY = (10 + 5) * (sin > 0 ? 1 : -1);
-        let slide = (Math.pow(sin, 41) * cornerPointX)
-            - (Math.pow(cos, 11) * cornerPointY);
-        textX += cornerPointX - sin * slide;
-        textY += cornerPointY + (cos * slide) - 0;
+        if (transition.fromState.isDrawable) {
+            let cos = Math.cos(textAngle);
+            let sin = Math.sin(textAngle);
+            let cornerPointX = (canvasCtx.measureText(longestLine).width / 2 + 5) * (cos > 0 ? 1 : -1);
+            let cornerPointY = 20 * (sin > 0 ? 1 : -1);
+            let slide = (Math.pow(sin, 41) * cornerPointX)
+                - (Math.pow(cos, 11) * cornerPointY);
+            textX += cornerPointX - sin * slide;
+            textY += cornerPointY + (cos * slide) - 0;
 
-        if (Math.abs(transition.angle) < (Math.PI / 2 - 0.3) || Math.abs(transition.angle) > (Math.PI / 2 + 0.3)) {
-            if (textAngle > 2 * Math.PI) {
-                textAngle = textAngle - Math.PI;
-            }
-            else if (textAngle > Math.PI) {
-                textAngle = Math.PI - textAngle;
-            }
-            if (textAngle > 0) {
-                vertialAlignment = CANVASTEXTVERTICAL.Down;
-            }
-            else {
-                vertialAlignment = CANVASTEXTVERTICAL.Up;
+            if (Math.abs(transition.angle) < (Math.PI / 2 - 0.3) || Math.abs(transition.angle) > (Math.PI / 2 + 0.3)) {
+                if (textAngle > 2 * Math.PI) {
+                    textAngle = textAngle - Math.PI;
+                }
+                else if (textAngle > Math.PI) {
+                    textAngle = Math.PI - textAngle;
+                }
+                if (textAngle > 0) {
+                    vertialAlignment = CANVASTEXTVERTICAL.Down;
+                }
+                else {
+                    vertialAlignment = CANVASTEXTVERTICAL.Up;
+                }
             }
         }
+
         drawCanvasText(textX, textY, colour, textLines, editable, vertialAlignment);
         return true;
     }
