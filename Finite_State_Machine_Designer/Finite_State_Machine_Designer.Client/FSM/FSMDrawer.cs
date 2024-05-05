@@ -1,4 +1,5 @@
 ﻿using Microsoft.JSInterop;
+using System.Drawing;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
@@ -81,6 +82,23 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				{
 					MinPerpendicularDistance = 0.05
 				};
+
+				if (newTransition.FromState == newTransition.ToState)
+				{
+					CanvasCoordinate stateCoord = newTransition.FromState.Coordinate;
+					double stateRadius = newTransition.FromState.Radius;
+					CanvasCoordinate dCoord = fromPos - stateCoord;
+					double angle = Math.Atan2(dCoord.Y, dCoord.X);
+
+					double circleX = stateCoord.X + (1.5 * stateRadius * Math.Cos(angle));
+					double circleY = stateCoord.Y + (1.5 * stateRadius * Math.Sin(angle));
+
+					newTransition.CenterArc = new CanvasCoordinate(circleX, circleY);
+
+					newTransition.Radius = 0.75 * stateRadius;
+					newTransition.SetSelfAngles(angle);
+				}
+
 				CanvasCoordinate fromCoord = newTransition.FromCoord;
 				CanvasCoordinate toCoord = newTransition.ToCoord;
 
@@ -145,22 +163,71 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		}
 
 		/// <summary>
-		/// Updates all the transitions connected to the <see cref="SelectedState"/>.
+		/// Updates all the transitions curvature connected to the given state.
 		/// </summary>
+		/// <param name="state">A finite state</param>
 		public void UpdateCurvedTransitions(FiniteState state)
 		{
 			List<StateTransition> transitions = fsm.FindTransitions(state, x => x.IsCurved);
 
 			foreach (var transition in transitions)
 			{
-				var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(
-					transition.FromState.Coordinate,
-					transition.ToState.Coordinate,
-					transition.Anchor);
+				if (transition.FromState != transition.ToState)
+				{
+					var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(
+						transition.FromState.Coordinate,
+						transition.ToState.Coordinate,
+						transition.Anchor);
 
-				transition.CenterArc = new CanvasCoordinate(circleX, circleY);
-				transition.Radius = circleRadius;
+					transition.CenterArc = new CanvasCoordinate(circleX, circleY);
+					transition.Radius = circleRadius;
+				}
+				else
+					UpdateSelfTransition(transition);
 			}
+		}
+
+		/// <summary>
+		/// Updates the centre arc of the transition
+		/// </summary>
+		/// <param name="transition">State transition</param>
+		public static void UpdateSelfTransition(StateTransition transition)
+		{
+			if (transition.FromState != transition.ToState)
+				return;
+
+			CanvasCoordinate stateCoord = transition.FromState.Coordinate;
+			double stateRadius = transition.FromState.Radius;
+
+			double circleX = stateCoord.X + (1.5 * stateRadius * Math.Cos(transition.Angle));
+			double circleY = stateCoord.Y + (1.5 * stateRadius * Math.Sin(transition.Angle));
+
+			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
+
+			transition.Radius = 0.75 * stateRadius;
+		}
+
+		/// <summary>
+		/// Updates all the transitions that link back to one state using the given coordinate.
+		/// </summary>
+		/// <param name="transition">A state transition that links it self</param>
+		/// <param name="coord">Coordinate that changes the orientation of the self transitions around the state</param>
+		public void UpdateSelfTransition(StateTransition transition, CanvasCoordinate coord)
+		{
+			if (transition.FromState != transition.ToState)
+				return;
+
+			CanvasCoordinate stateCoord = transition.FromState.Coordinate;
+			double stateRadius = transition.FromState.Radius;
+			CanvasCoordinate dCoord = coord - stateCoord;
+			double angle = Math.Atan2(dCoord.Y, dCoord.X);
+			transition.SetSelfAngles(angle);
+
+			double circleX = stateCoord.X + (1.5 * stateRadius * Math.Cos(transition.Angle));
+			double circleY = stateCoord.Y + (1.5 * stateRadius * Math.Sin(transition.Angle));
+
+			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
+			transition.Radius = 0.75 * stateRadius;
 		}
 
 		/// <summary>

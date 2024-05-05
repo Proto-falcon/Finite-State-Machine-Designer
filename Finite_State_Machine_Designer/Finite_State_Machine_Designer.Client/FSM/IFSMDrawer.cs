@@ -28,6 +28,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public void UpdateCurvedTransitions(FiniteState state);
 
+		public void UpdateSelfTransition(StateTransition transition, CanvasCoordinate coord);
+
 		public Task<bool> DrawMachineAsync(bool lineVisible = false);
 	}
 }

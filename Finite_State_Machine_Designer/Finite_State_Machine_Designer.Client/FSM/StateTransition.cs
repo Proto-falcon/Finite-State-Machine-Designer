@@ -57,22 +57,28 @@
 		{
 			get
 			{
+				double x;
+				double y;
 				if (!IsCurved)
 				{
 					float radius = 1;
 					if (_toState.Radius > 0)
 						radius = _toState.Radius;
-					double y = (Math.Sin(Angle + Math.PI) * radius) + _toState.Coordinate.Y;
-					double x = (Math.Cos(Angle + Math.PI) * radius) + _toState.Coordinate.X;
-					return new(x, y);
+					x = (Math.Cos(Angle + Math.PI) * radius) + _toState.Coordinate.X;
+					y = (Math.Sin(Angle + Math.PI) * radius) + _toState.Coordinate.Y;
+				}
+				else if (_fromState == _toState)
+				{
+					x = _toState.Coordinate.X + (1.5 * _toState.Radius * 1);
+					y = _toState.Coordinate.Y + (1.5 * _toState.Radius * 1);
 				}
 				else
 				{
 					double toAngle = ToAngle;
-					double x = _centerArc.X + (_radius * Math.Cos(toAngle));
-					double y = _centerArc.Y + (_radius + Math.Sin(toAngle));
-					return new(x, y);
+					x = _centerArc.X + (_radius * Math.Cos(toAngle));
+					y = _centerArc.Y + (_radius + Math.Sin(toAngle));
 				}
+				return new(x, y);
 			}
 			set => _toState.Coordinate = value;
 		}
@@ -88,16 +94,26 @@
 			{
 				if (IsCurved)
 				{
-					CanvasCoordinate fromCoord = _fromState.Coordinate;
-					double fromAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
-					/// 2 * Math.Asin(_fromState.Radius / (_radius * 2)) ≈ _fromState.Radius / _radius 
-					/// ≈ angle of the segment by around 3 sig figures
-					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
-					return fromAngle + ((IsReversed ? -1 : 1) * (_fromState.Radius / _radius));
+					if (_fromState != _toState)
+					{
+						CanvasCoordinate fromCoord = _fromState.Coordinate;
+						double fromAngle = Math.Atan2(fromCoord.Y - _centerArc.Y, fromCoord.X - _centerArc.X);
+						/// 2 * Math.Asin(_fromState.Radius / (_radius * 2)) ≈ _fromState.Radius / _radius 
+						/// ≈ angle of the segment by around 3 sig figures
+						/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
+						return fromAngle + ((IsReversed ? -1 : 1) * (_fromState.Radius / _radius));
+					}
+					else
+						return _selfFromAngle;
 				}
 				return Angle;
 			}
 		}
+
+		/// <summary>
+		/// Angle from the state when the transitions links the same finite state.
+		/// </summary>
+		private double _selfFromAngle;
 
 		/// <summary>
 		/// Uses one of the formula of a
@@ -110,27 +126,57 @@
 			{
 				if (IsCurved)
 				{
-					CanvasCoordinate toCoord = _toState.Coordinate;
-					double toAngle = Math.Atan2(toCoord.Y - _centerArc.Y, toCoord.X - _centerArc.X);
-					/// 2 * Math.Asin(_toState.Radius / (_radius * 2)) ≈ _toState.Radius / _radius 
-					/// ≈ angle of the segment by around 3 sig figures
-					/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
-					return toAngle - ((IsReversed ? -1 : 1) * (_toState.Radius / _radius));
+					if (_fromState != _toState)
+					{
+						CanvasCoordinate toCoord = _toState.Coordinate;
+						double toAngle = Math.Atan2(toCoord.Y - _centerArc.Y, toCoord.X - _centerArc.X);
+						/// 2 * Math.Asin(_toState.Radius / (_radius * 2)) ≈ _toState.Radius / _radius 
+						/// ≈ angle of the segment by around 3 sig figures
+						/// This is due to numbers less than 10^-3 stop making noticable differences on the canvas.
+						return toAngle - ((IsReversed ? -1 : 1) * (_toState.Radius / _radius));
+					}
+					else
+						return _selfToAngle;
 				}
 				return Angle;
 			}
 		}
 
 		/// <summary>
+		/// Angle to the state when the transitions links the same finite state.
+		/// </summary>
+		private double _selfToAngle;
+
+		public void SetSelfAngles(double angle)
+		{
+			_selfAngle = angle + _selfAngleOffset;
+			double angleOffset = Math.PI * 0.8;
+			_selfFromAngle = _selfAngle - angleOffset;
+			_selfToAngle = _selfAngle + angleOffset;
+		}
+
+		/// <summary>
 		/// Anti-clockwise angle between the coordinates of <see cref="FromState"/> and the <see cref="ToState"/>.
+		/// <para>If a self transition it represents the anti-clockwise angle from state to <see cref="CenterArc"/></para>
 		/// </summary>
 		public double Angle
 		{
 			get
 			{
-				CanvasCoordinate dCoord = _toState.Coordinate - _fromState.Coordinate;
-				return Math.Atan2(dCoord.Y, dCoord.X);
+				if (_fromState != _toState)
+				{
+					CanvasCoordinate dCoord = _toState.Coordinate - _fromState.Coordinate;
+					return Math.Atan2(dCoord.Y, dCoord.X);
+				}
+				return _selfAngle;
 			}
+		}
+
+		private double _selfAngle;
+		private double _selfAngleOffset;
+		public double SetSelfAngleOffset
+		{
+			set => _selfAngleOffset = _selfAngle - value;
 		}
 
 		private CanvasCoordinate _centerArc;
@@ -202,7 +248,7 @@
 			set => _radius = value;
 		}
 
-		public bool IsCurved => Math.Abs(_perpendicularAxis) >=  0.02;
+		public bool IsCurved => Math.Abs(_perpendicularAxis) >=  0.02 || _fromState == _toState;
 
 		private string _text = string.Empty;
 

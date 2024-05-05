@@ -159,11 +159,9 @@
 		}
 	}
 
-	private void SetLastCoords(double x, double y) => _lastMousePos = new((int)x, (int)y);
-
 	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
-		SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+		_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 
 		if (CheckJsModule(JsModule))
 		{
@@ -185,7 +183,15 @@
 					ToggleResizeState(_fsmDrawer.SelectedState);
 
 					if (_fsmDrawer.SelectedState is null)
-						_fsmDrawer.SelectedTransition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
+					{
+						StateTransition? transition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
+						if (transition != null && transition.FromState == transition.ToState)
+						{
+							CanvasCoordinate dCoord = _lastMousePos - transition.FromState.Coordinate;
+							transition.SetSelfAngleOffset = Math.Atan2(dCoord.Y, dCoord.X);
+						}
+						_fsmDrawer.SelectedTransition = transition;
+					}
 					else
 						_fsmDrawer.SelectedTransition = null;
 					break;
@@ -198,7 +204,8 @@
 						);
 					else
 						existingTransition = await _fsmDrawer.CreateTransitionAsync(
-							fromState: fromState, toState: fromState
+							_lastMousePos, _lastMousePos,
+							fromState, fromState
 						);
 
 					_fsmDrawer.SelectedTransition = existingTransition;
@@ -229,47 +236,60 @@
 							+ Math.Pow(mouseEventArgs.OffsetY - coords.Y, 2)
 						);
 						_fsmDrawer.SelectedState.Radius = newRadius;
+						_fsmDrawer.UpdateCurvedTransitions(_fsmDrawer.SelectedState);
 					}
 					else if (mouseEventArgs.Buttons <= 3)
 					{
 						CanvasCoordinate newCoord = new(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 						_fsmDrawer.MoveState(_fsmDrawer.SelectedState, newCoord, _lastMousePos);
-						List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(_fsmDrawer.SelectedState);
-						if (transitions.Count > 0)
-						{
-							foreach (var transition in transitions)
-								if (!transition.FromState.IsDrawable)
-									_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
-								else
-									_fsmDrawer.UpdateCurvedTransitions(_fsmDrawer.SelectedState);
-						}
+						List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(
+							_fsmDrawer.SelectedState, x => !x.FromState.IsDrawable);
+						foreach (var transition in transitions)
+							// Moves the non-drawable states from incoming transitions
+							_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
+
+						_fsmDrawer.UpdateCurvedTransitions(_fsmDrawer.SelectedState);
 					}
 				}
 				else if (_fsmDrawer.SelectedTransition is not null)
 				{
-					CanvasCoordinate newCoord = new((int)mouseEventArgs.OffsetX, (int)mouseEventArgs.OffsetY);
+					CanvasCoordinate newCoord = new(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+					FiniteState fromState = _fsmDrawer.SelectedTransition.FromState;
+					FiniteState toState = _fsmDrawer.SelectedTransition.ToState;
 					switch (mouseEventArgs.ShiftKey)
 					{
 						case false:
-							if (_fsmDrawer.SelectedTransition.FromState.IsDrawable
-								&& _fsmDrawer.SelectedTransition.ToState.IsDrawable)
-								_fsmDrawer.CurveTransition(_lastMousePos, _fsmDrawer.SelectedTransition);
-							else if (!_fsmDrawer.SelectedTransition.FromState.IsDrawable)
+							if (fromState.IsDrawable && toState.IsDrawable)
+								if (fromState != toState)
+								{
+									_fsmDrawer.CurveTransition(_lastMousePos, _fsmDrawer.SelectedTransition);
+								}
+								else
+								{
+									_fsmDrawer.UpdateSelfTransition(_fsmDrawer.SelectedTransition, newCoord);
+								}
+							else if (!fromState.IsDrawable)
+							{
 								_fsmDrawer.SelectedTransition.FromCoord = newCoord;
+							}
 							break;
 						case true:
 							FiniteState? tempToState = _fsmDrawer.FSM.FindState(newCoord);
 							if (tempToState is not null)
-								_fsmDrawer.SelectedTransition.ToState = tempToState;
+							{
+								toState = tempToState;
+								if (tempToState == fromState)
+									_fsmDrawer.UpdateSelfTransition(_fsmDrawer.SelectedTransition, newCoord);
+							}
 							else
 							{
 								FiniteState emptyState = new(newCoord, 0) { IsDrawable = false };
-								_fsmDrawer.SelectedTransition.ToState = emptyState;
+								toState = emptyState;
 							}
 							break;
 					}
 				}
-				SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+				_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 				await _fsmDrawer.DrawMachineAsync(_caretVisible);
 			}
 		}
@@ -277,7 +297,7 @@
 
 	private void MouseUpHandler(MouseEventArgs mouseEventArgs)
 	{
-		SetLastCoords(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
+		_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 		FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
 		if (_fsmDrawer.SelectedTransition is not null)
 		{
