@@ -288,6 +288,8 @@
 							}
 							break;
 					}
+					_fsmDrawer.SelectedTransition.FromState = fromState;
+					_fsmDrawer.SelectedTransition.ToState = toState;
 				}
 				_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 				await _fsmDrawer.DrawMachineAsync(_caretVisible);
