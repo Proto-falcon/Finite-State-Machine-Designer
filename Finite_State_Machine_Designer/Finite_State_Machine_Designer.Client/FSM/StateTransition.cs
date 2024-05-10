@@ -21,6 +21,7 @@
 		/// of the state's <see cref="FiniteState.Radius"/>.
 		/// <para>Note: If the <see cref="FromState"/> is <see langword="null"/>
 		/// then it will return coordinates (0, 0)</para>
+		/// Writing to it will update the from state coordinate.
 		/// </summary>
 		public CanvasCoordinate FromCoord
 		{
@@ -52,6 +53,7 @@
 		/// of the state's <see cref="FiniteState.Radius"/>.
 		/// <para>Note: If the <see cref="ToState"/> is <see langword="null"/>
 		/// then it will return coordinates (0, 0)</para>
+		/// Writing to it will update the to state coordinate.
 		/// </summary>
 		public CanvasCoordinate ToCoord
 		{
@@ -147,14 +149,6 @@
 		/// </summary>
 		private double _selfToAngle;
 
-		public void SetSelfAngles(double angle)
-		{
-			_selfAngle = angle + _selfAngleOffset;
-			double angleOffset = Math.PI * 0.8;
-			_selfFromAngle = _selfAngle - angleOffset;
-			_selfToAngle = _selfAngle + angleOffset;
-		}
-
 		/// <summary>
 		/// Anti-clockwise angle between the coordinates of <see cref="FromState"/> and the <see cref="ToState"/>.
 		/// <para>If a self transition it represents the anti-clockwise angle from state to <see cref="CenterArc"/></para>
@@ -173,10 +167,19 @@
 		}
 
 		private double _selfAngle;
-		private double _selfAngleOffset;
-		public double SetSelfAngleOffset
+		/// <summary>
+		/// Sets the offset of the transition linking back to a state
+		/// </summary>
+		public double SelfAngle
 		{
-			set => _selfAngleOffset = _selfAngle - value;
+			get => _selfAngle;
+			set
+			{
+				_selfAngle = value;
+				double angleOffset = Math.PI * 0.8;
+				_selfFromAngle = _selfAngle - angleOffset;
+				_selfToAngle = _selfAngle + angleOffset;
+			}
 		}
 
 		private CanvasCoordinate _centerArc;
@@ -185,10 +188,16 @@
 		{
 			get
 			{
+				if (_fromState == _toState)
+				{
+					double circleX = _fromState.Coordinate.X + (1.5 * _fromState.Radius * Math.Cos(_selfAngle));
+					double circleY = _fromState.Coordinate.Y + (1.5 * _fromState.Radius * Math.Sin(_selfAngle));
+
+					return new CanvasCoordinate(circleX, circleY);
+				}
 				if (IsCurved)
 					return _centerArc;
-				else
-					return default;
+				return default;
 			}
 			set => _centerArc = value;
 		}
@@ -244,7 +253,12 @@
 
 		public double Radius
 		{
-			get => _radius;
+			get
+			{
+				if (_fromState != _toState)
+					return _radius;
+				return 0.75 * _fromState.Radius;
+			}
 			set => _radius = value;
 		}
 

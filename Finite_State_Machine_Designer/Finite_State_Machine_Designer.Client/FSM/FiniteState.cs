@@ -32,9 +32,6 @@
 			set => _text = value;
 		}
 
-		public override int GetHashCode() =>
-			HashCode.Combine(coordinate, _isFinalState, _text);
-
 		public override string ToString() => 
 			$"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
 	}

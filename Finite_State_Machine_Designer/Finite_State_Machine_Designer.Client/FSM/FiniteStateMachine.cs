@@ -68,11 +68,11 @@
 				{
 					CanvasCoordinate dCoordTransition = transition.ToCoord - transition.FromCoord;
 					dCoord = coordinate - transition.FromCoord;
-					/// Using dot product to find out what part of the line has the clicked
+					/// Using dot product to find out what part of the line has been clicked
 					double squareDistance = (dCoordTransition.X * dCoordTransition.X) + (dCoordTransition.Y * dCoordTransition.Y);
 					double scaledLength = ((dCoord.X * dCoordTransition.X) + (dCoord.Y * dCoordTransition.Y)) / squareDistance;
 					if (scaledLength < 0 || scaledLength > 1)
-						return null;
+						continue;
 					/// Using determinant to find out how far away is the mouse perpendicular to the line
 					double perpendicularDistance = ((dCoord.X * dCoordTransition.Y) - (dCoord.Y * dCoordTransition.X))
 						/ Math.Sqrt(squareDistance);
@@ -112,10 +112,9 @@
 			return null;
 		}
 
-		public List<StateTransition> FindTransitions(FiniteState state, Predicate<StateTransition>? filter = null)
+		public List<StateTransition> FindTransitions(FiniteState? state, Predicate<StateTransition>? filter = null)
 		{
-			if (filter is null)
-				filter = x => true;
+			filter ??= x => true;
 
 			return _transitions
 				.Where(x => (x.FromState == state || x.ToState == state) && filter(x))

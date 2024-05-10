@@ -162,7 +162,6 @@
 	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
 		_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-
 		if (CheckJsModule(JsModule))
 		{
 			FiniteState? existingState = null;
@@ -181,17 +180,9 @@
 					_fsmDrawer.SelectedState = existingState;
 
 					ToggleResizeState(_fsmDrawer.SelectedState);
-
+					
 					if (_fsmDrawer.SelectedState is null)
-					{
-						StateTransition? transition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
-						if (transition != null && transition.FromState == transition.ToState)
-						{
-							CanvasCoordinate dCoord = _lastMousePos - transition.FromState.Coordinate;
-							transition.SetSelfAngleOffset = Math.Atan2(dCoord.Y, dCoord.X);
-						}
-						_fsmDrawer.SelectedTransition = transition;
-					}
+						_fsmDrawer.SelectedTransition = _fsmDrawer.FSM.FindTransition(_lastMousePos);
 					else
 						_fsmDrawer.SelectedTransition = null;
 					break;
@@ -212,6 +203,10 @@
 					break;
 			}
 		}
+		/// Implement self angles snapping at right angles (π/2 rads)
+		/// And fix self angles not moving as previously.
+		/// Snapping for finite states and incoming transitions works
+		_fsmDrawer.LastMouseDownCoord = _lastMousePos;
 		if (_canvasElement is not null)
 			_canvasHasFocus = true;
 		await _fsmDrawer.DrawMachineAsync(_caretVisible);
@@ -241,12 +236,12 @@
 					else if (mouseEventArgs.Buttons <= 3)
 					{
 						CanvasCoordinate newCoord = new(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
-						_fsmDrawer.MoveState(_fsmDrawer.SelectedState, newCoord, _lastMousePos);
-						List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(
-							_fsmDrawer.SelectedState, x => !x.FromState.IsDrawable);
-						foreach (var transition in transitions)
-							// Moves the non-drawable states from incoming transitions
-							_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
+						_fsmDrawer.MoveState(_fsmDrawer.SelectedState, newCoord, _lastMousePos, true);
+						// List<StateTransition> transitions = _fsmDrawer.FSM.FindTransitions(
+						// 	_fsmDrawer.SelectedState, x => !x.FromState.IsDrawable);
+						// foreach (var transition in transitions)
+						// 	// Moves the non-drawable states from incoming transitions
+						// 	_fsmDrawer.MoveState(transition.FromState, newCoord, _lastMousePos);
 
 						_fsmDrawer.UpdateCurvedTransitions(_fsmDrawer.SelectedState);
 					}
@@ -271,6 +266,7 @@
 							else if (!fromState.IsDrawable)
 							{
 								_fsmDrawer.SelectedTransition.FromCoord = newCoord;
+								_fsmDrawer.SnapState(_fsmDrawer.SelectedTransition.FromState, _fsmDrawer.SelectedTransition.ToState);
 							}
 							break;
 						case true:

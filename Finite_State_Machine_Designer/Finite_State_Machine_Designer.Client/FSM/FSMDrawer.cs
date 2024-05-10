@@ -1,5 +1,4 @@
 ﻿using Microsoft.JSInterop;
-using System.Drawing;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
@@ -9,6 +8,26 @@ namespace Finite_State_Machine_Designer.Client.FSM
         private IJSObjectReference? _jsModule;
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
+		private int _snapPadding = 6;
+
+		public CanvasCoordinate LastMouseDownCoord
+		{
+			get => _lastMouseDownCoord;
+			set
+			{
+				_lastMouseDownCoord = value;
+				if (_selectedState is not null)
+					_selectedStateCoordOffset = _selectedState.Coordinate - _lastMouseDownCoord;
+				else if (_selectedTransition is not null && _selectedTransition.FromState == _selectedTransition.ToState)
+				{
+					CanvasCoordinate dCoord = _lastMouseDownCoord - _selectedTransition.FromState.Coordinate;
+					_selfTransitionAngleOffset = _selectedTransition.SelfAngle - Math.Atan2(dCoord.Y, dCoord.X);
+				}
+			}
+		}
+		private CanvasCoordinate _lastMouseDownCoord;
+		private CanvasCoordinate _selectedStateCoordOffset;
+		private double _selfTransitionAngleOffset;
 
 		public FiniteState? SelectedState
 		{
@@ -63,9 +82,22 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return null;
 		}
 
-		public void MoveState(FiniteState state, CanvasCoordinate newCoord, CanvasCoordinate lastCoord)
+		public void MoveState(FiniteState state, CanvasCoordinate newCoord, CanvasCoordinate lastCoord, bool snapState = false)
 		{
-			state.Coordinate += newCoord - lastCoord;
+			state.Coordinate = newCoord + _selectedStateCoordOffset;
+
+			if (snapState)
+				SnapState(state);
+
+			List<StateTransition> transitions = fsm.FindTransitions(
+						_selectedState, x => !x.FromState.IsDrawable);
+			CanvasCoordinate dCoord = newCoord - lastCoord;
+			foreach (var transition in transitions)
+			{
+				// Moves the non-drawable states from incoming transitions
+				transition.FromState.Coordinate += dCoord;
+				SnapState(transition.FromState, transition.ToState);
+			}
 		}
 
 		public async Task<StateTransition?> CreateTransitionAsync(
@@ -86,17 +118,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				if (newTransition.FromState == newTransition.ToState)
 				{
 					CanvasCoordinate stateCoord = newTransition.FromState.Coordinate;
-					double stateRadius = newTransition.FromState.Radius;
 					CanvasCoordinate dCoord = fromPos - stateCoord;
 					double angle = Math.Atan2(dCoord.Y, dCoord.X);
-
-					double circleX = stateCoord.X + (1.5 * stateRadius * Math.Cos(angle));
-					double circleY = stateCoord.Y + (1.5 * stateRadius * Math.Sin(angle));
-
-					newTransition.CenterArc = new CanvasCoordinate(circleX, circleY);
-
-					newTransition.Radius = 0.75 * stateRadius;
-					newTransition.SetSelfAngles(angle);
+					newTransition.SelfAngle = angle;
 				}
 
 				CanvasCoordinate fromCoord = newTransition.FromCoord;
@@ -182,29 +206,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					transition.CenterArc = new CanvasCoordinate(circleX, circleY);
 					transition.Radius = circleRadius;
 				}
-				else
-					UpdateSelfTransition(transition);
 			}
-		}
-
-		/// <summary>
-		/// Updates the centre arc of the transition
-		/// </summary>
-		/// <param name="transition">State transition</param>
-		public static void UpdateSelfTransition(StateTransition transition)
-		{
-			if (transition.FromState != transition.ToState)
-				return;
-
-			CanvasCoordinate stateCoord = transition.FromState.Coordinate;
-			double stateRadius = transition.FromState.Radius;
-
-			double circleX = stateCoord.X + (1.5 * stateRadius * Math.Cos(transition.Angle));
-			double circleY = stateCoord.Y + (1.5 * stateRadius * Math.Sin(transition.Angle));
-
-			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
-
-			transition.Radius = 0.75 * stateRadius;
 		}
 
 		/// <summary>
@@ -218,16 +220,16 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				return;
 
 			CanvasCoordinate stateCoord = transition.FromState.Coordinate;
-			double stateRadius = transition.FromState.Radius;
 			CanvasCoordinate dCoord = coord - stateCoord;
-			double angle = Math.Atan2(dCoord.Y, dCoord.X);
-			transition.SetSelfAngles(angle);
+			double angle = Math.Atan2(dCoord.Y, dCoord.X) + _selfTransitionAngleOffset;
 
-			double circleX = stateCoord.X + (1.5 * stateRadius * Math.Cos(transition.Angle));
-			double circleY = stateCoord.Y + (1.5 * stateRadius * Math.Sin(transition.Angle));
+			/// Round the divided number to get an integer multiple of π/2
+			/// to be mulitplied to get the angle at right angles.
+			var snap = Math.Round(angle / (Math.PI/2)) * (Math.PI/2);
+			if (Math.Abs(angle - snap) < 0.1)
+				angle = snap;
 
-			transition.CenterArc = new CanvasCoordinate(circleX, circleY);
-			transition.Radius = 0.75 * stateRadius;
+			transition.SelfAngle = angle;
 		}
 
 		/// <summary>
@@ -272,6 +274,68 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			double circleRadius = Math.Sqrt((circleX * circleX) + (circleY * circleY) + (c / a));
 
 			return new Tuple<double, double, double>(circleX, circleY, circleRadius);
+		}
+
+		/// <summary>
+		/// Snaps a state to any other states x or y coordinates.
+		/// </summary>
+		/// <param name="state">A finite state.</param>
+		public void SnapState(FiniteState state)
+		{
+			bool xSnapped = false;
+			bool ySnapped = false;
+
+			double x = state.Coordinate.X;
+			double y = state.Coordinate.Y;
+
+			foreach (var otherState in fsm.States)
+			{
+				if (state == otherState)
+					continue;
+
+				if (Math.Abs(state.Coordinate.X - otherState.Coordinate.X) < _snapPadding)
+				{
+					x = otherState.Coordinate.X;
+					xSnapped = true;
+				}
+
+				if (Math.Abs(state.Coordinate.Y - otherState.Coordinate.Y) < _snapPadding)
+				{
+					y = otherState.Coordinate.Y;
+					ySnapped = true;
+				}
+
+				if (xSnapped && ySnapped)
+					break;
+			}
+
+			state.Coordinate = new CanvasCoordinate(x, y);
+		}
+
+		/// <summary>
+		/// Snaps the first state to the others states x or y coordinates.
+		/// </summary>
+		/// <param name="state">First finite state</param>
+		/// <param name="otherState">Second finite state</param>
+		public void SnapState(FiniteState state, FiniteState otherState)
+		{
+			if (state == otherState)
+				return;
+
+			double x = state.Coordinate.X;
+			double y = state.Coordinate.Y;
+
+			if (Math.Abs(state.Coordinate.X - otherState.Coordinate.X) < _snapPadding)
+			{
+				x = otherState.Coordinate.X;
+			}
+
+			if (Math.Abs(state.Coordinate.Y - otherState.Coordinate.Y) < _snapPadding)
+			{
+				y = otherState.Coordinate.Y;
+			}
+
+			state.Coordinate = new CanvasCoordinate(x, y);
 		}
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
