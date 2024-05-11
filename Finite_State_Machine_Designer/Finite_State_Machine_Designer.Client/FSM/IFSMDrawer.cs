@@ -5,7 +5,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public interface IFSMDrawer
 	{
-		public IFiniteStateMachine FSM { get; }
+		public IFiniteStateMachine FSM { get; set; }
 
 		public FiniteState? SelectedState { get; set; }
 

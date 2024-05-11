@@ -32,6 +32,24 @@
 			set => _text = value;
 		}
 
+		public static bool operator ==(FiniteState? state, FiniteState? other) =>
+			state?.GetHashCode() == other?.GetHashCode();
+
+		public static bool operator !=(FiniteState? state, FiniteState? other) =>
+			state?.GetHashCode() != other?.GetHashCode();
+
+		public override bool Equals(object? obj)
+		{
+			if (obj is FiniteState state)
+				return GetHashCode() == state.GetHashCode();
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(coordinate, radius, _isFinalState, _text);
+		}
+
 		public override string ToString() => 
 			$"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
 	}

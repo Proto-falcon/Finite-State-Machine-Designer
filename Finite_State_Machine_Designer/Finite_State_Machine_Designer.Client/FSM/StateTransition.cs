@@ -45,7 +45,6 @@
 					return new (x, y);
 				}
 			}
-			set => _fromState.Coordinate = value;
 		}
 
 		/// <summary>
@@ -82,7 +81,6 @@
 				}
 				return new(x, y);
 			}
-			set => _toState.Coordinate = value;
 		}
 
 		/// <summary>
@@ -211,30 +209,22 @@
 				return new (_fromState.Coordinate.X + (dCoord.X * _parallelAxis) - (dCoord.Y * _perpendicularAxis),
 					_fromState.Coordinate.Y + (dCoord.Y * _parallelAxis) + (dCoord.X * _perpendicularAxis));
 			}
-			set
-			{
-				CanvasCoordinate dCoord = new (_toState.Coordinate.X - _fromState.Coordinate.X,
-					_toState.Coordinate.Y - _fromState.Coordinate.Y);
-				double squareLength = (dCoord.X * dCoord.X) + (dCoord.Y * dCoord.Y);
+		}
 
-				CanvasCoordinate dCoord2 = new (value.X - _fromState.Coordinate.X,
-					value.Y - _fromState.Coordinate.Y);
-
-				/// Using Dot Product
-				_parallelAxis = ((dCoord.X*dCoord2.X) + (dCoord.Y*dCoord2.Y)) / squareLength;
-				/// Using Determinant
-				_perpendicularAxis = ((dCoord.X * dCoord2.Y) - (dCoord.Y * dCoord2.X)) / squareLength;
-
-				_isReversed = _perpendicularAxis > 0;
-				if (Math.Abs(_perpendicularAxis) < _minPerpendicularDistance)
-				{
-					_radius = 0;
-					_perpendicularAxis = 0;
-				}
-			}
+		public double ParallelAxis
+		{
+			get => _parallelAxis;
+			set => _parallelAxis = value;
 		}
 
 		private double _parallelAxis;
+
+		public double PerpendicularAxis
+		{
+			get => _perpendicularAxis;
+			set => _perpendicularAxis = value;
+		}
+
 		private double _perpendicularAxis;
 
 		public double MinPerpendicularDistance
@@ -245,9 +235,7 @@
 
 		private double _minPerpendicularDistance = 0.02;
 
-		public bool IsReversed => _isReversed;
-
-		private bool _isReversed;
+		public bool IsReversed { get; set; }
 
 		private double _radius;
 

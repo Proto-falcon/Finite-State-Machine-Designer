@@ -1,6 +1,4 @@
-﻿const CANVASWIDTHRATIO = 0.8;
-const CANVASHEIGHTRATIO = 0.8;
-const STATETEXTNEWLINE = 20;
+﻿const STATETEXTNEWLINE = 20;
 const CANVASTEXTFONTSTYLE = '20px "Times New Roman", serif';
 const FINALSTATECIRCLERATIO = 0.8;
 
@@ -118,19 +116,6 @@ export function clearCanvas() {
         return true;
     }
     return false;
-}
-
-/**
- * Updates the canvas dimensions when the window size changes
- * @param {Event} event
- */
-function updateCanvasDimensions(event) {
-    if (checkCanvas()) {
-        canvasCtx.canvas.height = window.outerHeight * CANVASHEIGHTRATIO;
-        canvasCtx.canvas.width = window.outerWidth * CANVASWIDTHRATIO;
-
-        canvasCtx.font = CANVASTEXTFONTSTYLE;
-    }
 }
 
 /**
@@ -354,5 +339,15 @@ function drawArrow(x, y, angle, colour) {
     canvasCtx.fill();
 }
 
-addEventListener("resize", updateCanvasDimensions);
-//addEventListener("visibilitychange");
+/**
+ * Saves the finite state machine to local storage
+ * @param {*} fsm 
+ */
+export function saveFSM(fsm) {
+    localStorage["fsm"] = JSON.stringify(fsm);
+}
+
+export function loadFSM() {
+    let fsm = JSON.parse(localStorage["fsm"]);
+    return fsm;
+}

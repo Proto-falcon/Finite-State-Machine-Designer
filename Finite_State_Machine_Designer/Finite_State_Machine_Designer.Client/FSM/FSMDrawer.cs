@@ -9,6 +9,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
 		private int _snapPadding = 6;
+		private double _minPerpendicularDistance = 0.05;
 
 		public CanvasCoordinate LastMouseDownCoord
 		{
@@ -43,7 +44,14 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		}
 		private StateTransition? _selectedTransition;
 
-		public IFiniteStateMachine FSM { get => fsm; }
+		public IFiniteStateMachine FSM
+		{
+			get => fsm;
+			set
+			{
+				fsm = value;
+			}
+		}
 
 		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff")
 		{
@@ -112,7 +120,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 				StateTransition newTransition = new(fromState, toState)
 				{
-					MinPerpendicularDistance = 0.05
+					MinPerpendicularDistance = _minPerpendicularDistance
 				};
 
 				if (newTransition.FromState == newTransition.ToState)
@@ -172,13 +180,33 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// <see langword="true"/> to calculate the actual angle.</param>
 		public void CurveTransition(CanvasCoordinate coord, StateTransition transition)
 		{
-			transition.Anchor = coord;
+			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
+			CanvasCoordinate toCoord = transition.ToState.Coordinate;
+
+			CanvasCoordinate dCoord = new(fromCoord.X - fromCoord.X,
+					toCoord.Y - fromCoord.Y);
+			double squareLength = (dCoord.X * dCoord.X) + (dCoord.Y * dCoord.Y);
+
+			CanvasCoordinate dCoord2 = new(coord.X - fromCoord.X,
+				coord.Y - fromCoord.Y);
+
+			/// Using Dot Product
+			transition.ParallelAxis = ((dCoord.X * dCoord2.X) + (dCoord.Y * dCoord2.Y)) / squareLength;
+			/// Using Determinant
+			transition.PerpendicularAxis = ((dCoord.X * dCoord2.Y) - (dCoord.Y * dCoord2.X)) / squareLength;
+
+			transition.IsReversed = transition.PerpendicularAxis > 0;
+			if (Math.Abs(transition.PerpendicularAxis) < _minPerpendicularDistance)
+			{
+				transition.Radius = 0;
+				transition.PerpendicularAxis = 0;
+			}
+
+			//transition.Anchor = coord;
 
 			if (!transition.IsCurved)
 				return;
 
-			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
-			CanvasCoordinate toCoord = transition.ToState.Coordinate;
 
 			var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(fromCoord, toCoord, transition.Anchor);
 

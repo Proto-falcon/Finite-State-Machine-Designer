@@ -2,13 +2,13 @@
 {
 	public interface IFiniteStateMachine
 	{
-		public List<FiniteState> States { get; }
+		public List<FiniteState> States { get; set; }
 
 		public List<FiniteState> FinalStates { get; }
 
 		public List<FiniteState> InitialStates { get; }
 		
-		public List<StateTransition> Transitions { get; }
+		public List<StateTransition> Transitions { get; set; }
 
 		public int TransitionSearchRadius { get; set; }
 
