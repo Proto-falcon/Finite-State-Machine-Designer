@@ -8,16 +8,13 @@
 @inject ILogger<FSMCanvas> _logger
 
 <div class="center canvas-top-buttons">
-	<!--Export as:
-	<a href="javascript:saveAsPNG()"
-	   download>PNG</a>
+	Export as:
+	<button @onclick="SaveAsPNG">PNG</button>
 	   |
-	<a href="javascript:saveAsSVG()"
-	   download>SVG</a>
+	<a href="javascript:saveAsSVG()">SVG</a>
 	   |
-	<a href="javascript:saveAsLaTeX()"
-	   download>LaTeX</a>
-	-->
+	<a href="javascript:saveAsLaTeX()">LaTeX</a>
+	
 	<button title="ctrl+."
 		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
 		@onclick="ToggleSuperScriptHandler"
@@ -164,7 +161,7 @@
 		}
 	}
 
-	private async Task MouseDownHandler(MouseEventArgs mouseEventArgs)
+	private async void MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
 		_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 		if (CheckJsModule(JsModule))
@@ -217,7 +214,7 @@
 		await _fsmDrawer.DrawMachineAsync(_caretVisible);
 	}
 
-	private async Task MoveMouseHandler(MouseEventArgs mouseEventArgs)
+	private async void MoveMouseHandler(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(JsModule))
 		{
@@ -307,7 +304,7 @@
 		}
 	}
 
-	private async Task KeyHandler(KeyboardEventArgs keyboardEventArgs)
+	private async void KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
 		if (CheckJsModule(JsModule))
 		{
@@ -331,7 +328,7 @@
 		_subScriptMode = !_subScriptMode;
 	}
 
-	private async Task DeselectState(FocusEventArgs focusEventArgs)
+	private async void DeselectState(FocusEventArgs focusEventArgs)
 	{
 		_fsmDrawer.SelectedState = null;
 		_caretVisible = false;
@@ -341,6 +338,28 @@
 
 		await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		_logger.LogInformation("Canvas isn't the focused element in the page.");
+	}
+
+	private async void SaveAsPNG(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+			await JsModule.InvokeVoidAsync("SaveAsPNG", _fsmDrawer.FSM, _stateColour);
+	}
+
+	private async void SaveAsSvg(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+		{
+
+		}
+	}
+
+	private async void SaveAsLatex(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+		{
+
+		}
 	}
 
 	async ValueTask IAsyncDisposable.DisposeAsync()

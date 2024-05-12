@@ -17,14 +17,14 @@ namespace Finite_State_Machine_Designer.Client.Components
 		/// </returns>
 		private async Task<bool> DrawStateOrFinal(FiniteState? existingState)
 		{
-			CanvasCoordinate? createdCoords = null;
+			CanvasCoordinate? createdCoords;
 			if (existingState == null)
 			{
 				createdCoords = await _fsmDrawer.CreateStateAsync(
 					_lastMousePos,
 					_defalutStateRadius
 				);
-				if (!(createdCoords is not null))
+				if (createdCoords is null)
 				{
 					_logger.LogError("State to be created at {Coordinate} failed to be created", createdCoords);
 					return false;

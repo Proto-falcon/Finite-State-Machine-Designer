@@ -21,7 +21,6 @@
 		/// of the state's <see cref="FiniteState.Radius"/>.
 		/// <para>Note: If the <see cref="FromState"/> is <see langword="null"/>
 		/// then it will return coordinates (0, 0)</para>
-		/// Writing to it will update the from state coordinate.
 		/// </summary>
 		public CanvasCoordinate FromCoord
 		{
@@ -52,7 +51,6 @@
 		/// of the state's <see cref="FiniteState.Radius"/>.
 		/// <para>Note: If the <see cref="ToState"/> is <see langword="null"/>
 		/// then it will return coordinates (0, 0)</para>
-		/// Writing to it will update the to state coordinate.
 		/// </summary>
 		public CanvasCoordinate ToCoord
 		{
@@ -67,11 +65,6 @@
 						radius = _toState.Radius;
 					x = (Math.Cos(Angle + Math.PI) * radius) + _toState.Coordinate.X;
 					y = (Math.Sin(Angle + Math.PI) * radius) + _toState.Coordinate.Y;
-				}
-				else if (_fromState == _toState)
-				{
-					x = _toState.Coordinate.X + (1.5 * _toState.Radius * 1);
-					y = _toState.Coordinate.Y + (1.5 * _toState.Radius * 1);
 				}
 				else
 				{
