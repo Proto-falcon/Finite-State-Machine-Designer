@@ -183,7 +183,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
 			CanvasCoordinate toCoord = transition.ToState.Coordinate;
 
-			CanvasCoordinate dCoord = new(fromCoord.X - fromCoord.X,
+			CanvasCoordinate dCoord = new(toCoord.X - fromCoord.X,
 					toCoord.Y - fromCoord.Y);
 			double squareLength = (dCoord.X * dCoord.X) + (dCoord.Y * dCoord.Y);
 
@@ -202,11 +202,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				transition.PerpendicularAxis = 0;
 			}
 
-			//transition.Anchor = coord;
-
 			if (!transition.IsCurved)
 				return;
-
 
 			var (circleX, circleY, circleRadius) = CircleCentreRadiiFrom3Points(fromCoord, toCoord, transition.Anchor);
 
