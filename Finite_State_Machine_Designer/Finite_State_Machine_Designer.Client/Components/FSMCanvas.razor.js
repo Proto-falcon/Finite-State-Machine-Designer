@@ -403,10 +403,10 @@ export function SaveAsPNG(fsm, colour) {
     tmpCanvas.height = canvasElement.height;
     let tmpCanvasCtx = tmpCanvas.getContext("2d");
     tmpCanvasCtx.font = CANVASTEXTFONTSTYLE;
+
     fsm.states.forEach(state =>
         drawState(state, colour, false, tmpCanvasCtx)
     );
-
     fsm.transitions.forEach(transition =>
         drawTransition(transition, colour, false, tmpCanvasCtx)
     );
@@ -416,4 +416,27 @@ export function SaveAsPNG(fsm, colour) {
     anchor.href = pngData;
     anchor.download = "Finite State Machine";
     anchor.click();
+}
+
+/**
+ * Downloads a json file of Finite State Machine
+ * @param {FiniteStateMachine} fsm
+ */
+export function saveAsJson(fsm) {
+    let fsmJson = new Blob([JSON.stringify(fsm, null, 4)], {type: "application/json"});
+    downloadFile(fsmJson, "Finite State Machine");
+}
+
+/**
+ * Downloads a blob object with a filename
+ * @param {Blob} blob
+ * @param {string} fileName
+ */
+function downloadFile(blob, fileName) {
+    let fileUrl = URL.createObjectURL(blob);
+    let anchor = document.createElement('a')
+    anchor.href = fileUrl;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(fileUrl);
 }

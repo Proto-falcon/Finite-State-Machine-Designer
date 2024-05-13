@@ -14,6 +14,8 @@
 	<a href="javascript:saveAsSVG()">SVG</a>
 	   |
 	<a href="javascript:saveAsLaTeX()">LaTeX</a>
+	<button @onclick="SaveAsJson">JSON</button>
+	<button @onclick="UploadJson">Upload JSON</button>
 	
 	<button title="ctrl+."
 		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
@@ -360,6 +362,17 @@
 		{
 
 		}
+	}
+
+	private async void SaveAsJson(MouseEventArgs mouseEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+			await JsModule.InvokeVoidAsync("saveAsJson", _fsmDrawer.FSM);
+	}
+
+	private async void UploadJson(MouseEventArgs mouseEventArgs)
+	{
+		
 	}
 
 	async ValueTask IAsyncDisposable.DisposeAsync()
