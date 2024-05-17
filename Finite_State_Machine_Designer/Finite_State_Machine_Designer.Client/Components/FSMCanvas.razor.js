@@ -75,6 +75,9 @@ let canvasCtx;
 /** @type {HTMLCanvasElement}*/
 let canvasElement;
 
+/** @type {HTMLInputElement} */
+let uploadElement = document.getElementById("json-upload");
+
 /**
  * Gets canvas context
  * @param {string} id HTML Id of Canvas
@@ -439,4 +442,31 @@ function downloadFile(blob, fileName) {
     anchor.download = fileName;
     anchor.click();
     URL.revokeObjectURL(fileUrl);
+}
+
+export let uploadJson = () => uploadElement.click();
+
+/**
+ * Parses json file to object
+ * @param {File | Blob} file
+ * @returns {Promise<object>}
+ */
+function parseJson(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                resolve(JSON.parse(e.target.result));
+            } catch (e) { reject(null) }
+        }
+        reader.onerror = (err) => { reject(err); }
+        reader.readAsText(file);
+    });
+}
+
+export async function loadJsonUpload() {
+    if (uploadElement.files < 1) return;
+    let file = uploadElement.files[0];
+    let fsm = await parseJson(file);
+    return fsm;
 }

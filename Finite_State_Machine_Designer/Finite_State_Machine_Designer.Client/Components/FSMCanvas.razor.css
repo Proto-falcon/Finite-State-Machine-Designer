@@ -18,6 +18,14 @@
     text-align: center;
 }
 
+#json-upload {
+    display: none
+}
+
+.canvas-button {
+    background-color: #ffffff
+}
+
 .error {
     display: block;
     color: red;

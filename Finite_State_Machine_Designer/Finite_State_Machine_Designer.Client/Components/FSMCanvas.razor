@@ -9,22 +9,21 @@
 
 <div class="center canvas-top-buttons">
 	Export as:
-	<button @onclick="SaveAsPNG">PNG</button>
-	   |
+	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
 	<a href="javascript:saveAsSVG()">SVG</a>
 	   |
 	<a href="javascript:saveAsLaTeX()">LaTeX</a>
-	<button @onclick="SaveAsJson">JSON</button>
-	<button @onclick="UploadJson">Upload JSON</button>
+	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
+	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
 	
-	<button title="ctrl+."
-		style="background-color:@(_superScriptMode ? "#a45cbd": "#ffffff");"
+	<button title="ctrl+." class="canvas-button"
+			style="@(_superScriptMode ? "background-color:#a45cbd": null)"
 		@onclick="ToggleSuperScriptHandler"
 	>
 		aˣ
 	</button>
-	<button title="ctrl+,"
-		style="background-color:@(_subScriptMode ? "#a45cbd": "#ffffff");"
+	<button title="ctrl+," class="canvas-button"
+		style="@(_subScriptMode ? "background-color:#a45cbd": null)"
 		@onclick="ToggleSubScriptHandler"
 	>
 		aₓ
@@ -47,6 +46,8 @@
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
 </canvas>
+
+<input id="json-upload" type="file" accept="application/json" @onchange="LoadUploadedJson" />
 
 @code {
 	[Parameter]
@@ -125,7 +126,8 @@
 
 			if (CheckJsModule(JsModule))
 			{
-				IFiniteStateMachine? fsm = await LoadFSM();
+				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadFSM");
+				fsm = LinkStatesToTransitions(fsm);
 				if (fsm is not null)
 					_fsmDrawer.FSM = fsm;
 				_fsmDrawer.SetStateColours(_stateColour, _selectedStateColour);
@@ -372,7 +374,22 @@
 
 	private async void UploadJson(MouseEventArgs mouseEventArgs)
 	{
-		
+		if (CheckJsModule(JsModule))
+			await JsModule.InvokeVoidAsync("uploadJson");
+	}
+
+	private async void LoadUploadedJson(ChangeEventArgs changeEventArgs)
+	{
+		if (CheckJsModule(JsModule))
+		{
+			IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload");
+			if (fsm is not null)
+			{
+				fsm = LinkStatesToTransitions(fsm);
+				_fsmDrawer.FSM = fsm;
+				await _fsmDrawer.DrawMachineAsync();
+			}
+		}
 	}
 
 	async ValueTask IAsyncDisposable.DisposeAsync()

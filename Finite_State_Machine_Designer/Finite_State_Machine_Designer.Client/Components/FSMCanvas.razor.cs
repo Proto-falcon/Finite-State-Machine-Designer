@@ -230,15 +230,13 @@ namespace Finite_State_Machine_Designer.Client.Components
 		}
 
 		/// <summary>
-		/// Loads the Finite State Machine from local storage.
+		/// Links <see cref="IFiniteStateMachine.Transitions"/> to <see cref="IFiniteStateMachine.States"/> and
+		/// removes state duplicates.
 		/// </summary>
-		/// <returns>Finite state machine</returns>
-		private async Task<IFiniteStateMachine?> LoadFSM()
+		/// <returns>Finite state machine with no duplicate state objects</returns>
+		private IFiniteStateMachine LinkStatesToTransitions(IFiniteStateMachine fsm)
 		{
-			IFiniteStateMachine? fsm = null;
 			if (JsModule is not null)
-			{
-				fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadFSM");
 				foreach (var transition in fsm.Transitions)
 					foreach (var state in fsm.States)
 					{
@@ -247,8 +245,6 @@ namespace Finite_State_Machine_Designer.Client.Components
 						if (state == transition.ToState)
 							transition.ToState = state;
 					}
-
-			}
 			return fsm;
 		}
 	}
