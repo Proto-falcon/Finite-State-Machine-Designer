@@ -423,7 +423,7 @@ export function SaveAsPNG(fsm, colour) {
  * @param {FiniteStateMachine} fsm
  */
 export function saveAsJson(fsm) {
-    let fsmJson = new Blob([JSON.stringify(fsm, null, 4)], {type: "application/json"});
+    let fsmJson = new Blob([JSON.stringify(fsm)], {type: "application/json"});
     downloadFile(fsmJson, "Finite State Machine");
 }
 
