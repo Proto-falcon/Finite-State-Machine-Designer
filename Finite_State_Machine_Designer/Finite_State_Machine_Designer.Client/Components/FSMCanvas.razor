@@ -65,6 +65,8 @@
 	private bool _canResizeState = false;
 	private bool _subScriptMode = false;
 	private bool _superScriptMode = false;
+	private bool _pressedShift = false;
+	private bool _pressedCtrl = false;
 	private bool _caretVisible = true;
 	private int _drawTimerInterval = 500;
 	private DateTime _lastDrawTimerCall = DateTime.Now;
@@ -172,7 +174,9 @@
 		{
 			FiniteState? existingState = null;
 			StateTransition? existingTransition = null;
-			switch (mouseEventArgs.ShiftKey)
+			_pressedShift = mouseEventArgs.ShiftKey;
+			_pressedCtrl = mouseEventArgs.CtrlKey;
+			switch (_pressedShift)
 			{
 				case false:
 					existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
@@ -229,7 +233,7 @@
 				// r is radius of circle
 				if (_fsmDrawer.SelectedState is not null)
 				{
-					if (mouseEventArgs.CtrlKey && _canResizeState)
+					if (_pressedCtrl && _canResizeState)
 					{
 						CanvasCoordinate coords = _fsmDrawer.SelectedState.Coordinate;
 						float newRadius = (float) Math.Sqrt(
@@ -251,7 +255,7 @@
 					CanvasCoordinate newCoord = new(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 					FiniteState fromState = _fsmDrawer.SelectedTransition.FromState;
 					FiniteState toState = _fsmDrawer.SelectedTransition.ToState;
-					switch (mouseEventArgs.ShiftKey)
+					switch (_pressedShift)
 					{
 						case false:
 							if (fromState.IsDrawable && toState.IsDrawable)
@@ -295,6 +299,8 @@
 
 	private void MouseUpHandler(MouseEventArgs mouseEventArgs)
 	{
+		_pressedCtrl = false;
+		_pressedShift = false;
 		_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
 		FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
 		if (_fsmDrawer.SelectedTransition is not null)
