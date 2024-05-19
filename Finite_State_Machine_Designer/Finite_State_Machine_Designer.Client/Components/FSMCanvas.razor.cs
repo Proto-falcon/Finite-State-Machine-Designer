@@ -180,8 +180,9 @@ namespace Finite_State_Machine_Designer.Client.Components
 
 		private string AddText(string text, string newText)
 		{
-			// For superscript numbers ⁰ and ⁷, numbers 1-3 are in U+00B9, U+00B2, U+00B3 respectively
-			// However subscript numbers are within U+208x where 0 < x < 9
+			// Superscript unicode ranges for 4-9 are U+207x where 4 <= x <= 9
+			// However, umbers 1-3 are in U+00B9, U+00B2, U+00B3 respectively
+			// Subscript numbers are within U+208x where 0 <= x <= 9
 			// Instead of typing '_0' to get '₀', just press 'ctrl ,' for superscript mode and 'ctrl .' for subscript mode
 			int utfSubSuperRange = 0x2080;
 			if (_superScriptMode)
@@ -190,10 +191,9 @@ namespace Finite_State_Machine_Designer.Client.Components
 			{
 				char[] characters = newText.ToCharArray();
 				for (int i = 0; i < characters.Length; i++)
-				{
 					if (char.IsDigit(characters[i]))
 					{
-						int newUtfCode = 0;
+						int newUtfCode;
 						int keyNum = int.Parse(newText[i].ToString());
 						if (_superScriptMode && (characters[i] == '2' || characters[i] == '3'))
 							newUtfCode = 0x00B0 + keyNum;
@@ -203,7 +203,6 @@ namespace Finite_State_Machine_Designer.Client.Components
 							newUtfCode = utfSubSuperRange + keyNum;
 						characters[i] = char.ConvertFromUtf32(newUtfCode)[0];
 					}
-				}
 				newText = string.Concat(characters);
 			}
 

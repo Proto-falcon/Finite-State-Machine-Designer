@@ -10,7 +10,7 @@
 <div class="center canvas-top-buttons">
 	Export as:
 	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
-	<a href="javascript:saveAsSVG()">SVG</a>
+	<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
 	   |
 	<a href="javascript:saveAsLaTeX()">LaTeX</a>
 	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
@@ -79,9 +79,9 @@
 	private float _defalutStateRadius = 30;
 	private int _transitionSearchRadius = 10;
 	private bool _canvasHasFocus = false;
-
-	private const string _selectedStateColour = "#9999ff";
-	private const string _stateColour = "#ffffff";
+	private const string _canvasBackgroundColour = "#313338";
+	private const string _selectedColour = "#9999ff";
+	private const string _colour = "#ffffff";
 
 	#region Greek Alphabet
 	/// <summary>
@@ -132,7 +132,7 @@
 				fsm = LinkStatesToTransitions(fsm);
 				if (fsm is not null)
 					_fsmDrawer.FSM = fsm;
-				_fsmDrawer.SetStateColours(_stateColour, _selectedStateColour);
+				_fsmDrawer.SetColours(_colour, _selectedColour, _canvasBackgroundColour);
 				_fsmDrawer.FSM.TransitionSearchRadius = _transitionSearchRadius;
 				_fsmDrawer.SetJsModule(JsModule);
 				await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
@@ -353,15 +353,13 @@
 	private async void SaveAsPNG(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(JsModule))
-			await JsModule.InvokeVoidAsync("SaveAsPNG", _fsmDrawer.FSM, _stateColour);
+			await JsModule.InvokeVoidAsync("saveAsPNG", _fsmDrawer.FSM, _colour);
 	}
 
 	private async void SaveAsSvg(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(JsModule))
-		{
-
-		}
+			await JsModule.InvokeVoidAsync("saveAsSvg", _fsmDrawer.FSM, _colour, _canvasBackgroundColour);
 	}
 
 	private async void SaveAsLatex(MouseEventArgs mouseEventArgs)

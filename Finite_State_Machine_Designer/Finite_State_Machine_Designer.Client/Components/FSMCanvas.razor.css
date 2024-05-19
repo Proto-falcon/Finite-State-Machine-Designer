@@ -3,9 +3,10 @@
     -moz-border-radius: 20px;
     margin: 10px auto;
     cursor: default;
-    border-style:solid;
-    border-color:black;
-    border-width:thin;
+    border-style: solid;
+    border-color: black;
+    border-width: thin;
+    background-color: #313338;
 }
 
 .canvas-top-buttons {

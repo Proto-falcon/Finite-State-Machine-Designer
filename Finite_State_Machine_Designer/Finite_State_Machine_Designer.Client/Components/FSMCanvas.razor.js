@@ -1,5 +1,6 @@
-﻿const STATETEXTNEWLINE = 20;
-const CANVASTEXTFONTSTYLE = '20px "Times New Roman", serif';
+﻿const FONTSTYLE = "Times New Roman, serif";
+const FONTSIZE = 20;
+const CANVASTEXTFONTSTYLE = `${FONTSIZE}px ${FONTSTYLE}`;
 const FINALSTATECIRCLERATIO = 0.8;
 
 const CANVASTEXTVERTICAL = Object.freeze(
@@ -131,6 +132,19 @@ export function clearCanvas() {
 }
 
 /**
+ * Draws backgroundColour of canvas
+ * @param {CanvasRenderingContext2D} drawingCtx Canvas 2d rendering context
+ * @param {string} colour
+ */
+export function drawBackgroundColour(colour, drawingCtx) {
+    if (drawingCtx === undefined || drawingCtx === null) {
+        drawingCtx = canvasCtx;
+    }
+    drawingCtx.fillStyle = colour;
+    drawingCtx.fillRect(0, 0, drawingCtx.canvas.width, drawingCtx.canvas.height);
+}
+
+/**
  * Creates a state at a position within the canvas with colour.
  * @param {FiniteState} state A state in Finite State Machine.
  * @param {string} colour Colour when drawn
@@ -193,7 +207,7 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
         if (!transition.isCurved) {
             if (!transition.fromState.isDrawable) {
                 textX = transition.fromCoord.x - ((drawingCtx.measureText(longestLine).width / 2 + 20) * Math.cos(transition.angle));
-                textY = transition.fromCoord.y - ((STATETEXTNEWLINE/2) * textLines.length * Math.sin(transition.angle));
+                textY = transition.fromCoord.y - ((FONTSIZE/2) * textLines.length * Math.sin(transition.angle));
             }
             else {
                 let fromCoord = transition.fromCoord;
@@ -289,20 +303,20 @@ function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, vertialAl
 
         if (textLines.length <= 0) {
             caretX = x + 0.5;
-            caretY = y + 10;
+            caretY = y + (FONTSIZE/2);
         }
         else {
             let initialY = 0;
             if (vertialAlignment == CANVASTEXTVERTICAL.Centre) {
-                initialY = y - ((textLines.length - 1) * (STATETEXTNEWLINE / 2));
+                initialY = y - ((textLines.length - 1) * (FONTSIZE / 2));
             }
             else if (vertialAlignment == CANVASTEXTVERTICAL.Up) {
-                initialY = y - ((textLines.length - 1) * STATETEXTNEWLINE);
+                initialY = y - ((textLines.length - 1) * FONTSIZE);
             }
             else {
                 initialY = y;
             }
-            textY = initialY + 10;
+            textY = initialY + (FONTSIZE / 2);
             drawingCtx.fillStyle = colour;
 
             for (var i = 0; i < textLines.length; i++) {
@@ -315,7 +329,7 @@ function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, vertialAl
                 drawingCtx.fillText(textLines[i], textX, textY);
 
                 caretY = textY
-                textY += STATETEXTNEWLINE
+                textY += FONTSIZE
             }
         }
 
@@ -378,6 +392,77 @@ function drawArrow(x, y, angle, colour, drawingCtx) {
 }
 
 /**
+ * Makes text xml save.
+ * @param {string} text 
+ * @returns {string} Text that is xml save.
+ */
+function textToXML(text) {
+    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var result = '';
+    for (var i = 0; i < text.length; i++) {
+        var c = text.charCodeAt(i);
+        // Escapes characters such as <, >, &, ", ' and etc.
+        if ((c >= 0x20 && c <= 0x7F)
+            || c == 0xB2 || c == 0xB3 || c == 0xB9
+            || (c >= 0x2074 && c <= 0x2079) || c == 0x2070
+            || (c >= 0x2080 && c <= 0x2089)) {
+            result += text[i];
+        } else {
+            result += '&#' + c + ';';
+        }
+    }
+    return result;
+}
+
+/**
+ * Creates an svg file from Finite State Machine
+ * @param {FiniteStateMachine} fsm Finite State machine
+ * @param {number} width Width of the svg
+ * @param {number} height Height of the svg
+ * @param {string} colour Colour to be used in svg file
+ * @param {string} backgroundColour Background Colour of svg image
+ * @returns {Blob} An svg File
+ */
+function drawFsmSvg(fsm, width, height, colour, backgroundColour, numPrecision = 2) {
+    let svgWidth = width.toFixed(numPrecision);
+    let svgHeight = height.toFixed(numPrecision);
+    let svgText = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" >`;
+    svgText += `<rect width="${svgWidth}" height="${svgHeight}" fill="${backgroundColour}" />`;
+    fsm.states.forEach(state => {
+        if (state.isDrawable) {
+            let stateX = state.coordinate.x.toFixed(numPrecision);
+            let stateY = state.coordinate.y.toFixed(numPrecision);
+            let stateRadius = state.radius.toFixed(numPrecision);
+            svgText += `<circle cx="${stateX}" cy="${stateY}" r="${stateRadius}" `
+                + `stroke="${colour}" stroke-width="1" fill="none" />`;
+            if (state.isFinalState) {
+                svgText += `<circle cx="${stateX}" cy="${stateY}"`
+                    + ` r="${(state.radius * FINALSTATECIRCLERATIO).toFixed(numPrecision)}" `
+                    + `stroke="${colour}" stroke-width="1" fill="none" />`;
+            }
+            // loop through text lines to map each to <text/>
+            let textLines = state.text.split("\n");
+            let textX = "0";
+            let initialTextY = state.coordinate.y - ((textLines.length-1) * (FONTSIZE / 2));
+            let textY = parseInt((initialTextY + (FONTSIZE / 2)).toFixed(numPrecision));
+            textLines.forEach(text => {
+                let xmlTxt = textToXML(text);
+                textX = (state.coordinate.x - (canvasCtx.measureText(text).width / 2)).toFixed(numPrecision);
+                svgText += `<text x="${textX}" y="${textY}" fill="${colour}" font-family="${FONTSTYLE}" font-size="${FONTSIZE}">${xmlTxt}</text>`;
+                textY += FONTSIZE;
+            });
+        }
+    });
+    //fsm.transitions.forEach(transition => {
+    //    svgFile
+    //});
+
+    svgText += '</svg>';
+    let svgFile = new Blob([svgText], { type: "image/svg+xml" });
+    return svgFile;
+}
+
+/**
  * Saves the finite state machine to local storage
  * @param {FiniteStateMachine} fsm 
  */
@@ -385,6 +470,10 @@ export function saveFSM(fsm) {
     localStorage["fsm"] = JSON.stringify(fsm);
 }
 
+/**
+ * Loads Finite State Machine from local storage
+ * @returns {FiniteStateMachine}
+ */
 export function loadFSM() {
     /**@type {string} */
     let fsmJSONText = localStorage["fsm"];
@@ -399,7 +488,7 @@ export function loadFSM() {
  * @param {FiniteStateMachine} fsm
  * @param {string} colour 
  */
-export function SaveAsPNG(fsm, colour) {
+export function saveAsPNG(fsm, colour) {
     /** @type {HTMLCanvasElement} */
     let tmpCanvas = document.createElement("canvas");
     tmpCanvas.width = canvasElement.width;
@@ -422,6 +511,17 @@ export function SaveAsPNG(fsm, colour) {
 }
 
 /**
+ * Downloads an svg file of the finite state machine
+ * @param {FiniteStateMachine} fsm Finite state machine
+ * @param {string} colour Colour of the finite state machine
+ * @param {string} backgroundColour Background colour
+ */
+export function saveAsSvg(fsm, colour, backgroundColour) {
+    let svgBlob = drawFsmSvg(fsm, canvasElement.width, canvasElement.height, colour, backgroundColour);
+    downloadFile(svgBlob, "Finite State Machine");
+}
+
+/**
  * Downloads a json file of Finite State Machine
  * @param {FiniteStateMachine} fsm
  */
@@ -432,7 +532,7 @@ export function saveAsJson(fsm) {
 
 /**
  * Downloads a blob object with a filename
- * @param {Blob} blob
+ * @param {Blob | File} blob
  * @param {string} fileName
  */
 function downloadFile(blob, fileName) {
@@ -464,6 +564,10 @@ function parseJson(file) {
     });
 }
 
+/**
+ * Loads the json file containing the Finite State Machine in the input[type=file] element.
+ * @returns {FiniteStateMachine}
+ */
 export async function loadJsonUpload() {
     if (uploadElement.files < 1) return;
     let file = uploadElement.files[0];
