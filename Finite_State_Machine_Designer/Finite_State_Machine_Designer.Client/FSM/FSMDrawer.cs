@@ -8,8 +8,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
         private IJSObjectReference? _jsModule;
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
-		private int _snapPadding = 6;
-		private double _minPerpendicularDistance = 0.05;
+		private readonly int _snapPadding = 6;
+		private readonly double _minPerpendicularDistance = 0.05;
+		private string _backgroundColour = "#000000";
 
 		public CanvasCoordinate LastMouseDownCoord
 		{
@@ -53,11 +54,11 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			}
 		}
 
-		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff")
+		public void SetColours(string colour = "#ff0000", string selectedColour = "#0000ff", string backgroundColour = "#000000")
 		{
 			_nonSelectedColour = colour;
 			_selectedColour = selectedColour;
-
+			_backgroundColour = backgroundColour;
 			_logger.LogInformation("Current state colours are:\nColour={Colour}\nSelected={Selected}",
 				_nonSelectedColour,_selectedColour);
 		}
@@ -367,6 +368,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		{
 			if (_jsModule is not null && await _jsModule.InvokeAsync<bool>("clearCanvas"))
 			{
+				await _jsModule.InvokeVoidAsync("drawBackgroundColour", _backgroundColour);
 				bool editable;
 				string currentColour;
 

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
+﻿using Microsoft.JSInterop;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
@@ -13,7 +12,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public CanvasCoordinate LastMouseDownCoord { get; set; }
 
-		public void SetStateColours(string colour = "#ff0000", string selectedColour = "#0000ff");
+		public void SetColours(string colour = "#ff0000", string selectedColour = "#0000ff", string backgroundColour = "#000000");
 
 		public void SetJsModule(IJSObjectReference jsObjectRef);
 
