@@ -193,36 +193,10 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
     if (checkCanvas(drawingCtx)) {
         let arrowCoord = new CanvasCoordinate();
         let arrowAngle = transition.angle;
-        let textX = 0;
-        let textY = 0;
-        let textAngle = 0;
-        let textLines = transition.text.split("\n");
-        let reverseScale = transition.isReversed ? -1 : 1;
-        let longestLine = "";
-        textLines.forEach(x => longestLine = x.length > longestLine.length ? x : longestLine);
-        let vertialAlignment = CANVASTEXTVERTICAL.Centre;
 
         drawingCtx.strokeStyle = colour;
         drawingCtx.beginPath();
         if (!transition.isCurved) {
-            if (!transition.fromState.isDrawable) {
-                textX = transition.fromCoord.x - ((drawingCtx.measureText(longestLine).width / 2 + 20) * Math.cos(transition.angle));
-                textY = transition.fromCoord.y - ((FONTSIZE/2) * textLines.length * Math.sin(transition.angle));
-            }
-            else {
-                let fromCoord = transition.fromCoord;
-                let toCoord = transition.toCoord;
-
-                textX = ((toCoord.x + fromCoord.x) / 2);
-                textY = ((toCoord.y + fromCoord.y) / 2);
-                /**
-                 * Gives the angle between the transition and positive y-axis
-                 * (positive y is down when dealing with position in webpages)
-                 */
-                let invertedAngle = Math.atan2(toCoord.x - fromCoord.x, toCoord.y - fromCoord.y);
-                textAngle = (transition.isReversed * Math.PI) - invertedAngle;
-            }
-
             drawingCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
             drawingCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
             arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
@@ -233,8 +207,59 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
             arrowAngle = transition.toAngle;
             arrowCoord.x = centreCoord.x + (Math.cos(arrowAngle) * transition.radius);
             arrowCoord.y = centreCoord.y + (Math.sin(arrowAngle) * transition.radius);
-            arrowAngle += reverseScale * (Math.PI / 2);
+            arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
+        }
+        drawingCtx.stroke();
+        drawingCtx.closePath();
+        drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
 
+        let textCoordInfo = SetTransitionTextCoords(transition, drawingCtx);
+        let textX = textCoordInfo.textX;
+        let textY = textCoordInfo.textY;
+        let vertialAlignment = textCoordInfo.vertialAlignment;
+
+        drawCanvasText(drawingCtx, textX, textY, colour, transition.text.split("\n"), editable, vertialAlignment);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Coordinates and angle of text for transition.
+ * @param {StateTransition} transition
+ * @param {CanvasRenderingContext2D} drawingCtx 2D canvas drawing context
+ * @returns {{textX: number, textY: number, textAngle: number, vertialAlignment: number}}
+ * First two numbers are coordinates, the thrid is the text angle.
+ * The last one is the vertical alignment of text.
+ */
+function SetTransitionTextCoords(transition, drawingCtx) {
+    let textX = 0;
+    let textY = 0;
+    let textAngle = 0;
+    let vertialAlignment = CANVASTEXTVERTICAL.Centre;
+    let textLines = transition.text.split("\n");
+    let longestLine = "";
+    textLines.forEach(x => longestLine = x.length > longestLine.length ? x : longestLine);
+
+    if (!transition.fromState.isDrawable) {
+        textX = transition.fromCoord.x - ((drawingCtx.measureText(longestLine).width / 2 + 20) * Math.cos(transition.angle));
+        textY = transition.fromCoord.y - ((FONTSIZE / 2) * textLines.length * Math.sin(transition.angle));
+    }
+    else {
+        if (!transition.isCurved) {
+            let fromCoord = transition.fromCoord;
+            let toCoord = transition.toCoord;
+
+            textX = ((toCoord.x + fromCoord.x) / 2);
+            textY = ((toCoord.y + fromCoord.y) / 2);
+            /**
+             * Gives the angle between the transition and positive y-axis
+             * (positive y is down when dealing with position in webpages)
+             */
+            let invertedAngle = Math.atan2(toCoord.x - fromCoord.x, toCoord.y - fromCoord.y);
+            textAngle = (transition.isReversed * Math.PI) - invertedAngle;
+        }
+        else {
             let startAngle = transition.fromAngle;
             let endAngle = transition.toAngle;
             endAngle += (endAngle < startAngle) ? (2 * Math.PI) : 0;
@@ -244,40 +269,33 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
             textX = transition.centerArc.x + (cos * (transition.radius + 5));
             textY = transition.centerArc.y + (Math.sin(textAngle) * (transition.radius + 5));
         }
-        drawingCtx.stroke();
-        drawingCtx.closePath();
-        drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
 
-        if (transition.fromState.isDrawable) {
-            let cos = Math.cos(textAngle);
-            let sin = Math.sin(textAngle);
-            let cornerPointX = (drawingCtx.measureText(longestLine).width / 2 + 5) * (cos > 0 ? 1 : -1);
-            let cornerPointY = 20 * (sin > 0 ? 1 : -1);
-            let slide = (Math.pow(sin, 41) * cornerPointX)
-                - (Math.pow(cos, 11) * cornerPointY);
-            textX += cornerPointX - sin * slide;
-            textY += cornerPointY + (cos * slide) - 0;
+        let cos = Math.cos(textAngle);
+        let sin = Math.sin(textAngle);
+        let cornerPointX = (drawingCtx.measureText(longestLine).width / 2 + 5) * (cos > 0 ? 1 : -1);
+        let cornerPointY = 20 * (sin > 0 ? 1 : -1);
+        let slide = (Math.pow(sin, 41) * cornerPointX)
+            - (Math.pow(cos, 11) * cornerPointY);
+        textX += cornerPointX - sin * slide;
+        textY += cornerPointY + (cos * slide) - 0;
 
-            if (Math.abs(transition.angle) < (Math.PI / 2 - 0.3) || Math.abs(transition.angle) > (Math.PI / 2 + 0.3)) {
-                if (textAngle > 2 * Math.PI) {
-                    textAngle = textAngle - Math.PI;
-                }
-                else if (textAngle > Math.PI) {
-                    textAngle = Math.PI - textAngle;
-                }
-                if (textAngle > 0) {
-                    vertialAlignment = CANVASTEXTVERTICAL.Down;
-                }
-                else {
-                    vertialAlignment = CANVASTEXTVERTICAL.Up;
-                }
+        if (Math.abs(transition.angle) < (Math.PI / 2 - 0.3) || Math.abs(transition.angle) > (Math.PI / 2 + 0.3)) {
+            if (textAngle > 2 * Math.PI) {
+                textAngle = textAngle - Math.PI;
+            }
+            else if (textAngle > Math.PI) {
+                textAngle = Math.PI - textAngle;
+            }
+            if (textAngle > 0) {
+                vertialAlignment = CANVASTEXTVERTICAL.Down;
+            }
+            else {
+                vertialAlignment = CANVASTEXTVERTICAL.Up;
             }
         }
-
-        drawCanvasText(drawingCtx, textX, textY, colour, textLines, editable, vertialAlignment);
-        return true;
     }
-    return false;
+
+    return { textX: textX, textY: textY, textAngle: textAngle, vertialAlignment: vertialAlignment };
 }
 
 /**
