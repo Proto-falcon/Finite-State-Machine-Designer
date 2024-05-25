@@ -2,6 +2,8 @@
 const FONTSIZE = 20;
 const CANVASTEXTFONTSTYLE = `${FONTSIZE}px ${FONTSTYLE}`;
 const FINALSTATECIRCLERATIO = 0.8;
+const ARROWWIDTH = 8;
+const ARROWHEIGHT = 5;
 
 const CANVASTEXTVERTICAL = Object.freeze(
     {
@@ -205,13 +207,12 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
             let centreCoord = transition.centerArc;
             drawingCtx.arc(centreCoord.x, centreCoord.y, transition.radius, transition.fromAngle, transition.toAngle, transition.isReversed);
             arrowAngle = transition.toAngle;
-            arrowCoord.x = centreCoord.x + (Math.cos(arrowAngle) * transition.radius);
-            arrowCoord.y = centreCoord.y + (Math.sin(arrowAngle) * transition.radius);
+            arrowCoord = transition.toCoord;
             arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
         }
         drawingCtx.stroke();
         drawingCtx.closePath();
-        drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour);
+        drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour, ARROWWIDTH, ARROWHEIGHT, drawingCtx);
 
         let textCoordInfo = SetTransitionTextCoords(transition, drawingCtx);
         let textX = textCoordInfo.textX;
@@ -301,13 +302,13 @@ function SetTransitionTextCoords(transition, drawingCtx) {
 /**
  * Draws Canvas Text
  * 
+ * @param {CanvasRenderingContext2D} drawingCtx A 2d canvas rendering context
  * @param {number} x
  * @param {number} y
  * @param {string} colour
  * @param {string[]} textLines
  * @param {boolean} editable
  * @param {number} [vertialAlignment=0] 
- * @param {CanvasRenderingContext2D} drawingCtx A 2d canvas rendering context
  */
 function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, vertialAlignment = 0) {
     if (drawingCtx === undefined || drawingCtx === null) {
@@ -389,21 +390,23 @@ export function drawCaret(x, y, hasOffset, drawingCtx) {
  * @param {number} y Y co-ordinate of the tip of the arrow
  * @param {number} angle Angle of the arrow
  * @param {string} colour Colour of the arrow
+ * @param {number} width Width of the arrow
+ * @param {number} height Height of the arrow
  * @param {CanvasRenderingContext2D} drawingCtx A 2d canvas rendering context
  */
-function drawArrow(x, y, angle, colour, drawingCtx) {
+function drawArrow(x, y, angle, colour, width, height, drawingCtx) {
     if (drawingCtx === undefined || drawingCtx === null) {
         drawingCtx = canvasCtx;
     }
     if (checkCanvas(drawingCtx)) {
-        var cosAngle = Math.cos(angle);
-        var sineAngle = Math.sin(angle);
+        let cosAngle = Math.cos(angle);
+        let sineAngle = Math.sin(angle);
 
         drawingCtx.fillStyle = colour;
         drawingCtx.beginPath();
         drawingCtx.moveTo(x, y);
-        drawingCtx.lineTo(x - 8 * cosAngle + 5 * sineAngle, y - 8 * sineAngle - 5 * cosAngle);
-        drawingCtx.lineTo(x - 8 * cosAngle - 5 * sineAngle, y - 8 * sineAngle + 5 * cosAngle);
+        drawingCtx.lineTo(x - width * cosAngle + height * sineAngle, y - width * sineAngle - height * cosAngle);
+        drawingCtx.lineTo(x - width * cosAngle - height * sineAngle, y - width * sineAngle + height * cosAngle);
         drawingCtx.closePath();
         drawingCtx.fill();
     }
@@ -466,14 +469,86 @@ function drawFsmSvg(fsm, width, height, colour, backgroundColour, numPrecision =
             textLines.forEach(text => {
                 let xmlTxt = textToXML(text);
                 textX = (state.coordinate.x - (canvasCtx.measureText(text).width / 2)).toFixed(numPrecision);
-                svgText += `<text x="${textX}" y="${textY}" fill="${colour}" font-family="${FONTSTYLE}" font-size="${FONTSIZE}">${xmlTxt}</text>`;
+                svgText += `<text x="${textX}" y="${textY}" fill="${colour}" font-family="${FONTSTYLE}" `
+                    + `font-size="${FONTSIZE}">${xmlTxt}</text>`;
                 textY += FONTSIZE;
             });
         }
     });
-    //fsm.transitions.forEach(transition => {
-    //    svgFile
-    //});
+    fsm.transitions.forEach(transition => {
+        let arrowCoord = new CanvasCoordinate();
+        let arrowAngle = transition.angle;
+        let fromCoord = transition.fromCoord;
+        let toCoord = transition.toCoord;
+        let textLines = transition.text.split("\n");
+        if (!transition.isCurved) {
+            arrowCoord = new CanvasCoordinate(fromCoord.x, toCoord.y);
+            svgText += `<line x1="${fromCoord.x.toFixed(numPrecision)}" y1="${fromCoord.y.toFixed(numPrecision)}"` +
+                ` x2="${toCoord.x.toFixed(numPrecision)}" y2="${toCoord.y.toFixed(numPrecision)}" stroke="${colour}" />`;
+            arrowCoord = new CanvasCoordinate(toCoord.x, toCoord.y);
+        }
+        else {
+            let centreCoord = transition.centerArc;
+            arrowAngle = transition.toAngle;
+            arrowCoord = transition.toCoord;
+            arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
+
+            let fromAngle = transition.fromAngle;
+            let toAngle = transition.toAngle;
+
+            if (toAngle < fromAngle) {
+                toAngle += 2 * Math.PI;
+            }
+
+            arrowAngle = transition.toAngle;
+            arrowCoord = transition.toCoord;
+            arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
+
+            // Will use path instead as it's actually easier to do partial circles than with circle element.
+            svgText += `<path fill="none" stroke="${colour}"`
+                + ` d="M ${fromCoord.x.toFixed(numPrecision)} ${fromCoord.y.toFixed(numPrecision)}`
+                + ` A ${transition.radius.toFixed(numPrecision)} ${transition.radius.toFixed(numPrecision)}`
+                + ` ${0} ${(Math.abs(toAngle - fromAngle) > Math.PI) * 1} ${1}`
+                + ` ${toCoord.x.toFixed(numPrecision)} ${toCoord.y.toFixed(numPrecision)}" />`;
+        }
+
+        var cosAngle = Math.cos(arrowAngle);
+        var sineAngle = Math.sin(arrowAngle);
+        let xa = arrowCoord.x - ARROWWIDTH * cosAngle;
+        let ya = arrowCoord.y - ARROWWIDTH * sineAngle;
+        svgText += `<path fill="${colour}" `
+            + `d="M ${arrowCoord.x.toFixed(numPrecision)} ${arrowCoord.y.toFixed(numPrecision)} `
+            + `L ${(xa + ARROWHEIGHT * sineAngle).toFixed(numPrecision)}, ${(ya - ARROWHEIGHT * cosAngle).toFixed(numPrecision)} `
+            + `${(xa - ARROWHEIGHT * sineAngle).toFixed(numPrecision)}, ${(ya + ARROWHEIGHT * cosAngle).toFixed(numPrecision)} `
+            + `Z"/>`;
+
+        let textCoordInfo = SetTransitionTextCoords(transition, canvasCtx);
+
+        function ExportAsSvg() {
+            this.canvas = canvasCtx.canvas;
+            this.fillStyle = colour;
+            /**
+             * @param {string} text
+             * @returns {TextMetrics}
+             */
+            this.measureText = (text) => canvasCtx.measureText(text);
+            /**
+             * 
+             * @param {string} text
+             * @param {number} x
+             * @param {number} y
+             */
+            this.fillText = (text, x, y) => {
+                let xmlText = textToXML(text);
+                svgText += `<text x="${x.toFixed(numPrecision)}" y="${y.toFixed(numPrecision)}" `
+                    + `fill="${this.fillStyle}" font-family="${FONTSTYLE}" font-size="${FONTSIZE}">${xmlText}</text>`;
+            };
+        };
+
+        let drawingCtx = new ExportAsSvg();
+
+        drawCanvasText(drawingCtx, textCoordInfo.textX, textCoordInfo.textY, colour, textLines, false, textCoordInfo.vertialAlignment);
+    });
 
     svgText += '</svg>';
     let svgFile = new Blob([svgText], { type: "image/svg+xml" });

@@ -13,10 +13,11 @@
     position: sticky;
     z-index: 2;
     top: 0.75rem;
+    margin-right: 2rem;
 }
 
 .center {
-    text-align: center;
+    text-align: right;
 }
 
 #json-upload {
