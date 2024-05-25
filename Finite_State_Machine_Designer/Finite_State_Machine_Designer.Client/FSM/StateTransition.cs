@@ -26,23 +26,24 @@
 		{
 			get
 			{
+				double x;
+				double y;
 				if (!IsCurved)
 				{
 					float radius = 1;
 					if (_fromState.Radius > 0)
 						radius = _fromState.Radius;
 					double angle = Angle;
-					double y = (Math.Sin(angle) * radius) + _fromState.Coordinate.Y;
-					double x = (Math.Cos(angle) * radius) + _fromState.Coordinate.X;
-					return new (x, y);
+					x = _fromState.Coordinate.X + (Math.Cos(angle) * radius);
+					y = _fromState.Coordinate.Y + (Math.Sin(angle) * radius);
 				}
 				else
 				{
 					double fromAngle = FromAngle;
-					double x = _centerArc.X + (_radius * Math.Cos(fromAngle));
-					double y = _centerArc.Y + (_radius + Math.Sin(fromAngle));
-					return new (x, y);
+					x = CenterArc.X + (_radius * Math.Cos(fromAngle));
+					y = CenterArc.Y + (_radius * Math.Sin(fromAngle));
 				}
+				return new (x, y);
 			}
 		}
 
@@ -69,8 +70,8 @@
 				else
 				{
 					double toAngle = ToAngle;
-					x = _centerArc.X + (_radius * Math.Cos(toAngle));
-					y = _centerArc.Y + (_radius + Math.Sin(toAngle));
+					x = CenterArc.X + (_radius * Math.Cos(toAngle));
+					y = CenterArc.Y + (_radius * Math.Sin(toAngle));
 				}
 				return new(x, y);
 			}
