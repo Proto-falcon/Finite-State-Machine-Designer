@@ -10,9 +10,6 @@
 <div class="center canvas-top-buttons">
 	Export as:
 	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
-	<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
-	   |
-	<a href="javascript:saveAsLaTeX()">LaTeX</a>
 	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
 	
@@ -360,14 +357,6 @@
 	{
 		if (CheckJsModule(JsModule))
 			await JsModule.InvokeVoidAsync("saveAsSvg", _fsmDrawer.FSM, _colour, _canvasBackgroundColour);
-	}
-
-	private async void SaveAsLatex(MouseEventArgs mouseEventArgs)
-	{
-		if (CheckJsModule(JsModule))
-		{
-
-		}
 	}
 
 	private async void SaveAsJson(MouseEventArgs mouseEventArgs)
