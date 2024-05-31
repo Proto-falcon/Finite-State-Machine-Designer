@@ -10,6 +10,7 @@
 <div class="center canvas-top-buttons">
 	Export as:
 	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
+	<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
 	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
 	
@@ -170,7 +171,7 @@
 		if (CheckJsModule(JsModule))
 		{
 			FiniteState? existingState = null;
-			StateTransition? existingTransition = null;
+			Transition? existingTransition = null;
 			_pressedShift = mouseEventArgs.ShiftKey;
 			_pressedCtrl = mouseEventArgs.CtrlKey;
 			switch (_pressedShift)
@@ -302,7 +303,7 @@
 		FiniteState? existingState = _fsmDrawer.FSM.FindState(_lastMousePos);
 		if (_fsmDrawer.SelectedTransition is not null)
 		{
-			StateTransition transition = _fsmDrawer.SelectedTransition;
+			Transition transition = _fsmDrawer.SelectedTransition;
 			if (!transition.ToState.IsDrawable)
 			{
 				_fsmDrawer.FSM.RemoveTransition(_fsmDrawer.SelectedTransition);

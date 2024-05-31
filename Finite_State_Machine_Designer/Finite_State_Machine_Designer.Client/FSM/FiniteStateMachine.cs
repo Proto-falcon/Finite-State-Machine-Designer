@@ -6,6 +6,9 @@
 		private List<FiniteState> _states = [];
 		private List<StateTransition> _transitions = [];
 
+		public List<Transition> Transitions { get => _transitions; set => _transitions = value; }
+		private List<Transition> _transitions = [];
+
 		private int _transitionSearchRadius;
 		public int TransitionSearchRadius
 		{
@@ -17,8 +20,6 @@
 			.Select(x => x.ToState).ToList();
 
 		public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
-
-		public List<StateTransition> Transitions { get => _transitions; set => _transitions = value; }
 
 		public void AddState(FiniteState state)
 		{
@@ -49,20 +50,20 @@
 			return false;
 		}
 
-		public void AddTransition(StateTransition stateTransition)
+		public void AddTransition(Transition stateTransition)
 		{
 			_transitions.Add(stateTransition);
 		}
 
-		public bool RemoveTransition(StateTransition transition)
+		public bool RemoveTransition(Transition transition)
 		{
 			return _transitions.Remove(transition);
 		}
 
-		public StateTransition? FindTransition(CanvasCoordinate coordinate)
+		public Transition? FindTransition(CanvasCoordinate coordinate)
 		{
 			CanvasCoordinate dCoord;
-			foreach (StateTransition transition in _transitions)
+			foreach (Transition transition in _transitions)
 			{
 				if (!transition.IsCurved)
 				{
@@ -112,13 +113,15 @@
 			return null;
 		}
 
-		public List<StateTransition> FindTransitions(FiniteState? state, Predicate<StateTransition>? filter = null)
+		public List<Transition> FindTransitions(FiniteState? state, Predicate<Transition>? filter = null)
 		{
-			filter ??= x => true;
-
+			if (filter is not null)
 			return _transitions
 				.Where(x => (x.FromState == state || x.ToState == state) && filter(x))
 				.ToList();
+            return _transitions
+                .Where(x => (x.FromState == state || x.ToState == state))
+                .ToList();
 		}
 	}
 }

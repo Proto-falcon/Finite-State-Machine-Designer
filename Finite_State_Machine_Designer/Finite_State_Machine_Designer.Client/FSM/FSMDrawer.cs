@@ -38,12 +38,12 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		}
 		private FiniteState? _selectedState;
 
-		public StateTransition? SelectedTransition
+		public Transition? SelectedTransition
 		{
 			get => _selectedTransition;
 			set => _selectedTransition = value;
 		}
-		private StateTransition? _selectedTransition;
+		private Transition? _selectedTransition;
 
 		public IFiniteStateMachine FSM
 		{
@@ -98,7 +98,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			if (snapState)
 				SnapState(state);
 
-			List<StateTransition> transitions = fsm.FindTransitions(
+			List<Transition> transitions = fsm.FindTransitions(
 						_selectedState, x => !x.FromState.IsDrawable);
 			CanvasCoordinate dCoord = newCoord - lastCoord;
 			foreach (var transition in transitions)
@@ -109,7 +109,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			}
 		}
 
-		public async Task<StateTransition?> CreateTransitionAsync(
+		public async Task<Transition?> CreateTransitionAsync(
 			CanvasCoordinate fromPos = default, CanvasCoordinate toPos = default,
 			FiniteState? fromState = null, FiniteState? toState = null
 			)
@@ -119,7 +119,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				fromState ??= new(fromPos, 0) { IsDrawable = false };
 				toState ??= new(toPos, 0) { IsDrawable = false };
 
-				StateTransition newTransition = new(fromState, toState)
+				Transition newTransition = new(fromState, toState)
 				{
 					MinPerpendicularDistance = _minPerpendicularDistance
 				};
@@ -179,7 +179,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// <param name="transition">The transition to be curved</param>
 		/// to find the coordinate of transition touch the state for efficiency.
 		/// <see langword="true"/> to calculate the actual angle.</param>
-		public void CurveTransition(CanvasCoordinate coord, StateTransition transition)
+		public void CurveTransition(CanvasCoordinate coord, Transition transition)
 		{
 			CanvasCoordinate fromCoord = transition.FromState.Coordinate;
 			CanvasCoordinate toCoord = transition.ToState.Coordinate;
@@ -218,7 +218,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// <param name="state">A finite state</param>
 		public void UpdateCurvedTransitions(FiniteState state)
 		{
-			List<StateTransition> transitions = fsm.FindTransitions(state, x => x.IsCurved);
+			List<Transition> transitions = fsm.FindTransitions(state, x => x.IsCurved);
 
 			foreach (var transition in transitions)
 			{
@@ -240,7 +240,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// </summary>
 		/// <param name="transition">A state transition that links it self</param>
 		/// <param name="coord">Coordinate that changes the orientation of the self transitions around the state</param>
-		public void UpdateSelfTransition(StateTransition transition, CanvasCoordinate coord)
+		public void UpdateSelfTransition(Transition transition, CanvasCoordinate coord)
 		{
 			if (transition.FromState != transition.ToState)
 				return;
@@ -392,7 +392,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						editable && lineVisible
 					);
 				}
-				foreach (StateTransition transition in fsm.Transitions)
+				foreach (Transition transition in fsm.Transitions)
                 {
 					editable = false;
 					currentColour = _nonSelectedColour;

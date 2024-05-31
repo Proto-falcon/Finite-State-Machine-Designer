@@ -50,15 +50,15 @@ namespace Finite_State_Machine_Designer.Client.Components
 						if (state.Text.Length > 0)
 						{
 							var text = state.Text;
-							state.Text = text.Substring(0, text.Length - 1);
+							state.Text = text[..^1];
 							_caretVisible = true;
 						}
 						break;
 					case "delete":
 						if (_fsmDrawer.FSM.RemoveState(state))
 						{
-							List<StateTransition> connectedTransitions = _fsmDrawer.FSM.FindTransitions(state);
-							foreach (StateTransition transition in connectedTransitions)
+							List<Transition> connectedTransitions = _fsmDrawer.FSM.FindTransitions(state);
+							foreach (Transition transition in connectedTransitions)
 								_fsmDrawer.FSM.Transitions.Remove(transition);
 						}
 						break;
@@ -84,7 +84,7 @@ namespace Finite_State_Machine_Designer.Client.Components
 			}
 		}
 
-		private void TransitionKeyHandler(KeyboardEventArgs keyboardEventArgs, StateTransition transition)
+		private void TransitionKeyHandler(KeyboardEventArgs keyboardEventArgs, Transition transition)
 		{
 			if (CheckJsModule(JsModule))
 			{
@@ -94,7 +94,7 @@ namespace Finite_State_Machine_Designer.Client.Components
 						if (transition.Text.Length > 0)
 						{
 							var text = transition.Text;
-							transition.Text = text.Substring(0, text.Length - 1);
+							transition.Text = text[..^1];
 
 							_caretVisible = true;
 						}

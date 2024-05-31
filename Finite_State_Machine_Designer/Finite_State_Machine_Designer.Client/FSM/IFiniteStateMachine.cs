@@ -8,21 +8,21 @@
 
 		public List<FiniteState> InitialStates { get; }
 		
-		public List<StateTransition> Transitions { get; set; }
+		public List<Transition> Transitions { get; set; }
 
 		public int TransitionSearchRadius { get; set; }
 
-		public void AddTransition(StateTransition transition);
+		public void AddTransition(Transition transition);
 
-		public bool RemoveTransition(StateTransition transition);
+		public bool RemoveTransition(Transition transition);
 
 		public void AddState(FiniteState state);
 
 		public FiniteState? FindState(CanvasCoordinate coordinate);
 		
-		public StateTransition? FindTransition(CanvasCoordinate coordinate);
+		public Transition? FindTransition(CanvasCoordinate coordinate);
 
-		public List<StateTransition> FindTransitions(FiniteState? state, Predicate<StateTransition>? filter = null);
+		public List<Transition> FindTransitions(FiniteState? state, Predicate<Transition>? filter = null);
 
 		public bool RemoveState(FiniteState stateToBeRemoved);
 	}
