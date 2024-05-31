@@ -1,10 +1,18 @@
-﻿namespace Finite_State_Machine_Designer.Client.FSM
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
-	{
-		public List<FiniteState> States { get => _states; set => _states = value; }
+    {
+        public long Id { get; set; }
+
+        public long UserId { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+
+        public List<FiniteState> States { get => _states; set => _states = value; }
 		private List<FiniteState> _states = [];
-		private List<StateTransition> _transitions = [];
 
 		public List<Transition> Transitions { get => _transitions; set => _transitions = value; }
 		private List<Transition> _transitions = [];
@@ -16,10 +24,12 @@
 			set => _transitionSearchRadius = value;
 		}
 
+		[NotMapped]
 		public List<FiniteState> InitialStates => _transitions.Where(x => !x.FromState.IsDrawable && x.ToState.IsDrawable)
 			.Select(x => x.ToState).ToList();
 
-		public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
+        [NotMapped]
+        public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
 
 		public void AddState(FiniteState state)
 		{
@@ -108,7 +118,6 @@
 					if (angle > startAngle && angle < endAngle)
 						return transition;
 				}
-
 			}
 			return null;
 		}
@@ -116,12 +125,12 @@
 		public List<Transition> FindTransitions(FiniteState? state, Predicate<Transition>? filter = null)
 		{
 			if (filter is not null)
-			return _transitions
-				.Where(x => (x.FromState == state || x.ToState == state) && filter(x))
-				.ToList();
+				return _transitions
+					.Where(x => (x.FromState == state || x.ToState == state) && filter(x))
+					.ToList();
             return _transitions
                 .Where(x => (x.FromState == state || x.ToState == state))
                 .ToList();
-		}
+        }
 	}
 }

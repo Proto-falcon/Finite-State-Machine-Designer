@@ -1,12 +1,31 @@
-﻿namespace Finite_State_Machine_Designer.Client.FSM
+﻿using System.Text.Json.Serialization;
+
+namespace Finite_State_Machine_Designer.Client.FSM
 {
-	public class FiniteState(CanvasCoordinate coordinate, float radius)
+	public class FiniteState
 	{
-		public CanvasCoordinate Coordinate
+		public FiniteState() { }
+
+		public FiniteState(CanvasCoordinate coord, float rad)
+		{
+			coordinate = coord;
+			radius = rad;
+		}
+
+		public long Id { get; set; }
+
+		private CanvasCoordinate coordinate;
+
+		private float radius;
+
+        public CanvasCoordinate Coordinate
 		{
 			get => coordinate;
 			set => coordinate = value;
 		}
+
+		[JsonIgnore]
+		public List<Transition>? Transitions { get; set; }
 
 		public bool IsDrawable { get; set; } = true;
 
@@ -47,7 +66,7 @@
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(coordinate, radius, _isFinalState, _text);
+			return HashCode.Combine(Id, coordinate, radius, _isFinalState, _text);
 		}
 
 		public override string ToString() => 

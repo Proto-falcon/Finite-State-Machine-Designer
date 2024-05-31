@@ -2,7 +2,14 @@
 {
 	public interface IFiniteStateMachine
 	{
-		public List<FiniteState> States { get; set; }
+        public long Id { get; set; }
+
+        public long UserId { get; set; }
+
+        public string Name { get; set; }
+        public string Description { get; set; }
+
+        public List<FiniteState> States { get; set; }
 
 		public List<FiniteState> FinalStates { get; }
 
