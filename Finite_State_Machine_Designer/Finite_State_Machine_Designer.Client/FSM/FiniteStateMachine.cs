@@ -6,10 +6,13 @@ namespace Finite_State_Machine_Designer.Client.FSM
     {
         public long Id { get; set; }
 
-        public long UserId { get; set; }
-
         public string Name { get; set; } = string.Empty;
+
         public string Description { get; set; } = string.Empty;
+
+		public int Width { get; set; }
+
+		public int Height { get; set; }
 
         public List<FiniteState> States { get => _states; set => _states = value; }
 		private List<FiniteState> _states = [];

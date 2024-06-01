@@ -5,7 +5,7 @@
 namespace Finite_State_Machine_Designer.Migrations
 {
     /// <inheritdoc />
-    public partial class FiniteStateMachine : Migration
+    public partial class FSMModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,11 +16,12 @@ namespace Finite_State_Machine_Designer.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Width = table.Column<int>(type: "int", nullable: false),
+                    Height = table.Column<int>(type: "int", nullable: false),
                     TransitionSearchRadius = table.Column<int>(type: "int", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -42,7 +43,7 @@ namespace Finite_State_Machine_Designer.Migrations
                     Radius = table.Column<float>(type: "real", nullable: false),
                     IsFinalState = table.Column<bool>(type: "bit", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: false),
+                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: true),
                     Coordinate_X = table.Column<double>(type: "float", nullable: false),
                     Coordinate_Y = table.Column<double>(type: "float", nullable: false)
                 },
@@ -69,7 +70,7 @@ namespace Finite_State_Machine_Designer.Migrations
                     IsReversed = table.Column<bool>(type: "bit", nullable: false),
                     Radius = table.Column<double>(type: "float", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: false),
+                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: true),
                     CenterArc_X = table.Column<double>(type: "float", nullable: false),
                     CenterArc_Y = table.Column<double>(type: "float", nullable: false)
                 },

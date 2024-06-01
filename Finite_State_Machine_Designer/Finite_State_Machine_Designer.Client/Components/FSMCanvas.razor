@@ -89,7 +89,8 @@
 	/// <para>Unicdoe for rightarrow (→): U+2192</para>
 	/// <para>Unicode for leftarrow (←): U+2190</para>
 	/// </summary>
-	private readonly string[] _greekAlphabet = [
+	private readonly string[] _greekAlphabet =
+	[
 		"alpha",
 	"beta",
 	"gamma",
@@ -130,6 +131,8 @@
 				fsm = LinkStatesToTransitions(fsm);
 				if (fsm is not null)
 					_fsmDrawer.FSM = fsm;
+				_fsmDrawer.FSM.Width = Width;
+				_fsmDrawer.FSM.Height = Height;
 				_fsmDrawer.SetColours(_colour, _selectedColour, _canvasBackgroundColour);
 				_fsmDrawer.FSM.TransitionSearchRadius = _transitionSearchRadius;
 				_fsmDrawer.SetJsModule(JsModule);

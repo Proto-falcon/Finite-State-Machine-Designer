@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Finite_State_Machine_Designer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240531191836_FiniteStateMachine")]
-    partial class FiniteStateMachine
+    [Migration("20240601180755_FSMModel")]
+    partial class FSMModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -96,6 +96,9 @@ namespace Finite_State_Machine_Designer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -103,8 +106,8 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.Property<int>("TransitionSearchRadius")
                         .HasColumnType("int");
 
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Width")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
