@@ -28,6 +28,11 @@
     background-color: #ffffff
 }
 
+.remove-link-style {
+    color: #000000;
+    text-decoration: none;
+}
+
 .error {
     display: block;
     color: red;

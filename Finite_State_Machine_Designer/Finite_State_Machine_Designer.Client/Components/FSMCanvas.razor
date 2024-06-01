@@ -13,6 +13,13 @@
 	<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
 	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
+	<AuthorizeView>
+		<button class="canvas-button">
+			<NavLink class="remove-link-style" href="MyFSMs?saveCurrent=true">
+				My State Machines
+			</NavLink>
+		</button>
+	</AuthorizeView>
 	
 	<button title="ctrl+." class="canvas-button"
 			style="@(_superScriptMode ? "background-color:#a45cbd": null)"
@@ -130,7 +137,7 @@
 				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadFSM");
 				if (fsm is not null)
 				{
-				fsm = LinkStatesToTransitions(fsm);
+					fsm = LinkStatesToTransitions(fsm);
 					_fsmDrawer.FSM = fsm;
 				}
 				_fsmDrawer.FSM.Width = Width;
