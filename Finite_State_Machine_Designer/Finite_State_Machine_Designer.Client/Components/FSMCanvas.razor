@@ -128,15 +128,17 @@
 			if (CheckJsModule(JsModule))
 			{
 				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadFSM");
-				fsm = LinkStatesToTransitions(fsm);
 				if (fsm is not null)
+				{
+				fsm = LinkStatesToTransitions(fsm);
 					_fsmDrawer.FSM = fsm;
+				}
 				_fsmDrawer.FSM.Width = Width;
 				_fsmDrawer.FSM.Height = Height;
 				_fsmDrawer.SetColours(_colour, _selectedColour, _canvasBackgroundColour);
 				_fsmDrawer.FSM.TransitionSearchRadius = _transitionSearchRadius;
 				_fsmDrawer.SetJsModule(JsModule);
-				await JsModule.InvokeAsync<bool>("getCanvasContext", "FSMCanvas");
+				await JsModule.InvokeAsync<bool>("fSMCanvasUtils.getCanvasContext", "FSMCanvas");
 			}
 			_drawTimer = _drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
 		}

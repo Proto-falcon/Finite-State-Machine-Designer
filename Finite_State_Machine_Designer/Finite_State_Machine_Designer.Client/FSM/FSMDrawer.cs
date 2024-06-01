@@ -73,7 +73,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			if (_jsModule is not null)
 			{
 				var newState = new FiniteState(coordinate, radius);
-				bool isCreated = await _jsModule.InvokeAsync<bool>("drawState", newState, _selectedColour, true);
+				bool isCreated = await _jsModule.InvokeAsync<bool>("fSMCanvasUtils.drawState", newState, _selectedColour, true);
 
 
 				if (!isCreated)
@@ -136,7 +136,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				CanvasCoordinate toCoord = newTransition.ToCoord;
 
 				bool isCreated = await _jsModule
-					.InvokeAsync<bool>("drawTransition", newTransition, _selectedColour, true);
+					.InvokeAsync<bool>("fSMCanvasUtils.drawTransition", newTransition, _selectedColour, true);
 
 				if (!isCreated)
 				{
@@ -366,9 +366,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
 		{
-			if (_jsModule is not null && await _jsModule.InvokeAsync<bool>("clearCanvas"))
+			if (_jsModule is not null && await _jsModule.InvokeAsync<bool>("fSMCanvasUtils.clearCanvas"))
 			{
-				await _jsModule.InvokeVoidAsync("drawBackgroundColour", _backgroundColour);
+				await _jsModule.InvokeVoidAsync("fSMCanvasUtils.drawBackgroundColour", _backgroundColour);
 				bool editable;
 				string currentColour;
 
@@ -386,7 +386,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					}
 
 					await _jsModule.InvokeAsync<bool>(
-						"drawState",
+						"fSMCanvasUtils.drawState",
 						state,
 						currentColour,
 						editable && lineVisible
@@ -404,7 +404,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					}
 					
 					await _jsModule.InvokeAsync<bool>(
-						"drawTransition",
+						"fSMCanvasUtils.drawTransition",
 						transition,
 						currentColour,
 						editable && lineVisible && transition.ToState.IsDrawable
