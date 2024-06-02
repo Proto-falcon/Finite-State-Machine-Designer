@@ -11,9 +11,9 @@
 		<h1>Finite State Designer</h1>
 	</div>
 </SectionContent>
-
-<DynamicComponent Type="@_canvasLoaded" Parameters="_canvasParams" />
-
+<div class="canvas-designer-container">
+	<DynamicComponent Type="@_canvasLoaded" Parameters="_canvasParams" />
+</div>
 <div class="instruction">
 	<p>
 		The big white box above is the FSM designer.&nbsp; Here's how to
@@ -63,7 +63,12 @@
 </footer>
 
 @code {
-	private Dictionary<string, object> _canvasParams = new();
+	private Dictionary<string, object> _canvasParams = new()
+	{
+		{"Width", "20em"},
+		{"Height", "20em"},
+		{"Style", "border-width: 1em"},
+	};
 	private Type? _canvasLoaded = typeof(Loading);
 
 	private bool _mustRetryContext = false;
@@ -80,10 +85,7 @@
 		if (path == "/designer")
 		{
 			_mustRetryContext = true;
-			if (_canvasParams.ContainsKey("MustRetryContext"))
-			{
-				_canvasParams["MustRetryContext"] = _mustRetryContext;
-			}
+			_canvasParams["MustRetryContext"] = _mustRetryContext;
 			StateHasChanged();
 		}
 	}
@@ -105,10 +107,10 @@
 
 			int width = (int)(dimensions[0] * 0.75);
 			int height = (int)(dimensions[1] * 0.75);
-
-			_canvasParams.TryAdd("Height", width);
-			_canvasParams.TryAdd("Width", height);
-			_canvasParams.TryAdd("MustRetryContext", _mustRetryContext);
+			_canvasParams.Clear();
+			_canvasParams["Height"] = width;
+			_canvasParams["Width"] = height;
+			_canvasParams["MustRetryContext"] = _mustRetryContext;
 			_canvasLoaded = typeof(FSMCanvas);
 
 			StateHasChanged();

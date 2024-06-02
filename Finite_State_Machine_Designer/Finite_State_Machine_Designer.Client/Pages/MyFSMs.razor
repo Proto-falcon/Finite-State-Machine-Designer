@@ -21,7 +21,7 @@
     {
         if (firstRender)
         {
-            await SetJsModule("./Components/MyFSMs.razor.js");
+            await SetJsModule("./Pages/MyFSMs.razor.js");
             if (CheckJsModule(JsModule))
             {
                 await JsModule.InvokeVoidAsync("console.log", SaveCurrent);

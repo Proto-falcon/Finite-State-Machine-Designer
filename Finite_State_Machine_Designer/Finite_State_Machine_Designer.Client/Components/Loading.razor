@@ -1,1 +1,13 @@
-﻿<h3><b>Loading...</b></h3>
+﻿<div class="loading" style="width: @Width;height: @Height; @Style" />
+
+@code
+{
+	[Parameter]
+	public string Width { get; set; } = "2em";
+
+	[Parameter]
+	public string Height { get; set; } = "2em";
+
+	[Parameter]
+	public string? Style { get; set; }
+}

@@ -19,3 +19,8 @@ textarea {
     height: 400px;
     margin: 0 auto;
 }
+
+.canvas-designer-container {
+    display: grid;
+    justify-content: center;
+}
