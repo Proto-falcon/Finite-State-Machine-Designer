@@ -8,31 +8,39 @@
 @inject ILogger<FSMCanvas> _logger
 
 <div class="center canvas-top-buttons">
-	Export as:
-	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
-	<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
-	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
-	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
-	<AuthorizeView>
-		<button class="canvas-button">
-			<NavLink style="color: #000000;text-decoration: none" href="MyFSMs?saveCurrent=true">
-				My State Machines
-			</NavLink>
+	<div>
+		Export as:
+		<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
+		<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
+		<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
+		<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
+		<AuthorizeView>
+			<button class="canvas-button">
+				<NavLink style="color: #000000;text-decoration: none" href="MyFSMs?saveCurrent=true">
+					Save
+				</NavLink>
+			</button>
+		</AuthorizeView>
+
+		<button title="ctrl+." class="canvas-button"
+				style="@(_superScriptMode ? "background-color:#a45cbd": null)"
+				@onclick="ToggleSuperScriptHandler">
+			aˣ
 		</button>
-	</AuthorizeView>
-	
-	<button title="ctrl+." class="canvas-button"
-			style="@(_superScriptMode ? "background-color:#a45cbd": null)"
-		@onclick="ToggleSuperScriptHandler"
-	>
-		aˣ
-	</button>
-	<button title="ctrl+," class="canvas-button"
-		style="@(_subScriptMode ? "background-color:#a45cbd": null)"
-		@onclick="ToggleSubScriptHandler"
-	>
-		aₓ
-	</button>
+		<button title="ctrl+," class="canvas-button"
+				style="@(_subScriptMode ? "background-color:#a45cbd": null)"
+				@onclick="ToggleSubScriptHandler">
+			aₓ
+		</button>
+	</div>
+	<form>
+		<label for="name">Name:</label>
+		<input type="text" name="name" placeholder="Name"
+			   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Name" @bind:set="OnFSMNameChange" />
+		<label for="name">Description:</label>
+		<input type="text" name="Description" placeholder="Description"
+			   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Description" @bind:set="OnFSMDescChange" />
+	</form>
 </div>
 <canvas
 	id="FSMCanvas"
@@ -137,7 +145,7 @@
 				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadFSM");
 				if (fsm is not null)
 				{
-					fsm = LinkStatesToTransitions(fsm);
+					fsm.LinkStatesToTransitions();
 					_fsmDrawer.FSM = fsm;
 				}
 				_fsmDrawer.FSM.Width = Width;
@@ -175,6 +183,18 @@
 			_drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
 			_logger.LogDebug("Restarted the draw timer");
 		}
+	}
+
+	private void OnFSMNameChange(string? newName)
+	{
+		newName ??= "";
+		_fsmDrawer.FSM.Name = newName;
+	}
+
+	private void OnFSMDescChange(string? newDesc)
+	{
+		newDesc ??= "";
+		_fsmDrawer.FSM.Description = newDesc;
 	}
 
 	private async void MouseDownHandler(MouseEventArgs mouseEventArgs)
@@ -391,7 +411,7 @@
 			IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload");
 			if (fsm is not null)
 			{
-				fsm = LinkStatesToTransitions(fsm);
+				fsm.LinkStatesToTransitions();
 				_fsmDrawer.FSM = fsm;
 				await _fsmDrawer.DrawMachineAsync();
 			}

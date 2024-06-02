@@ -227,24 +227,5 @@ namespace Finite_State_Machine_Designer.Client.Components
 			_caretVisible = true;
 			return newText;
 		}
-
-		/// <summary>
-		/// Links <see cref="IFiniteStateMachine.Transitions"/> to <see cref="IFiniteStateMachine.States"/> and
-		/// removes state duplicates.
-		/// </summary>
-		/// <returns>Finite state machine with no duplicate state objects</returns>
-		private IFiniteStateMachine LinkStatesToTransitions(IFiniteStateMachine fsm)
-		{
-			if (JsModule is not null)
-				foreach (var transition in fsm.Transitions)
-					foreach (var state in fsm.States)
-					{
-						if (state == transition.FromState)
-							transition.FromState = state;
-						if (state == transition.ToState)
-							transition.ToState = state;
-					}
-			return fsm;
-		}
 	}
 }
