@@ -20,6 +20,10 @@
     text-align: right;
 }
 
+.canvas-form {
+    margin-right: 2rem;
+}
+
 #json-upload {
     display: none
 }
@@ -34,6 +38,11 @@
     font-size: 28px;
     line-height: 30px;
     padding: 30px;
+}
+
+.remove-link-style {
+    color: #000000;
+    text-decoration: none;
 }
 
 form {

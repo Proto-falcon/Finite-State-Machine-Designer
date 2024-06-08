@@ -66,7 +66,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(Id, coordinate, radius, _isFinalState, _text);
+			return HashCode.Combine(Id, coordinate, radius, _isFinalState, IsDrawable, _text);
 		}
 
 		public override string ToString() => 

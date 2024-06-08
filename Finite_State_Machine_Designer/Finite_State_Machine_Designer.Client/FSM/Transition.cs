@@ -290,7 +290,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
             set => _text = value;
         }
 
-        public override int GetHashCode() => HashCode.Combine(_fromState, _toState);
+        public override int GetHashCode() => HashCode.Combine(
+            FromState, FromAngle, ToAngle, MinPerpendicularDistance * ParallelAxis, CenterArc * Anchor, Radius, IsReversed, ToState
+        );
 
         public override string ToString()
         {

@@ -36,8 +36,8 @@ export function textToXML(text) {
         var c = text.charCodeAt(i);
         // Escapes characters such as <, >, &, ", ' and etc.
         if ((c >= 0x20 && c <= 0x7F)
-            || c == 0xB2 || c == 0xB3 || c == 0xB9
-            || (c >= 0x2074 && c <= 0x2079) || c == 0x2070
+            || c === 0xB2 || c === 0xB3 || c === 0xB9
+            || (c >= 0x2074 && c <= 0x2079) || c === 0x2070
             || (c >= 0x2080 && c <= 0x2089)) {
             result += text[i];
         } else {

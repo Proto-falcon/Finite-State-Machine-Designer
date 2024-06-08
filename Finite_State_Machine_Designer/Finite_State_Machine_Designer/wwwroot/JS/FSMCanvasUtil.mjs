@@ -328,10 +328,10 @@ export function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, ve
         }
         else {
             let initialY = 0;
-            if (vertialAlignment == CANVASTEXTVERTICAL.Centre) {
+            if (vertialAlignment === CANVASTEXTVERTICAL.Centre) {
                 initialY = y - ((textLines.length - 1) * (FONTSIZE / 2));
             }
-            else if (vertialAlignment == CANVASTEXTVERTICAL.Up) {
+            else if (vertialAlignment === CANVASTEXTVERTICAL.Up) {
                 initialY = y - ((textLines.length - 1) * FONTSIZE);
             }
             else {
@@ -411,4 +411,27 @@ export function drawCaret(x, y, hasOffset, drawingCtx) {
         drawingCtx.closePath();
         drawingCtx.stroke();
     }
+}
+
+/**
+ * Saves the finite state machine to local storage
+ * @param {FiniteStateMachine} fsm 
+ */
+export function saveFSM(fsm) {
+    localStorage["fsm"] = JSON.stringify(fsm);
+}
+
+/**
+ * Loads Finite State Machine from local storage
+ * @returns {FiniteStateMachine}
+ */
+export function loadFSM() {
+    /**@type {string} */
+    let fsmJSONText = localStorage["fsm"];
+    if (fsmJSONText === undefined) {
+        return null;
+    };
+    let result = JSON.parse(fsmJSONText);
+    console.log(result);
+    return result;
 }

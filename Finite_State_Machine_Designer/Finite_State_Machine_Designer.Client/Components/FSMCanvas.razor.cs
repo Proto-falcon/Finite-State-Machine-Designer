@@ -171,7 +171,7 @@ namespace Finite_State_Machine_Designer.Client.Components
 		{
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 			if (JsModule is not null)
-				await JsModule.InvokeVoidAsync("saveFSM", _fsmDrawer.FSM);
+				await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _fsmDrawer.FSM);
 			_logger.LogDebug("State machine is redrawn at {Time} with caret {Visibilty}.",
 			DateTimeOffset.Now, _caretVisible ? "visible" : "not visible");
 			_caretVisible = !_caretVisible;

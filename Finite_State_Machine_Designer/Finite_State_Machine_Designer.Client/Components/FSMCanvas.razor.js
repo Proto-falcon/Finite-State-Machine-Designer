@@ -4,27 +4,6 @@ import * as FSMCanvasExport from "../JS/FSMCanvasExport.mjs";
 export let fSMCanvasUtils = FSMCanvasUtils;
 
 /**
- * Saves the finite state machine to local storage
- * @param {FiniteStateMachine} fsm 
- */
-export function saveFSM(fsm) {
-    localStorage["fsm"] = JSON.stringify(fsm);
-}
-
-/**
- * Loads Finite State Machine from local storage
- * @returns {FiniteStateMachine}
- */
-export function loadFSM() {
-    /**@type {string} */
-    let fsmJSONText = localStorage["fsm"];
-    if (fsmJSONText === undefined) {
-        return null;
-    };
-    return JSON.parse(fsmJSONText);
-}
-
-/**
  * Downloads a png of the Finite State Machine
  * @param {FiniteStateMachine} fsm
  * @param {string} colour 

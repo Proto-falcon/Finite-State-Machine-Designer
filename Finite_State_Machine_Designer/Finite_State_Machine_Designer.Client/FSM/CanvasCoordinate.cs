@@ -16,6 +16,9 @@
 			new (a.X + b.X, a.Y + b.Y);
 		public static CanvasCoordinate operator -(CanvasCoordinate a, CanvasCoordinate b) =>
 			new (a.X - b.X, a.Y - b.Y);
+		public static CanvasCoordinate operator *(CanvasCoordinate a, CanvasCoordinate b) =>
+			new(a.X * b.X, a.Y * b.Y);
+
 
 		public override readonly string ToString() => $"(x: {x}, y: {y})";
 	}
