@@ -2,9 +2,12 @@ using Finite_State_Machine_Designer.Client.Pages;
 using Finite_State_Machine_Designer.Components;
 using Finite_State_Machine_Designer.Components.Account;
 using Finite_State_Machine_Designer.Data;
+using Finite_State_Machine_Designer.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,9 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingServerAuthenticationStateProvider>();
+builder.Services.AddScoped<UserService>();
+builder.Services.TryAddEnumerable(
+    ServiceDescriptor.Scoped<CircuitHandler, UserCircuitHandler>());
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>

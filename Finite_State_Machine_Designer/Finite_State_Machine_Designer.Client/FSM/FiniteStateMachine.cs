@@ -1,10 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
     {
         public long Id { get; set; }
+
+		[JsonIgnore]
+		public string UserId { get; set; } = string.Empty;
 
         public string Name { get; set; } = string.Empty;
 

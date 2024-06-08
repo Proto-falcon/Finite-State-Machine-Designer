@@ -24,9 +24,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			set => coordinate = value;
 		}
 
-		[JsonIgnore]
-		public List<Transition>? Transitions { get; set; }
-
 		public bool IsDrawable { get; set; } = true;
 
 		public float Radius
@@ -71,5 +68,5 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public override string ToString() => 
 			$"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
-	}
+    }
 }

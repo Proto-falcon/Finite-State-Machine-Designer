@@ -1,0 +1,138 @@
+﻿@page "/MyFSMs"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore.ChangeTracking
+@using Finite_State_Machine_Designer.Data
+@using Finite_State_Machine_Designer.Services
+@using Finite_State_Machine_Designer.Client.FSM
+@inherits ModuleCheckBaseComponent
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject UserService userService
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ILogger<MyFSMs> _logger
+@attribute [Authorize]
+
+<PageTitle>My State Machines</PageTitle>
+<SectionContent SectionId="MainLayout.TopBarSection">
+    <h1>Finite State Machines</h1>
+</SectionContent>
+
+<h2>saveCurrent is set to @SaveCurrent</h2>
+
+@if (SaveCurrent && !_currentSaved && !_currentSavedFailed)
+{
+    <h3>Currently saving current FSM</h3>
+}
+else if (_saveFinished)
+{
+    if (_currentSaved && !_currentSavedFailed)
+    {
+        <h3>Successfully Saved Current FSM!!</h3>
+    }
+    else
+    {
+        <h3>There was error trying to save the current FSM</h3>
+    }
+}
+<h3>Current user is @userService.GetUser().Identity?.Name</h3>
+
+@code
+{
+    [SupplyParameterFromQuery]
+    [Parameter]
+    public bool SaveCurrent { get; set; }
+
+    private ApplicationDbContext _dbContext { get; set; }
+
+    private bool _saveFinished = false;
+    private bool _currentSaved = false;
+    private bool _currentSavedFailed = false;
+
+    protected override void OnInitialized()
+    {
+        _dbContext = DbFactory.CreateDbContext();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await SetJsModule("./Components/Pages/MyFSMs.razor.js");
+        if (SaveCurrent)
+            await SaveCurrentFSM();
+    }
+
+    private async Task SaveCurrentFSM()
+    {
+        if (CheckJsModule(JsModule))
+        {
+            _saveFinished = false;
+            _currentSaved = false;
+            _currentSavedFailed = false;
+            FiniteStateMachine fsm = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
+            if (fsm is not null)
+            {
+                fsm.LinkStatesToTransitions();
+                string userName = userService.GetUser().Identity?.Name ?? "";
+                ApplicationUser? appUser = null;
+                try
+                {
+                    if (!string.IsNullOrEmpty(userName))
+                        appUser = _dbContext.Users
+                        .Include(user => user.StateMachines)
+                        .Where(user => user.NormalizedUserName == userName.ToUpper())
+                        .FirstOrDefault();
+                    if (appUser is not null)
+                    {
+                        FiniteStateMachine? existingFSM = null;
+                        var existingFSMs = appUser.StateMachines
+                            .Where(fsmOther => fsmOther.Name == fsm.Name);
+                        int existingFSMCount = existingFSMs.Count();
+                        existingFSM = existingFSMs.FirstOrDefault();
+                        if (existingFSMCount > 1)
+                            _dbContext.Remove(existingFSMs.TakeLast(existingFSMCount - 1));
+                        if (existingFSM is not null)
+                            _dbContext.Remove(existingFSM);
+                        fsm.Id = 0;
+                        foreach (FiniteState state in fsm.States)
+                            state.Id = 0;
+                        foreach (Transition transition in fsm.Transitions)
+                            transition.Id = 0;
+                        appUser.StateMachines.Add(fsm);
+                        await _dbContext.SaveChangesAsync();
+
+                        var fetchedFSM = _dbContext.StateMachines
+                                .Where(otherFSM => otherFSM.UserId == appUser.Id && otherFSM.Name == fsm.Name)
+                                .FirstOrDefault();
+                        if (fetchedFSM is not null)
+                        {
+                            _currentSaved = true;
+                            _logger.LogInformation("Successfully saved the current FSM {FSM} from user {user}",
+                                fetchedFSM.Name, appUser.Id);
+                            fsm = fetchedFSM;
+                            await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", fsm);
+                        }
+                        else
+                        {
+                            _currentSavedFailed = true;
+                            _logger.LogError("Couldn't save the current FSM from user {user}", appUser.Id);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _currentSavedFailed = true;
+                    _logger.LogError(ex.ToString());
+                }
+            }
+            _saveFinished = true;
+            SaveCurrent = false;
+            StateHasChanged();
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        await _dbContext.DisposeAsync();
+    }
+}

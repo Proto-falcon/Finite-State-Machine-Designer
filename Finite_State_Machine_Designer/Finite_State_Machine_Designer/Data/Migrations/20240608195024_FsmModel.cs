@@ -5,7 +5,7 @@
 namespace Finite_State_Machine_Designer.Migrations
 {
     /// <inheritdoc />
-    public partial class FSMModel : Migration
+    public partial class FsmModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,21 +16,22 @@ namespace Finite_State_Machine_Designer.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Width = table.Column<int>(type: "int", nullable: false),
                     Height = table.Column<int>(type: "int", nullable: false),
-                    TransitionSearchRadius = table.Column<int>(type: "int", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    TransitionSearchRadius = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_StateMachines", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StateMachines_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
+                        name: "FK_StateMachines_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -43,7 +44,7 @@ namespace Finite_State_Machine_Designer.Migrations
                     Radius = table.Column<float>(type: "real", nullable: false),
                     IsFinalState = table.Column<bool>(type: "bit", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: true),
+                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: false),
                     Coordinate_X = table.Column<double>(type: "float", nullable: false),
                     Coordinate_Y = table.Column<double>(type: "float", nullable: false)
                 },
@@ -54,7 +55,8 @@ namespace Finite_State_Machine_Designer.Migrations
                         name: "FK_States_StateMachines_FiniteStateMachineId",
                         column: x => x.FiniteStateMachineId,
                         principalTable: "StateMachines",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -70,7 +72,7 @@ namespace Finite_State_Machine_Designer.Migrations
                     IsReversed = table.Column<bool>(type: "bit", nullable: false),
                     Radius = table.Column<double>(type: "float", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: true),
+                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: false),
                     CenterArc_X = table.Column<double>(type: "float", nullable: false),
                     CenterArc_Y = table.Column<double>(type: "float", nullable: false)
                 },
@@ -81,42 +83,43 @@ namespace Finite_State_Machine_Designer.Migrations
                         name: "FK_Transitions_StateMachines_FiniteStateMachineId",
                         column: x => x.FiniteStateMachineId,
                         principalTable: "StateMachines",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "FiniteStateTransition",
+                name: "FiniteStateTransitions",
                 columns: table => new
                 {
                     StatesId = table.Column<long>(type: "bigint", nullable: false),
-                    TransitionsId = table.Column<long>(type: "bigint", nullable: false)
+                    TransitionId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FiniteStateTransition", x => new { x.StatesId, x.TransitionsId });
+                    table.PrimaryKey("PK_FiniteStateTransitions", x => new { x.StatesId, x.TransitionId });
                     table.ForeignKey(
-                        name: "FK_FiniteStateTransition_States_StatesId",
+                        name: "FK_FiniteStateTransitions_States_StatesId",
                         column: x => x.StatesId,
                         principalTable: "States",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_FiniteStateTransition_Transitions_TransitionsId",
-                        column: x => x.TransitionsId,
+                        name: "FK_FiniteStateTransitions_Transitions_TransitionId",
+                        column: x => x.TransitionId,
                         principalTable: "Transitions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_FiniteStateTransition_TransitionsId",
-                table: "FiniteStateTransition",
-                column: "TransitionsId");
+                name: "IX_FiniteStateTransitions_TransitionId",
+                table: "FiniteStateTransitions",
+                column: "TransitionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StateMachines_ApplicationUserId",
+                name: "IX_StateMachines_UserId",
                 table: "StateMachines",
-                column: "ApplicationUserId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_States_FiniteStateMachineId",
@@ -133,7 +136,7 @@ namespace Finite_State_Machine_Designer.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "FiniteStateTransition");
+                name: "FiniteStateTransitions");
 
             migrationBuilder.DropTable(
                 name: "States");

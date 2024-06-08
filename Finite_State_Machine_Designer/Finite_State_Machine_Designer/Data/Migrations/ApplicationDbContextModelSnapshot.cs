@@ -23,19 +23,19 @@ namespace Finite_State_Machine_Designer.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("FiniteStateTransition", b =>
+            modelBuilder.Entity("FiniteStateTransitions", b =>
                 {
                     b.Property<long>("StatesId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("TransitionsId")
+                    b.Property<long>("TransitionId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("StatesId", "TransitionsId");
+                    b.HasKey("StatesId", "TransitionId");
 
-                    b.HasIndex("TransitionsId");
+                    b.HasIndex("TransitionId");
 
-                    b.ToTable("FiniteStateTransition");
+                    b.ToTable("FiniteStateTransitions");
                 });
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteState", b =>
@@ -46,7 +46,7 @@ namespace Finite_State_Machine_Designer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long?>("FiniteStateMachineId")
+                    b.Property<long>("FiniteStateMachineId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDrawable")
@@ -86,9 +86,6 @@ namespace Finite_State_Machine_Designer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -103,12 +100,16 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.Property<int>("TransitionSearchRadius")
                         .HasColumnType("int");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("Width")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("StateMachines");
                 });
@@ -121,7 +122,7 @@ namespace Finite_State_Machine_Designer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long?>("FiniteStateMachineId")
+                    b.Property<long>("FiniteStateMachineId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsReversed")
@@ -360,17 +361,17 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FiniteStateTransition", b =>
+            modelBuilder.Entity("FiniteStateTransitions", b =>
                 {
                     b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteState", null)
                         .WithMany()
                         .HasForeignKey("StatesId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Finite_State_Machine_Designer.Client.FSM.Transition", null)
                         .WithMany()
-                        .HasForeignKey("TransitionsId")
+                        .HasForeignKey("TransitionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -379,21 +380,27 @@ namespace Finite_State_Machine_Designer.Migrations
                 {
                     b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteStateMachine", null)
                         .WithMany("States")
-                        .HasForeignKey("FiniteStateMachineId");
+                        .HasForeignKey("FiniteStateMachineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteStateMachine", b =>
                 {
                     b.HasOne("Finite_State_Machine_Designer.Data.ApplicationUser", null)
                         .WithMany("StateMachines")
-                        .HasForeignKey("ApplicationUserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.Transition", b =>
                 {
                     b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteStateMachine", null)
                         .WithMany("Transitions")
-                        .HasForeignKey("FiniteStateMachineId");
+                        .HasForeignKey("FiniteStateMachineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
