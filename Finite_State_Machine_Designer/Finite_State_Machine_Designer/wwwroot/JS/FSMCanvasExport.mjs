@@ -69,11 +69,11 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
             let stateY = (state.coordinate.y * scale).toFixed(numPrecision);
             let stateRadius = (state.radius * scale).toFixed(numPrecision);
             svgText += `<circle cx="${stateX}" cy="${stateY}" r="${stateRadius}" `
-                + `stroke="${colour}" stroke-width="1" fill="none" />\n`;
+                + `stroke="${colour}" stroke-width="${scale.toFixed(numPrecision)}" fill="none" />\n`;
             if (state.isFinalState) {
                 svgText += `<circle cx="${stateX}" cy="${stateY}"`
                     + ` r="${(state.radius * FSMCanvasUtil.FINALSTATECIRCLERATIO * scale).toFixed(numPrecision)}" `
-                    + `stroke="${colour}" stroke-width="1" fill="none" />\n`;
+                    + `stroke="${colour}" stroke-width="${scale.toFixed(numPrecision)}" fill="none" />\n`;
             }
             // loop through text lines to map each to <text/>
             let textLines = state.text.split("\n");
@@ -99,7 +99,8 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
         if (!transition.isCurved) {
             arrowCoord = new FSMCanvasUtil.CanvasCoordinate(fromCoord.x, toCoord.y);
             svgText += `<line x1="${fromCoord.x.toFixed(numPrecision)}" y1="${fromCoord.y.toFixed(numPrecision)}"` +
-                ` x2="${toCoord.x.toFixed(numPrecision)}" y2="${toCoord.y.toFixed(numPrecision)}" stroke="${colour}" />\n`;
+                ` x2="${toCoord.x.toFixed(numPrecision)}" y2="${toCoord.y.toFixed(numPrecision)}"`
+                + ` stroke="${colour}" stroke-width="${scale.toFixed(numPrecision)}" />\n`;
             arrowCoord = new FSMCanvasUtil.CanvasCoordinate(toCoord.x, toCoord.y);
         }
         else {
@@ -120,7 +121,7 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
 
             // Will use path instead as it's actually easier to do partial circles than with circle element.
             let scaledTransitionRadius = transition.radius * scale;
-            svgText += `<path fill="none" stroke="${colour}"`
+            svgText += `<path fill="none" stroke="${colour}" stroke-width="${scale.toFixed(numPrecision)}"`
                 + ` d="M ${fromCoord.x.toFixed(numPrecision)} ${fromCoord.y.toFixed(numPrecision)}`
                 + ` A ${scaledTransitionRadius.toFixed(numPrecision)} ${scaledTransitionRadius.toFixed(numPrecision)}`
                 + ` ${0} ${(Math.abs(toAngle - fromAngle) > Math.PI) * 1} ${1}`
