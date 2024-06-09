@@ -4,7 +4,7 @@
  * Converts FSM in canvas to PNG
  * @param {FiniteStateMachine} fsm
  * @param {string} colour 
- * @returns {string} PNG of FSM canvas
+ * @returns {string} Data URL of FSM canvas PNG
  */
 export function fsmToPNG(fsm, colour) {
     /** @type {HTMLCanvasElement} */
@@ -54,44 +54,47 @@ export function textToXML(text) {
  * @param {number} height Height of the SVG
  * @param {string} colour Colour to be used in SVG file
  * @param {string} backgroundColour Background Colour of SVG image
+ * @param {number} [numPrecision=2] The number of decimal places to be used
+ * @param {number} [scale=1] Scale the canvas by a factor
  * @returns {Blob} An SVG File
  */
-export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecision = 2) {
-    let svgWidth = width.toFixed(numPrecision);
-    let svgHeight = height.toFixed(numPrecision);
+export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecision = 2, scale = 1) {
+    let svgWidth = (width * scale).toFixed(numPrecision);
+    let svgHeight = (height * scale).toFixed(numPrecision);
     let svgText = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" >\n`;
     svgText += `<rect width="${svgWidth}" height="${svgHeight}" fill="${backgroundColour}" />\n`;
     fsm.states.forEach(state => {
         if (state.isDrawable) {
-            let stateX = state.coordinate.x.toFixed(numPrecision);
-            let stateY = state.coordinate.y.toFixed(numPrecision);
-            let stateRadius = state.radius.toFixed(numPrecision);
+            let stateX = (state.coordinate.x * scale).toFixed(numPrecision);
+            let stateY = (state.coordinate.y * scale).toFixed(numPrecision);
+            let stateRadius = (state.radius * scale).toFixed(numPrecision);
             svgText += `<circle cx="${stateX}" cy="${stateY}" r="${stateRadius}" `
                 + `stroke="${colour}" stroke-width="1" fill="none" />\n`;
             if (state.isFinalState) {
                 svgText += `<circle cx="${stateX}" cy="${stateY}"`
-                    + ` r="${(state.radius * FSMCanvasUtil.FINALSTATECIRCLERATIO).toFixed(numPrecision)}" `
+                    + ` r="${(state.radius * FSMCanvasUtil.FINALSTATECIRCLERATIO * scale).toFixed(numPrecision)}" `
                     + `stroke="${colour}" stroke-width="1" fill="none" />\n`;
             }
             // loop through text lines to map each to <text/>
             let textLines = state.text.split("\n");
             let textX = "0";
             let initialTextY = state.coordinate.y - ((textLines.length - 1) * (FSMCanvasUtil.FONTSIZE / 2));
-            let textY = parseInt((initialTextY + (FSMCanvasUtil.FONTSIZE / 2)).toFixed(numPrecision));
+            let textY = parseInt(((initialTextY + (FSMCanvasUtil.FONTSIZE / 2)) * scale).toFixed(numPrecision));
             textLines.forEach(text => {
                 let xmlTxt = textToXML(text);
-                textX = (state.coordinate.x - (FSMCanvasUtil.canvasCtx.measureText(text).width / 2)).toFixed(numPrecision);
+                let tempX = (state.coordinate.x - (FSMCanvasUtil.canvasCtx.measureText(text).width / 2)) * scale;
+                textX = tempX.toFixed(numPrecision);
                 svgText += `<text x="${textX}" y="${textY}" fill="${colour}" font-family="${FSMCanvasUtil.FONTSTYLE}" `
-                    + `font-size="${FSMCanvasUtil.FONTSIZE}">${xmlTxt}</text>\n`;
-                textY += FSMCanvasUtil.FONTSIZE;
+                    + `font-size="${FSMCanvasUtil.FONTSIZE * scale}">${xmlTxt}</text>\n`;
+                textY += FSMCanvasUtil.FONTSIZE * scale;
             });
         }
     });
     fsm.transitions.forEach(transition => {
         let arrowCoord = new FSMCanvasUtil.CanvasCoordinate();
         let arrowAngle = transition.angle;
-        let fromCoord = transition.fromCoord;
-        let toCoord = transition.toCoord;
+        let fromCoord = new FSMCanvasUtil.CanvasCoordinate(transition.fromCoord.x * scale, transition.fromCoord.y * scale);
+        let toCoord = new FSMCanvasUtil.CanvasCoordinate(transition.toCoord.x * scale, transition.toCoord.y * scale);
         let textLines = transition.text.split("\n");
         if (!transition.isCurved) {
             arrowCoord = new FSMCanvasUtil.CanvasCoordinate(fromCoord.x, toCoord.y);
@@ -112,27 +115,28 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
             }
 
             arrowAngle = transition.toAngle;
-            arrowCoord = transition.toCoord;
+            arrowCoord =  toCoord;
             arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
 
             // Will use path instead as it's actually easier to do partial circles than with circle element.
+            let scaledTransitionRadius = transition.radius * scale;
             svgText += `<path fill="none" stroke="${colour}"`
                 + ` d="M ${fromCoord.x.toFixed(numPrecision)} ${fromCoord.y.toFixed(numPrecision)}`
-                + ` A ${transition.radius.toFixed(numPrecision)} ${transition.radius.toFixed(numPrecision)}`
+                + ` A ${scaledTransitionRadius.toFixed(numPrecision)} ${scaledTransitionRadius.toFixed(numPrecision)}`
                 + ` ${0} ${(Math.abs(toAngle - fromAngle) > Math.PI) * 1} ${1}`
                 + ` ${toCoord.x.toFixed(numPrecision)} ${toCoord.y.toFixed(numPrecision)}" />\n`;
         }
 
         var cosAngle = Math.cos(arrowAngle);
         var sineAngle = Math.sin(arrowAngle);
-        let xa = arrowCoord.x - FSMCanvasUtil.ARROWWIDTH * cosAngle;
-        let ya = arrowCoord.y - FSMCanvasUtil.ARROWWIDTH * sineAngle;
+        let xa = arrowCoord.x - FSMCanvasUtil.ARROWWIDTH * scale * cosAngle;
+        let ya = arrowCoord.y - FSMCanvasUtil.ARROWWIDTH * scale * sineAngle;
         svgText += `<path fill="${colour}" `
             + `d="M ${arrowCoord.x.toFixed(numPrecision)} ${arrowCoord.y.toFixed(numPrecision)} `
-            + `L ${(xa + FSMCanvasUtil.ARROWHEIGHT * sineAngle).toFixed(numPrecision)}, `
-            + `${(ya - FSMCanvasUtil.ARROWHEIGHT * cosAngle).toFixed(numPrecision)} `
-            + `${(xa - FSMCanvasUtil.ARROWHEIGHT * sineAngle).toFixed(numPrecision)}, `
-            + `${(ya + FSMCanvasUtil.ARROWHEIGHT * cosAngle).toFixed(numPrecision)} `
+            + `L ${(xa + FSMCanvasUtil.ARROWHEIGHT * scale * sineAngle).toFixed(numPrecision)}, `
+            + `${(ya - FSMCanvasUtil.ARROWHEIGHT * scale * cosAngle).toFixed(numPrecision)} `
+            + `${(xa - FSMCanvasUtil.ARROWHEIGHT * scale * sineAngle).toFixed(numPrecision)}, `
+            + `${(ya + FSMCanvasUtil.ARROWHEIGHT * scale * cosAngle).toFixed(numPrecision)} `
             + `Z"/>\n`;
 
         let textCoordInfo = FSMCanvasUtil.SetTransitionTextCoords(transition, FSMCanvasUtil.canvasCtx);
@@ -155,14 +159,14 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
                 let xmlText = textToXML(text);
                 svgText += `<text x="${x.toFixed(numPrecision)}" y="${y.toFixed(numPrecision)}" `
                     + `fill="${this.fillStyle}" font-family="${FSMCanvasUtil.FONTSTYLE}" `
-                    + `font-size="${FSMCanvasUtil.FONTSIZE}">${xmlText}</text>\n`;
+                    + `font-size="${FSMCanvasUtil.FONTSIZE * scale}">${xmlText}</text>\n`;
             };
         };
 
         let drawingCtx = new ExportAsSvg();
 
         FSMCanvasUtil.drawCanvasText(
-            drawingCtx, textCoordInfo.textX, textCoordInfo.textY, colour, textLines, false, textCoordInfo.vertialAlignment
+            drawingCtx, textCoordInfo.textX, textCoordInfo.textY, colour, textLines, false, textCoordInfo.vertialAlignment, scale
         );
     });
 

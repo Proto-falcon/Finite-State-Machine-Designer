@@ -22,9 +22,10 @@ export function saveAsPNG(fsm, colour) {
  * @param {FiniteStateMachine} fsm Finite state machine
  * @param {string} colour Colour of the finite state machine
  * @param {string} backgroundColour Background colour
+ * @param {number} [scale=1] Scale the canvas by a factor
  */
-export function saveAsSvg(fsm, colour, backgroundColour) {
-    let svgBlob = FSMCanvasExport.fsmToSVG(fsm, FSMCanvasUtils.canvasElement.width, FSMCanvasUtils.canvasElement.height, colour, backgroundColour);
+export function saveAsSvg(fsm, colour, backgroundColour, scale = 1) {
+    let svgBlob = FSMCanvasExport.fsmToSVG(fsm, FSMCanvasUtils.canvasElement.width, FSMCanvasUtils.canvasElement.height, colour, backgroundColour, 2, scale);
     downloadFile(svgBlob, "Finite State Machine");
 }
 

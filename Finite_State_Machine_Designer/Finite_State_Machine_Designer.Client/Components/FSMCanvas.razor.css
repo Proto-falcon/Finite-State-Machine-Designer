@@ -21,7 +21,45 @@
 }
 
 .canvas-form {
-    margin-right: 2rem;
+    padding: 5px;
+    border: 2px solid #ffffff; 
+    border-radius: 5px;
+}
+
+.canvas-name-group {
+    width: fit-content;
+}
+
+.canvas-name {
+    width: 30em;
+}
+
+.canvas-desc-group {
+    text-align: left;
+    display: grid;
+}
+
+.canvas-desc-label {
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.canvas-details {
+    position: relative;
+    bottom: 1.9em;
+    left: 2rem;
+    width:fit-content;
+    z-index: 2;
+}
+
+.canvas-details-button {
+    width: fit-content;
+    list-style: none;
+    text-align: right;
+    background-color: #808080;
+    padding: 5px;
+    border-radius: 5px;
 }
 
 #json-upload {
@@ -48,4 +86,15 @@
 form {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.svg-scale-input {
+    width: 5em;
+}
+
+.svg-form {
+    display: inline;
+    padding: 10px;
+    border: 2px solid #ffffff;
+    border-radius: 5px;
 }

@@ -311,8 +311,9 @@ export function SetTransitionTextCoords(transition, drawingCtx) {
  * @param {string[]} textLines
  * @param {boolean} editable
  * @param {number} [vertialAlignment=0] 
+ * @param {number} [scale=1] Scale the canvas by a factor
  */
-export function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, vertialAlignment = 0) {
+export function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, vertialAlignment = 0, scale = 1) {
     if (drawingCtx === undefined || drawingCtx === null) {
         drawingCtx = canvasCtx;
     }
@@ -323,8 +324,8 @@ export function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, ve
         let textY = 0;
 
         if (textLines.length <= 0) {
-            caretX = x + 0.5;
-            caretY = y + (FONTSIZE / 2);
+            caretX = (x + 0.5) * scale;
+            caretY = (y + (FONTSIZE / 2)) * scale;
         }
         else {
             let initialY = 0;
@@ -337,7 +338,7 @@ export function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, ve
             else {
                 initialY = y;
             }
-            textY = initialY + (FONTSIZE / 2);
+            textY = (initialY + (FONTSIZE / 2)) * scale;
             drawingCtx.fillStyle = colour;
 
             for (var i = 0; i < textLines.length; i++) {
@@ -345,12 +346,12 @@ export function drawCanvasText(drawingCtx, x, y, colour, textLines, editable, ve
 
                 let halfWidth = Math.round(textMetric.width / 2);
 
-                textX = x - halfWidth;
-                caretX = x + halfWidth;
+                textX = (x - halfWidth) * scale;
+                caretX = (x + halfWidth) * scale;
                 drawingCtx.fillText(textLines[i], textX, textY);
 
-                caretY = textY
-                textY += FONTSIZE
+                caretY = textY * scale
+                textY += FONTSIZE * scale
             }
         }
 
@@ -432,6 +433,5 @@ export function loadFSM() {
         return null;
     };
     let result = JSON.parse(fsmJSONText);
-    console.log(result);
     return result;
 }

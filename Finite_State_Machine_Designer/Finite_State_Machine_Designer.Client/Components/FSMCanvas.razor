@@ -10,7 +10,11 @@
 <div class="center canvas-top-buttons">
 	Export as:
 	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
-	<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
+	<form class="svg-form">
+		<input class="svg-scale-input" type="number" min="0" placeholder="SVG export Scale" step="0.01"
+		@bind:event="oninput" @bind="_canvasExportScale" />
+		<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
+	</form>
 	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
 	<AuthorizeView>
@@ -32,14 +36,21 @@
 		aₓ
 	</button>
 </div>
-<form class="center canvas-form">
-	<label for="name">Name:</label>
-	<input type="text" name="name" placeholder="Name"
-		   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Name" @bind:set="OnFSMNameChange" />
-	<label for="name">Description:</label>
-	<input type="text" name="Description" placeholder="Description"
-		   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Description" @bind:set="OnFSMDescChange" />
-</form>
+<details class="canvas-details">
+	<summary class="canvas-details-button">Finite State Machine Name & Description</summary>
+	<form class="center canvas-form">
+		<div class="canvas-name-group">
+			<label for="canvasName">Name:</label>
+			<input id="canvasName" class="canvas-name" type="text" name="name" placeholder="Name"
+				   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Name" @bind:set="OnFSMNameChange" />
+		</div>
+		<div class="canvas-desc-group">
+			<label class="canvas-desc-label" for="canvasDesc">Description:</label>
+			<textarea id="canvasDesc" name="Description" style="resize:none" placeholder="Description" rows="10" cols="50"
+				   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Description" @bind:set="OnFSMDescChange" />
+		</div>
+	</form>
+</details>
 <canvas
 	id="FSMCanvas"
 	@ref="_canvasElement"
@@ -71,7 +82,7 @@
 	public bool MustRetryContext { get; set; } = false;
 
 	private ElementReference? _canvasElement;
-
+	private float _canvasExportScale { get; set; } = 1;
 	private Timer? _drawTimer;
 	private bool _canResizeState = false;
 	private bool _subScriptMode = false;
@@ -388,7 +399,7 @@
 	private async void SaveAsSvg(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(JsModule))
-			await JsModule.InvokeVoidAsync("saveAsSvg", _fsmDrawer.FSM, _colour, _canvasBackgroundColour);
+			await JsModule.InvokeVoidAsync("saveAsSvg", _fsmDrawer.FSM, _colour, _canvasBackgroundColour, _canvasExportScale);
 	}
 
 	private async void SaveAsJson(MouseEventArgs mouseEventArgs)
