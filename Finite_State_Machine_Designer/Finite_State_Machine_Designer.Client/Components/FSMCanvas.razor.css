@@ -11,6 +11,8 @@
 
 .canvas-top-buttons {
     position: sticky;
+    width: fit-content;
+    align-self: end;
     z-index: 2;
     top: 0.75rem;
     margin-right: 2rem;
@@ -45,12 +47,16 @@
     margin-bottom: 0.5em;
 }
 
+#canvasDesc {
+    resize:both;
+}
+
 .canvas-details {
     position: relative;
     bottom: 1.9em;
     left: 2rem;
-    width:fit-content;
-    z-index: 2;
+    width: fit-content;
+    align-self: flex-start;
 }
 
 .canvas-details-button {

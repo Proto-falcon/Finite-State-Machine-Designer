@@ -42,12 +42,12 @@
 		<div class="canvas-name-group">
 			<label for="canvasName">Name:</label>
 			<input id="canvasName" class="canvas-name" type="text" name="name" placeholder="Name"
-				   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Name" @bind:set="OnFSMNameChange" />
+				   @bind:event="oninput" @bind="_fsmDrawer.FSM.Name" />
 		</div>
 		<div class="canvas-desc-group">
 			<label class="canvas-desc-label" for="canvasDesc">Description:</label>
-			<textarea id="canvasDesc" name="Description" style="resize:none" placeholder="Description" rows="10" cols="50"
-				   @bind:event="oninput" @bind:get="_fsmDrawer.FSM.Description" @bind:set="OnFSMDescChange" />
+			<textarea id="canvasDesc" name="Description" placeholder="Description" rows="10" cols="50"
+				   @bind:event="oninput" @bind="_fsmDrawer.FSM.Description" />
 		</div>
 	</form>
 </details>
@@ -193,18 +193,6 @@
 			_drawTimer = new Timer(DrawMachineTimer, null, 0, _drawTimerInterval);
 			_logger.LogDebug("Restarted the draw timer");
 		}
-	}
-
-	private void OnFSMNameChange(string? newName)
-	{
-		newName ??= "";
-		_fsmDrawer.FSM.Name = newName;
-	}
-
-	private void OnFSMDescChange(string? newDesc)
-	{
-		newDesc ??= "";
-		_fsmDrawer.FSM.Description = newDesc;
 	}
 
 	private async void MouseDownHandler(MouseEventArgs mouseEventArgs)
