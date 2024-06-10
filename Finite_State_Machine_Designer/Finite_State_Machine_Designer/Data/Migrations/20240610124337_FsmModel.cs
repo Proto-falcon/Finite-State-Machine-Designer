@@ -14,8 +14,7 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "StateMachines",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(type: "nchar(64)", fixedLength: true, maxLength: 64, nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -38,13 +37,12 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "States",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(type: "nchar(64)", fixedLength: true, maxLength: 64, nullable: false),
                     IsDrawable = table.Column<bool>(type: "bit", nullable: false),
                     Radius = table.Column<float>(type: "real", nullable: false),
                     IsFinalState = table.Column<bool>(type: "bit", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: false),
+                    FiniteStateMachineId = table.Column<string>(type: "nchar(64)", nullable: false),
                     Coordinate_X = table.Column<double>(type: "float", nullable: false),
                     Coordinate_Y = table.Column<double>(type: "float", nullable: false)
                 },
@@ -63,8 +61,7 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "Transitions",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(type: "nchar(64)", fixedLength: true, maxLength: 64, nullable: false),
                     SelfAngle = table.Column<double>(type: "float", nullable: false),
                     ParallelAxis = table.Column<double>(type: "float", nullable: false),
                     PerpendicularAxis = table.Column<double>(type: "float", nullable: false),
@@ -72,7 +69,7 @@ namespace Finite_State_Machine_Designer.Migrations
                     IsReversed = table.Column<bool>(type: "bit", nullable: false),
                     Radius = table.Column<double>(type: "float", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FiniteStateMachineId = table.Column<long>(type: "bigint", nullable: false),
+                    FiniteStateMachineId = table.Column<string>(type: "nchar(64)", nullable: false),
                     CenterArc_X = table.Column<double>(type: "float", nullable: false),
                     CenterArc_Y = table.Column<double>(type: "float", nullable: false)
                 },
@@ -91,8 +88,8 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "FiniteStateTransitions",
                 columns: table => new
                 {
-                    StatesId = table.Column<long>(type: "bigint", nullable: false),
-                    TransitionId = table.Column<long>(type: "bigint", nullable: false)
+                    StatesId = table.Column<string>(type: "nchar(64)", nullable: false),
+                    TransitionId = table.Column<string>(type: "nchar(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -101,8 +98,7 @@ namespace Finite_State_Machine_Designer.Migrations
                         name: "FK_FiniteStateTransitions_States_StatesId",
                         column: x => x.StatesId,
                         principalTable: "States",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_FiniteStateTransitions_Transitions_TransitionId",
                         column: x => x.TransitionId,

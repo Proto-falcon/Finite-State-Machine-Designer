@@ -1,0 +1,59 @@
+﻿h2 {
+    text-decoration:underline;
+}
+
+.canvas-name-group {
+    width: 30em;
+}
+
+.canvas-name {
+    width: 30em;
+}
+
+.canvas-info-group {
+    margin-bottom: 0.5em;
+}
+
+.canvas-desc-group {
+    text-align: left;
+    display: grid;
+}
+
+.canvas-desc-label {
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+#canvasDesc {
+    resize: vertical;
+}
+
+.canvas-details {
+    position: relative;
+    bottom: 1.9em;
+    left: 2rem;
+    width: fit-content;
+}
+
+.current-svg-container {
+    border: solid 5px #ffffff;
+    border-radius: 5px;
+}
+
+.blink {
+    animation: blinker 1s linear normal;
+    display: inline;
+    margin-left: 0.3em;
+}
+
+.current-save-button {
+    display: inline;
+    width: fit-content;
+}
+
+@keyframes blinker {
+    100% {
+        opacity: 0;
+    }
+}

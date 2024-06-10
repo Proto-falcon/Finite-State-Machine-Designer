@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Finite_State_Machine_Designer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240608195024_FsmModel")]
+    [Migration("20240610124337_FsmModel")]
     partial class FsmModel
     {
         /// <inheritdoc />
@@ -28,11 +28,11 @@ namespace Finite_State_Machine_Designer.Migrations
 
             modelBuilder.Entity("FiniteStateTransitions", b =>
                 {
-                    b.Property<long>("StatesId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("StatesId")
+                        .HasColumnType("nchar(64)");
 
-                    b.Property<long>("TransitionId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("TransitionId")
+                        .HasColumnType("nchar(64)");
 
                     b.HasKey("StatesId", "TransitionId");
 
@@ -43,14 +43,14 @@ namespace Finite_State_Machine_Designer.Migrations
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteState", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("FiniteStateMachineId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("FiniteStateMachineId")
+                        .IsRequired()
+                        .HasColumnType("nchar(64)");
 
                     b.Property<bool>("IsDrawable")
                         .HasColumnType("bit");
@@ -83,11 +83,10 @@ namespace Finite_State_Machine_Designer.Migrations
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteStateMachine", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -119,14 +118,14 @@ namespace Finite_State_Machine_Designer.Migrations
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.Transition", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("nchar(64)")
+                        .IsFixedLength();
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("FiniteStateMachineId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("FiniteStateMachineId")
+                        .IsRequired()
+                        .HasColumnType("nchar(64)");
 
                     b.Property<bool>("IsReversed")
                         .HasColumnType("bit");
@@ -369,7 +368,7 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteState", null)
                         .WithMany()
                         .HasForeignKey("StatesId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
 
                     b.HasOne("Finite_State_Machine_Designer.Client.FSM.Transition", null)

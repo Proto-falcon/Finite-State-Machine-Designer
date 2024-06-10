@@ -23,13 +23,38 @@ namespace Finite_State_Machine_Designer.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<FiniteStateMachine>()
+                .Property(fsm => fsm.Id)
+                .IsFixedLength()
+                .HasMaxLength(64);
+
+            modelBuilder.Entity<FiniteStateMachine>()
+                .HasKey(fsm => fsm.Id);
+
+            modelBuilder.Entity<FiniteState>()
+                .HasKey(state => state.Id);
+
+            modelBuilder.Entity<FiniteState>()
+                .Property(state => state.Id)
+                .IsFixedLength()
+                .HasMaxLength(64);
+
+            modelBuilder.Entity<Transition>()
+                .HasKey(transition => transition.Id);
+
+            modelBuilder.Entity<Transition>()
+                .Property(transition => transition.Id)
+                .IsFixedLength()
+                .HasMaxLength(64);
+
             modelBuilder.Entity<Transition>()
                 .HasMany(transition => transition.States)
                 .WithMany()
                 .UsingEntity(
                     "FiniteStateTransitions",
-                    leftSide => leftSide.HasOne(typeof(FiniteState)).WithMany().OnDelete(DeleteBehavior.Restrict),
+                    leftSide => leftSide.HasOne(typeof(FiniteState)).WithMany().OnDelete(DeleteBehavior.ClientCascade),
                     rightSide => rightSide.HasOne(typeof(Transition)).WithMany().OnDelete(DeleteBehavior.Cascade)
+                    // fix when resaving the same fsm
                 );
 
             modelBuilder.Entity<FiniteStateMachine>()

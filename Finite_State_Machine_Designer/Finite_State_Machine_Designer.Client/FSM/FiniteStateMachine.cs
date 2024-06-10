@@ -5,7 +5,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
     {
-        public long Id { get; set; }
+		[JsonIgnore]
+		public string? Id { get; set; }
 
 		[JsonIgnore]
 		public string UserId { get; set; } = string.Empty;

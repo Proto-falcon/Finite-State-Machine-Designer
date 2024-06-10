@@ -10,6 +10,7 @@
 @implements IAsyncDisposable
 @inject UserService userService
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
 @inject ILogger<MyFSMs> _logger
 @attribute [Authorize]
 
@@ -18,57 +19,131 @@
     <h1>Finite State Machines</h1>
 </SectionContent>
 
-<h2>saveCurrent is set to @SaveCurrent</h2>
-
-@if (SaveCurrent && !_currentSaved && !_currentSavedFailed)
-{
-    <h3>Currently saving current FSM</h3>
-}
-else if (_saveFinished)
-{
-    if (_currentSaved && !_currentSavedFailed)
+<div style="display:grid; justify-content:center;">
+    @if (!_finishLoadingFSM)
     {
-        <h3>Successfully Saved Current FSM!!</h3>
+        <Loading Height="10em" Width="10em" Style="border-width: 1em; justify-self: center;" />
+    }
+    else if (_currentFSM is null)
+    {
+        <h2>No FSM currently in use</h2>
     }
     else
     {
-        <h3>There was error trying to save the current FSM</h3>
+        <div class="canvas-name-group canvas-info-group">
+            <h2><label for="canvasName">Name: @_currentFSM.Name</label></h2>
+            <input id="canvasName" class="canvas-name" type="text" name="name" placeholder="Name"
+                   @bind:event="oninput" @bind="_currentFSM.Name" />
+        </div>
+        <div>
+            @if (_currentlySaving)
+            {
+                <Loading Height="1.5em" Width="1.5em" Style="border-width: 0.2em;" />
+            }
+            else
+            {
+                <button class="current-save-button" @onclick="SetSaveCurrent">Save</button>
+            }
+            @if (_currentSaved)
+            {
+                <p class="blink">Saved!!</p>
+            }
+            else if (_currentSavedFailed)
+            {
+                <p class="blink">Couldn't save!! Something went wrong.</p>
+            }
+        </div>
+        <details>
+            <summary style="font-size: 1.5em; user-select: none;">Description</summary>
+            <div class="canvas-desc-group canvas-info-group">
+                <label class="canvas-desc-label" for="canvasDesc">Description:</label>
+                <textarea id="canvasDesc" name="Description" placeholder="Description" rows="10" cols="50"
+                          @bind:event="oninput" @bind="_currentFSM.Description" />
+            </div>
+        </details>
+        <div class="current-svg-container">
+            @_renderCurrentFSM
+        </div>
     }
-}
-<h3>Current user is @userService.GetUser().Identity?.Name</h3>
-
+</div>
+<canvas id="hiddenCanvas" style="display:none;"/>
 @code
 {
+    private FiniteStateMachine? _currentFSM = null;
+
     [SupplyParameterFromQuery]
     [Parameter]
     public bool SaveCurrent { get; set; }
-
-    private ApplicationDbContext _dbContext { get; set; }
-
-    private bool _saveFinished = false;
+    private bool _currentlySaving = false;
     private bool _currentSaved = false;
     private bool _currentSavedFailed = false;
+    private bool _finishLoadingFSM = false;
+    private const string _canvasBackgroundColour = "#313338";
+    private const string _colour = "#ffffff";
+    private MarkupString _renderCurrentFSM = new();
 
     protected override void OnInitialized()
     {
-        _dbContext = DbFactory.CreateDbContext();
+        Navigation.LocationChanged += HandleLocationChanged;
     }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
             await SetJsModule("./Components/Pages/MyFSMs.razor.js");
+
+        }
+        if (CheckJsModule(JsModule) && !_finishLoadingFSM)
+        {
+            await JsModule.InvokeAsync<bool>("fSMCanvasUtils.getCanvasContext", "hiddenCanvas");
+            _currentFSM = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
+            if (_currentFSM is not null)
+                _renderCurrentFSM = await GenerateFsmSvg(_currentFSM);
+            _finishLoadingFSM = !string.IsNullOrWhiteSpace(_renderCurrentFSM.Value);
+            StateHasChanged();
+        }
         if (SaveCurrent)
             await SaveCurrentFSM();
     }
 
+    /// <summary>
+    /// Generates an SVG of the 
+    /// </summary>
+    /// <returns></returns>
+    private async Task<MarkupString> GenerateFsmSvg(FiniteStateMachine fsm)
+    {
+        MarkupString fsmSvg = new();
+        if (CheckJsModule(JsModule))
+        {
+            fsmSvg = new( await JsModule.InvokeAsync<string>("fSMExport.fsmToSVG",
+                fsm, fsm.Width, fsm.Height, _colour,
+                _canvasBackgroundColour, 2, 0.5, true));
+        }
+        return fsmSvg;
+    }
+
+    private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => SaveCurrent = true;
+
+    private async void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _finishLoadingFSM = false;
+        if (CheckJsModule(JsModule))
+            await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
+    }
+
+    /// <summary>
+    /// Saves the current FSM in use to database.
+    /// </summary>
     private async Task SaveCurrentFSM()
     {
         if (CheckJsModule(JsModule))
         {
-            _saveFinished = false;
+            SaveCurrent = false;
+            _currentlySaving = true;
             _currentSaved = false;
             _currentSavedFailed = false;
+            StateHasChanged();
             FiniteStateMachine fsm = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
             if (fsm is not null)
             {
@@ -77,6 +152,7 @@ else if (_saveFinished)
                 ApplicationUser? appUser = null;
                 try
                 {
+                    await using ApplicationDbContext _dbContext = await DbFactory.CreateDbContextAsync();
                     if (!string.IsNullOrEmpty(userName))
                         appUser = _dbContext.Users
                         .Include(user => user.StateMachines)
@@ -85,19 +161,17 @@ else if (_saveFinished)
                     if (appUser is not null)
                     {
                         FiniteStateMachine? existingFSM = null;
-                        var existingFSMs = appUser.StateMachines
-                            .Where(fsmOther => fsmOther.Name == fsm.Name);
-                        int existingFSMCount = existingFSMs.Count();
-                        existingFSM = existingFSMs.FirstOrDefault();
-                        if (existingFSMCount > 1)
-                            _dbContext.Remove(existingFSMs.TakeLast(existingFSMCount - 1));
+                        existingFSM = appUser.StateMachines
+                            .Where(fsmOther => fsmOther.Name == fsm.Name).FirstOrDefault();
                         if (existingFSM is not null)
-                            _dbContext.Remove(existingFSM);
-                        fsm.Id = 0;
+                        {
+                            appUser.StateMachines.Remove(existingFSM);
+                        }
+                        fsm.Id = Guid.NewGuid().ToString();
                         foreach (FiniteState state in fsm.States)
-                            state.Id = 0;
+                            state.Id = Guid.NewGuid().ToString();
                         foreach (Transition transition in fsm.Transitions)
-                            transition.Id = 0;
+                            transition.Id = Guid.NewGuid().ToString();
                         appUser.StateMachines.Add(fsm);
                         await _dbContext.SaveChangesAsync();
 
@@ -109,8 +183,6 @@ else if (_saveFinished)
                             _currentSaved = true;
                             _logger.LogInformation("Successfully saved the current FSM {FSM} from user {user}",
                                 fetchedFSM.Name, appUser.Id);
-                            fsm = fetchedFSM;
-                            await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", fsm);
                         }
                         else
                         {
@@ -125,14 +197,15 @@ else if (_saveFinished)
                     _logger.LogError(ex.ToString());
                 }
             }
-            _saveFinished = true;
-            SaveCurrent = false;
+            _currentlySaving = false;
             StateHasChanged();
         }
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
-        await _dbContext.DisposeAsync();
+        if (CheckJsModule(JsModule))
+            await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
+        Navigation.LocationChanged -= HandleLocationChanged;
     }
 }

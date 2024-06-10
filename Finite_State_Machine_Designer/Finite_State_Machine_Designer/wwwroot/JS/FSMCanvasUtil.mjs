@@ -67,6 +67,10 @@ export class Transition {
 }
 
 export class FiniteStateMachine {
+    name = "";
+    description = "";
+    width = 0;
+    height = 0;
     finalStates = [new FiniteState()];
     initialStates = [new FiniteState()];
     states = [new FiniteState()];

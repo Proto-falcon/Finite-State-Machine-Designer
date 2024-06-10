@@ -56,9 +56,10 @@ export function textToXML(text) {
  * @param {string} backgroundColour Background Colour of SVG image
  * @param {number} [numPrecision=2] The number of decimal places to be used
  * @param {number} [scale=1] Scale the canvas by a factor
- * @returns {Blob} An SVG File
+ * @param {boolean} [asText=false] Flag to export it as blob when false, otherwise raw text;
+ * @returns {Blob|string} An SVG file or text
  */
-export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecision = 2, scale = 1) {
+export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecision = 2, scale = 1, asText = false) {
     let svgWidth = (width * scale).toFixed(numPrecision);
     let svgHeight = (height * scale).toFixed(numPrecision);
     let svgText = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" >\n`;
@@ -172,6 +173,9 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
     });
 
     svgText += '</svg>\n';
+    if (asText) {
+        return svgText;
+    }
     let svgFile = new Blob([svgText], { type: "image/svg+xml" });
     return svgFile;
 }

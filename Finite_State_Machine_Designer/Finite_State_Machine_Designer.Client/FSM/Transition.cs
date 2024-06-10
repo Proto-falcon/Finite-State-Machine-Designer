@@ -13,7 +13,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
             _fromState = fromState;
         }
 
-        public long Id { get; set; }
+        [JsonIgnore]
+        public string? Id { get; set; }
 
         private FiniteState _toState = new() { IsDrawable = false };
         private FiniteState _fromState = new() { IsDrawable = false };

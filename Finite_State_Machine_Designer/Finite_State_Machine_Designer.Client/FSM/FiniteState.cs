@@ -12,7 +12,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			radius = rad;
 		}
 
-		public long Id { get; set; }
+		[JsonIgnore]
+		public string? Id { get; set; }
 
 		private CanvasCoordinate coordinate;
 
