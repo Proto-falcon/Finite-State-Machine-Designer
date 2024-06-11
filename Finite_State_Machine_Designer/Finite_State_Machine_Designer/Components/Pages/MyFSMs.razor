@@ -61,19 +61,18 @@
                           @bind:event="oninput" @bind="_currentFSM.Description" />
             </div>
         </details>
-        <div class="current-svg-container">
-            @_renderCurrentFSM
-        </div>
+        <div class="current-svg-container">@_renderCurrentFSM</div>
     }
 </div>
 <canvas id="hiddenCanvas" style="display:none;"/>
 @code
 {
-    private FiniteStateMachine? _currentFSM = null;
-
     [SupplyParameterFromQuery]
     [Parameter]
     public bool SaveCurrent { get; set; }
+
+    private ApplicationUser _user = new ApplicationUser();
+    private FiniteStateMachine? _currentFSM = null;
     private bool _currentlySaving = false;
     private bool _currentSaved = false;
     private bool _currentSavedFailed = false;
@@ -81,6 +80,7 @@
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private MarkupString _renderCurrentFSM = new();
+    private List<MarkupString> _fsmSvgs = [];
 
     protected override void OnInitialized()
     {
@@ -92,7 +92,21 @@
         if (firstRender)
         {
             await SetJsModule("./Components/Pages/MyFSMs.razor.js");
-
+            await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
+            string? userName = userService.GetUser().Identity?.Name;
+            if (userName is not null)
+            {
+                ApplicationUser? fetchedUser = dbContext.Users
+                .Where(user => user.NormalizedUserName == userName.ToUpper())
+                .Include(user => user.StateMachines)
+                .FirstOrDefault();
+                if (fetchedUser is ApplicationUser)
+                    _user = fetchedUser;
+                else
+                    Navigation.NavigateTo("Account/Login");
+        }
+            else
+                Navigation.NavigateTo("Account/Login");
         }
         if (CheckJsModule(JsModule) && !_finishLoadingFSM)
         {
@@ -108,9 +122,9 @@
     }
 
     /// <summary>
-    /// Generates an SVG of the 
+    /// Generates an SVG of the Finite State Machine
     /// </summary>
-    /// <returns></returns>
+    /// <returns><see cref="MarkupString"/> that contains the SVG of Finite State Machine</returns>
     private async Task<MarkupString> GenerateFsmSvg(FiniteStateMachine fsm)
     {
         MarkupString fsmSvg = new();
@@ -148,47 +162,37 @@
             if (fsm is not null)
             {
                 fsm.LinkStatesToTransitions();
-                string userName = userService.GetUser().Identity?.Name ?? "";
-                ApplicationUser? appUser = null;
                 try
                 {
-                    await using ApplicationDbContext _dbContext = await DbFactory.CreateDbContextAsync();
-                    if (!string.IsNullOrEmpty(userName))
-                        appUser = _dbContext.Users
-                        .Include(user => user.StateMachines)
-                        .Where(user => user.NormalizedUserName == userName.ToUpper())
-                        .FirstOrDefault();
-                    if (appUser is not null)
-                    {
+                    await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
+                    dbContext.Attach(_user);
                         FiniteStateMachine? existingFSM = null;
-                        existingFSM = appUser.StateMachines
+                    existingFSM = _user.StateMachines
                             .Where(fsmOther => fsmOther.Name == fsm.Name).FirstOrDefault();
                         if (existingFSM is not null)
-                        {
-                            appUser.StateMachines.Remove(existingFSM);
-                        }
+                        _user.StateMachines.Remove(existingFSM);
+
                         fsm.Id = Guid.NewGuid().ToString();
                         foreach (FiniteState state in fsm.States)
                             state.Id = Guid.NewGuid().ToString();
                         foreach (Transition transition in fsm.Transitions)
                             transition.Id = Guid.NewGuid().ToString();
-                        appUser.StateMachines.Add(fsm);
-                        await _dbContext.SaveChangesAsync();
+                    _user.StateMachines.Add(fsm);
+                    await dbContext.SaveChangesAsync();
 
-                        var fetchedFSM = _dbContext.StateMachines
-                                .Where(otherFSM => otherFSM.UserId == appUser.Id && otherFSM.Name == fsm.Name)
+                    var fetchedFSM = dbContext.StateMachines
+                        .Where(otherFSM => otherFSM.UserId == _user.Id && otherFSM.Name == fsm.Name)
                                 .FirstOrDefault();
                         if (fetchedFSM is not null)
                         {
                             _currentSaved = true;
                             _logger.LogInformation("Successfully saved the current FSM {FSM} from user {user}",
-                                fetchedFSM.Name, appUser.Id);
+                            fetchedFSM.Name, _user.Id);
                         }
                         else
                         {
                             _currentSavedFailed = true;
-                            _logger.LogError("Couldn't save the current FSM from user {user}", appUser.Id);
-                        }
+                        _logger.LogError("Couldn't save the current FSM from user {user}", _user.Id);
                     }
                 }
                 catch (Exception ex)
