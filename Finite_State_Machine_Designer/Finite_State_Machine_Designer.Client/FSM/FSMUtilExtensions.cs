@@ -7,7 +7,7 @@
 		/// removes state duplicates.
 		/// </summary>
 		/// <returns>Finite state machine with no duplicate state objects</returns>
-		public static void LinkStatesToTransitions(this IFiniteStateMachine fsm)
+		public static void RemoveDuplicateStates(this IFiniteStateMachine fsm)
         {
             foreach (var transition in fsm.Transitions)
                 foreach (var state in fsm.States)

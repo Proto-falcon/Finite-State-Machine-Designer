@@ -7,7 +7,7 @@
 @using Finite_State_Machine_Designer.Client.FSM
 @inherits ModuleCheckBaseComponent
 @rendermode InteractiveServer
-@implements IAsyncDisposable
+@implements IDisposable
 @inject UserService userService
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject NavigationManager Navigation
@@ -113,7 +113,10 @@
             await JsModule.InvokeAsync<bool>("fSMCanvasUtils.getCanvasContext", "hiddenCanvas");
             _currentFSM = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
             if (_currentFSM is not null)
+            {
+                _currentFSM.RemoveDuplicateStates();
                 _renderCurrentFSM = await GenerateFsmSvg(_currentFSM);
+            }
             _finishLoadingFSM = !string.IsNullOrWhiteSpace(_renderCurrentFSM.Value);
             StateHasChanged();
         }
@@ -158,34 +161,35 @@
             _currentSaved = false;
             _currentSavedFailed = false;
             StateHasChanged();
-            FiniteStateMachine fsm = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
-            if (fsm is not null)
+            if (_currentFSM is not null)
             {
-                fsm.LinkStatesToTransitions();
                 try
                 {
+                    _user.StateMachines.Clear();
                     await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
                     dbContext.Attach(_user);
+                    await dbContext.Entry(_user).Collection(user => user.StateMachines).LoadAsync();
                         FiniteStateMachine? existingFSM = null;
                     existingFSM = _user.StateMachines
-                            .Where(fsmOther => fsmOther.Name == fsm.Name).FirstOrDefault();
+                        .Where(fsmOther => fsmOther.Name == _currentFSM.Name).FirstOrDefault();
                         if (existingFSM is not null)
                         _user.StateMachines.Remove(existingFSM);
 
-                        fsm.Id = Guid.NewGuid().ToString();
-                        foreach (FiniteState state in fsm.States)
+                    _currentFSM.Id = Guid.NewGuid().ToString();
+                    foreach (FiniteState state in _currentFSM.States)
                             state.Id = Guid.NewGuid().ToString();
-                        foreach (Transition transition in fsm.Transitions)
+                    foreach (Transition transition in _currentFSM.Transitions)
                             transition.Id = Guid.NewGuid().ToString();
-                    _user.StateMachines.Add(fsm);
+                    _user.StateMachines.Add(_currentFSM);
                     await dbContext.SaveChangesAsync();
 
                     var fetchedFSM = dbContext.StateMachines
-                        .Where(otherFSM => otherFSM.UserId == _user.Id && otherFSM.Name == fsm.Name)
+                        .Where(otherFSM => otherFSM.UserId == _user.Id && otherFSM.Name == _currentFSM.Name)
                                 .FirstOrDefault();
                         if (fetchedFSM is not null)
                         {
                             _currentSaved = true;
+                        await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
                             _logger.LogInformation("Successfully saved the current FSM {FSM} from user {user}",
                             fetchedFSM.Name, _user.Id);
                         }
@@ -206,10 +210,8 @@
         }
     }
 
-    async ValueTask IAsyncDisposable.DisposeAsync()
+    public void Dispose()
     {
-        if (CheckJsModule(JsModule))
-            await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
         Navigation.LocationChanged -= HandleLocationChanged;
     }
 }

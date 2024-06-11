@@ -154,7 +154,7 @@
 				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
 				if (fsm is not null)
 				{
-					fsm.LinkStatesToTransitions();
+					fsm.RemoveDuplicateStates();
 					_fsmDrawer.FSM = fsm;
 				}
 				_fsmDrawer.FSM.Width = Width;
@@ -409,7 +409,7 @@
 			IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload");
 			if (fsm is not null)
 			{
-				fsm.LinkStatesToTransitions();
+				fsm.RemoveDuplicateStates();
 				_fsmDrawer.FSM = fsm;
 				await _fsmDrawer.DrawMachineAsync();
 			}
