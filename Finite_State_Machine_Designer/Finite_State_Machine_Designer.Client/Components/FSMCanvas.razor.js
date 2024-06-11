@@ -4,12 +4,18 @@ import * as FSMCanvasExport from "../JS/FSMCanvasExport.mjs";
 export let fSMCanvasUtils = FSMCanvasUtils;
 
 /**
+ * @typedef {import("../../Finite_State_Machine_Designer/wwwroot/JS/FSMCanvasUtil.mjs").FiniteStateMachine} FiniteStateMachine
+ * @typedef {import("../../Finite_State_Machine_Designer/wwwroot/JS/FSMCanvasUtil.mjs").Transition} Transition
+ * @typedef {import("../../Finite_State_Machine_Designer/wwwroot/JS/FSMCanvasUtil.mjs").FiniteState} FiniteState
+ * @typedef {import("../../Finite_State_Machine_Designer/wwwroot/JS/FSMCanvasUtil.mjs").CanvasCoordinate} CanvasCoordinate
+ */
+
+/**
  * Downloads a png of the Finite State Machine
  * @param {FiniteStateMachine} fsm
  * @param {string} colour 
  */
 export function saveAsPNG(fsm, colour) {
-
     let pngData = FSMCanvasExport.fsmToPNG(fsm, colour);
     let anchor = document.createElement('a');
     anchor.href = pngData;

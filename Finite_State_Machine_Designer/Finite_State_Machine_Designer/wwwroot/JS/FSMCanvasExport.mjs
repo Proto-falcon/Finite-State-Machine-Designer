@@ -1,6 +1,13 @@
 ﻿import * as FSMCanvasUtil from "./FSMCanvasUtil.mjs";
 
 /**
+ * @typedef {import("./FSMCanvasUtil.mjs").FiniteStateMachine} FiniteStateMachine
+ * @typedef {import("./FSMCanvasUtil.mjs").Transition} Transition
+ * @typedef {import("./FSMCanvasUtil.mjs").FiniteState} FiniteState
+ * @typedef {import("./FSMCanvasUtil.mjs").CanvasCoordinate} CanvasCoordinate
+ */
+
+/**
  * Converts FSM in canvas to PNG
  * @param {FiniteStateMachine} fsm
  * @param {string} colour 

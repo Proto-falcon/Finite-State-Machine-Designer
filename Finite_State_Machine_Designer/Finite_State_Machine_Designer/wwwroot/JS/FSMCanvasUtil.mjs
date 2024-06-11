@@ -13,6 +13,12 @@ export const CANVASTEXTVERTICAL = Object.freeze(
     }
 );
 
+/**
+ * @typedef {{
+ *      x: number,
+ *      y: number,
+ * }} CanvasCoordinate
+ */
 export class CanvasCoordinate {
     x = 0;
     y = 0;
@@ -28,7 +34,15 @@ export class CanvasCoordinate {
     }
 }
 
-
+/**
+ * @typedef {{
+ *      coordinate: CanvasCoordinate,
+ *      radius: number,
+ *      isFinalState: boolean,
+ *      text: string,
+ *      isDrawable: boolean,
+ * }} FiniteState
+ */
 export class FiniteState {
     coordinate = new CanvasCoordinate();
     radius = 1;
@@ -47,7 +61,25 @@ export class FiniteState {
     }
 }
 
-
+/**
+ * @typedef {{
+ *      fromState: FiniteState,
+ *      fromCoord: CanvasCoordinate,
+ *      fromAngle: number,
+ *      toState: FiniteState,
+ *      toCoord: CanvasCoordinate,
+ *      toAngle: number,
+ *      angle: number,
+ *      centerArc: CanvasCoordinate,
+ *      radius: number,
+ *      isCurved: boolean,
+ *      text: string,
+ *      anchor: CanvasCoordinate,
+ *      parallelAxis: number,
+ *      perpendicularAxis: number,
+ *      isReversed: boolean,
+ * }} Transition
+ */
 export class Transition {
     fromState = new FiniteState();
     fromCoord = new CanvasCoordinate();
@@ -66,6 +98,19 @@ export class Transition {
     isReversed = false;
 }
 
+/**
+ * @typedef {{
+ *      name: string,
+ *      description: string,
+ *      width: number,
+ *      height: number,
+ *      finalStates: Array<FiniteState>,
+ *      initialStates: Array<FiniteState>,
+ *      states: Array<FiniteState>,
+ *      transitionSearchRadius: number,
+ *      transitions: Array<Transition>,
+ * }} FiniteStateMachine
+ */
 export class FiniteStateMachine {
     name = "";
     description = "";
