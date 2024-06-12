@@ -58,7 +58,15 @@ function downloadFile(blob, fileName) {
     URL.revokeObjectURL(fileUrl);
 }
 
-export let uploadJson = () => FSMCanvasUtils.uploadElement.click();
+/**
+ * Sends the click event to the input[file] element to trigger pop up to display file explorer
+ * @param {HTMLInputElement} uploadElement Input[file] element
+ */
+export function uploadJson(uploadElement) {
+    if (uploadElement !== null && uploadElement !== undefined) {
+        uploadElement.click();
+    }
+}
 
 /**
  * Parses json file to object
@@ -80,11 +88,15 @@ function parseJson(file) {
 
 /**
  * Loads the json file containing the Finite State Machine in the input[type=file] element.
- * @returns {FiniteStateMachine}
+ * @param {HTMLInputElement} uploadElement Input[file] element
+ * @returns {FiniteStateMachine?}
  */
-export async function loadJsonUpload() {
-    if (FSMCanvasUtils.uploadElement.files < 1) return;
-    let file = FSMCanvasUtils.uploadElement.files[0];
-    let fsm = await parseJson(file);
-    return fsm;
+export async function loadJsonUpload(uploadElement) {
+    if (uploadElement !== null || uploadElement !== undefined) {
+        if (uploadElement.files < 1) return;
+        let file = uploadElement.files[0];
+        let fsm = await parseJson(file);
+        return fsm;
+    }
+    return null;
 }

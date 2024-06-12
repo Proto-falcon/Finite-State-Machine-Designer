@@ -129,9 +129,6 @@ export let canvasCtx;
 /** @type {HTMLCanvasElement}*/
 export let canvasElement;
 
-/** @type {HTMLInputElement} */
-export let uploadElement = document.getElementById("json-upload");
-
 /**
  * Gets canvas context
  * @param {string} id HTML Id of Canvas

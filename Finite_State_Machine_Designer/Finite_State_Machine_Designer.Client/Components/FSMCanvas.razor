@@ -69,7 +69,7 @@
 	element.
 </canvas>
 
-<input id="json-upload" type="file" accept="application/json" @onchange="LoadUploadedJson" />
+<input @ref="_jsonUpload" id="json-upload" type="file" accept="application/json" @onchange="LoadUploadedJson" />
 
 @code {
 	[Parameter]
@@ -82,6 +82,7 @@
 	public bool MustRetryContext { get; set; } = false;
 
 	private ElementReference? _canvasElement;
+	private ElementReference? _jsonUpload;
 	private float _canvasExportScale { get; set; } = 1;
 	private Timer? _drawTimer;
 	private bool _canResizeState = false;
@@ -398,15 +399,15 @@
 
 	private async void UploadJson(MouseEventArgs mouseEventArgs)
 	{
-		if (CheckJsModule(JsModule))
-			await JsModule.InvokeVoidAsync("uploadJson");
+		if (CheckJsModule(JsModule) && _jsonUpload is not null)
+			await JsModule.InvokeVoidAsync("uploadJson", _jsonUpload);
 	}
 
 	private async void LoadUploadedJson(ChangeEventArgs changeEventArgs)
 	{
-		if (CheckJsModule(JsModule))
+		if (CheckJsModule(JsModule) && _jsonUpload is not null)
 		{
-			IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload");
+			IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload", _jsonUpload);
 			if (fsm is not null)
 			{
 				fsm.RemoveDuplicateStates();
