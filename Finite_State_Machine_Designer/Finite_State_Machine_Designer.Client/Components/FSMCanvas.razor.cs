@@ -100,7 +100,7 @@ namespace Finite_State_Machine_Designer.Client.Components
 						}
 						break;
 					case "delete":
-						_fsmDrawer.FSM.RemoveTransition(transition);
+						_fsmDrawer.FSM.Transitions.Remove(transition);
 						break;
 					case "return":
 					case "enter":

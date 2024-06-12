@@ -26,7 +26,7 @@ namespace Finite_State_Machine_Designer.Data
             modelBuilder.Entity<FiniteStateMachine>()
                 .Property(fsm => fsm.Id)
                 .IsFixedLength()
-                .HasMaxLength(64);
+                .HasMaxLength(36);
 
             modelBuilder.Entity<FiniteStateMachine>()
                 .HasKey(fsm => fsm.Id);
@@ -37,7 +37,7 @@ namespace Finite_State_Machine_Designer.Data
             modelBuilder.Entity<FiniteState>()
                 .Property(state => state.Id)
                 .IsFixedLength()
-                .HasMaxLength(64);
+                .HasMaxLength(36);
 
             modelBuilder.Entity<Transition>()
                 .HasKey(transition => transition.Id);
@@ -45,17 +45,8 @@ namespace Finite_State_Machine_Designer.Data
             modelBuilder.Entity<Transition>()
                 .Property(transition => transition.Id)
                 .IsFixedLength()
-                .HasMaxLength(64);
-
-            modelBuilder.Entity<Transition>()
-                .HasMany(transition => transition.States)
-                .WithMany()
-                .UsingEntity(
-                    "FiniteStateTransitions",
-                    leftSide => leftSide.HasOne(typeof(FiniteState)).WithMany().OnDelete(DeleteBehavior.ClientCascade),
-                    rightSide => rightSide.HasOne(typeof(Transition)).WithMany().OnDelete(DeleteBehavior.Cascade)
-                    // fix when resaving the same fsm
-                );
+                .HasMaxLength(36); // the length of GUIDs converted to string in terms of byte pairs is 36
+                                   // this due to the 4 extra hyphens '-'
 
             modelBuilder.Entity<FiniteStateMachine>()
                 .HasMany(fsm => fsm.Transitions)

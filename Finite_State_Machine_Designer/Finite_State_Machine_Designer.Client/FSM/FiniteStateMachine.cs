@@ -5,10 +5,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
     {
-		[JsonIgnore]
-		public string? Id { get; set; }
+		public string Id { get; set; } = string.Empty;
 
-		[JsonIgnore]
+        [JsonIgnore]
 		public string UserId { get; set; } = string.Empty;
 
         public string Name { get; set; } = string.Empty;
@@ -39,11 +38,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
         [NotMapped]
         public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
 
-		public void AddState(FiniteState state)
-		{
-			_states.Add(state);
-		}
-
 		public FiniteState? FindState(CanvasCoordinate coordinate)
 		{
 			// Equation of Circle -> (x-a)^2 + (y-b)^2 <= r^2
@@ -66,16 +60,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				if (stateToBeRemoved == state)
 					return _states.Remove(state);
 			return false;
-		}
-
-		public void AddTransition(Transition stateTransition)
-		{
-			_transitions.Add(stateTransition);
-		}
-
-		public bool RemoveTransition(Transition transition)
-		{
-			return _transitions.Remove(transition);
 		}
 
 		public Transition? FindTransition(CanvasCoordinate coordinate)

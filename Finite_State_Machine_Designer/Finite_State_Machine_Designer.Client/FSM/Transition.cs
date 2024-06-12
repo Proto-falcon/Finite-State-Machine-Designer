@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
@@ -13,45 +12,38 @@ namespace Finite_State_Machine_Designer.Client.FSM
             _fromState = fromState;
         }
 
-        [JsonIgnore]
-        public string? Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         private FiniteState _toState = new() { IsDrawable = false };
         private FiniteState _fromState = new() { IsDrawable = false };
-
-        /// <summary>
-        /// <para>List of states connected by this transition.</para>
-        /// Maximum number is <b>2</b>.
-        /// </summary>
-        [JsonIgnore]
-        public List<FiniteState> States
-        {
-            get => [_fromState, _toState];
-            set
-            {
-                List<FiniteState> states = value.Where(x => x is not null).Take(2).ToList();
-                if (states.Count > 0)
-                    _fromState = states[0];
-                if (states.Count > 1)
-                    _toState = states[1];
-                else
-                    _toState = _fromState;
-            }
-        }
 
         [NotMapped]
         public FiniteState FromState
         {
             get => _fromState;
-            set => _fromState = value;
+            set
+            {
+                _fromState = value;
+                if (ReferenceEquals(_toState, _fromState))
+                    _radius = 0.75 * _fromState.Radius;
+            }
         }
+
+        public string FromId { get; set; } = string.Empty;
 
         [NotMapped]
         public FiniteState ToState
         {
             get => _toState;
-            set => _toState = value;
+            set
+            {
+                _toState = value;
+                if (ReferenceEquals(_toState, _fromState))
+                    _radius = 0.75 * _fromState.Radius;
+            }
         }
+
+        public string ToId { get; set; } = string.Empty;
 
         /// <summary>
         /// It's the <see cref="CanvasCoordinate"/> that the transition originates from the edge
@@ -281,7 +273,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
             set => _radius = value;
         }
 
-        public bool IsCurved => Math.Abs(_perpendicularAxis) >= 0.02 || _fromState == _toState;
+        public bool IsCurved => Math.Abs(_perpendicularAxis) >= _minPerpendicularDistance || _fromState == _toState;
 
         private string _text = string.Empty;
 
@@ -291,20 +283,18 @@ namespace Finite_State_Machine_Designer.Client.FSM
             set => _text = value;
         }
 
-        public override int GetHashCode() => HashCode.Combine(
-            FromState, FromAngle, ToAngle, MinPerpendicularDistance * ParallelAxis, CenterArc * Anchor, Radius, IsReversed, ToState
-        );
-
         public override string ToString()
         {
-            string text = $"( {_fromState} -> {_toState}, Text: '{_text}', ";
-
+            string text = $"(";
+            if (!string.IsNullOrWhiteSpace(Id))
+                text += $"id: {Id}, ";
+            text += $"{_fromState} -> {_toState}, Text: '{_text}', ";
             if (!IsCurved)
-                text += $"Angle: {Angle} )";
+                text += $"Angle: {Angle}";
             else
-                text += $"From Angle: {FromAngle}, To Angle: {ToAngle}, Center Point: {_centerArc}, Radius: {_radius}, Reversed: {IsReversed} )";
+                text += $"From Angle: {FromAngle}, To Angle: {ToAngle}, Center Point: {_centerArc}, Radius: {_radius}, Reversed: {IsReversed}";
 
-            return text;
+            return text + ')';
         }
     }
 }

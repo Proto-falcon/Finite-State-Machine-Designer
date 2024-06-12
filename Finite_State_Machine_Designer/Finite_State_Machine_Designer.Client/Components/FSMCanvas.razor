@@ -337,7 +337,7 @@
 			Transition transition = _fsmDrawer.SelectedTransition;
 			if (!transition.ToState.IsDrawable)
 			{
-				_fsmDrawer.FSM.RemoveTransition(_fsmDrawer.SelectedTransition);
+				_fsmDrawer.FSM.Transitions.Remove(_fsmDrawer.SelectedTransition);
 				_fsmDrawer.SelectedTransition = null;
 			}
 		}
@@ -407,12 +407,19 @@
 	{
 		if (CheckJsModule(JsModule) && _jsonUpload is not null)
 		{
-			IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload", _jsonUpload);
-			if (fsm is not null)
+			try
 			{
-				fsm.RemoveDuplicateStates();
-				_fsmDrawer.FSM = fsm;
-				await _fsmDrawer.DrawMachineAsync();
+				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload", _jsonUpload);
+				if (fsm is not null)
+				{
+					fsm.RemoveDuplicateStates();
+					_fsmDrawer.FSM = fsm;
+					await _fsmDrawer.DrawMachineAsync();
+				}
+			}
+			catch (Exception)
+			{
+				await JS.InvokeVoidAsync("alert", "Json file uploaded is malformed");
 			}
 		}
 	}

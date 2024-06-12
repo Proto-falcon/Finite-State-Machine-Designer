@@ -18,12 +18,6 @@
 
 		public int TransitionSearchRadius { get; set; }
 
-		public void AddTransition(Transition transition);
-
-		public bool RemoveTransition(Transition transition);
-
-		public void AddState(FiniteState state);
-
 		public FiniteState? FindState(CanvasCoordinate coordinate);
 		
 		public Transition? FindTransition(CanvasCoordinate coordinate);

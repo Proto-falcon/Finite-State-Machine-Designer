@@ -166,42 +166,70 @@
                 try
                 {
                     _user.StateMachines.Clear();
-                    await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
+                    await using (ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync())
+                    {
                     dbContext.Attach(_user);
-                    await dbContext.Entry(_user).Collection(user => user.StateMachines).LoadAsync();
+                        await dbContext.Entry(_user)
+                            .Collection(user => user.StateMachines).LoadAsync();
                         FiniteStateMachine? existingFSM = null;
                     existingFSM = _user.StateMachines
-                        .Where(fsmOther => fsmOther.Name == _currentFSM.Name).FirstOrDefault();
+                            .Find(fsmOther => fsmOther.Name == _currentFSM.Name);
                         if (existingFSM is not null)
+                        {
+                            await using var transact = await dbContext.Database.BeginTransactionAsync();
+                            try
+                            {
                         _user.StateMachines.Remove(existingFSM);
+                                dbContext.Remove(existingFSM);
+                                await dbContext.SaveChangesAsync();
 
-                    _currentFSM.Id = Guid.NewGuid().ToString();
                     foreach (FiniteState state in _currentFSM.States)
+                                    if (string.IsNullOrWhiteSpace(state.Id))
                             state.Id = Guid.NewGuid().ToString();
+
                     foreach (Transition transition in _currentFSM.Transitions)
+                                    if (string.IsNullOrWhiteSpace(transition.Id))
                             transition.Id = Guid.NewGuid().ToString();
+
+                                if (string.IsNullOrWhiteSpace(existingFSM.Id)
+                                    || string.IsNullOrWhiteSpace(_currentFSM.Id))
+                                    _currentFSM.Id = Guid.NewGuid().ToString();
+
                     _user.StateMachines.Add(_currentFSM);
                     await dbContext.SaveChangesAsync();
-
-                    var fetchedFSM = dbContext.StateMachines
-                        .Where(otherFSM => otherFSM.UserId == _user.Id && otherFSM.Name == _currentFSM.Name)
-                                .FirstOrDefault();
-                        if (fetchedFSM is not null)
+                            }
+                            catch (Exception ex)
                         {
-                            _currentSaved = true;
-                        await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
-                            _logger.LogInformation("Successfully saved the current FSM {FSM} from user {user}",
-                            fetchedFSM.Name, _user.Id);
+                                await transact.RollbackAsync();
+                                throw ex;
+                            }
+                            await transact.CommitAsync();
                         }
                         else
                         {
-                            _currentSavedFailed = true;
-                        _logger.LogError("Couldn't save the current FSM from user {user}", _user.Id);
+                            _currentFSM.Id = Guid.NewGuid().ToString();
+                            _currentFSM.UserId = _user.Id;
+                            foreach (FiniteState state in _currentFSM.States)
+                                state.Id = Guid.NewGuid().ToString();
+                            foreach (Transition transition in _currentFSM.Transitions)
+                            {
+                                transition.Id = Guid.NewGuid().ToString();
+                                transition.FromId = transition.FromState.Id;
+                                transition.ToId = transition.ToState.Id;
+                            }
+                            _user.StateMachines.Add(_currentFSM);
+                            await dbContext.SaveChangesAsync();
+                        }
                     }
+                    _currentSaved = true;
+                    await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
+                    _logger.LogInformation("Successfully saved the current FSM '{FSM}' from user '{user}'",
+                        _currentFSM.Name, _user.Id);
                 }
                 catch (Exception ex)
                 {
                     _currentSavedFailed = true;
+                    _logger.LogError("Couldn't save the current FSM '{FsmName}' from user '{user}'", _currentFSM.Name, _user.Id);
                     _logger.LogError(ex.ToString());
                 }
             }

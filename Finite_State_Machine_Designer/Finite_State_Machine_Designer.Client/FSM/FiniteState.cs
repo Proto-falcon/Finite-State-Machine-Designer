@@ -8,29 +8,29 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public FiniteState(CanvasCoordinate coord, float rad)
 		{
-			coordinate = coord;
-			radius = rad;
+			_coordinate = coord;
+			_radius = rad;
 		}
 
 		[JsonIgnore]
-		public string? Id { get; set; }
+		public string Id { get; set; } = string.Empty;
 
-		private CanvasCoordinate coordinate;
+        private CanvasCoordinate _coordinate;
 
-		private float radius;
+		private float _radius;
 
         public CanvasCoordinate Coordinate
 		{
-			get => coordinate;
-			set => coordinate = value;
+			get => _coordinate;
+			set => _coordinate = value;
 		}
 
 		public bool IsDrawable { get; set; } = true;
 
 		public float Radius
 		{
-			get => radius;
-			set => radius = value;
+			get => _radius;
+			set => _radius = value;
 		}
 
 		private bool _isFinalState = false;
@@ -62,12 +62,16 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return false;
 		}
 
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(Id, coordinate, radius, _isFinalState, IsDrawable, _text);
-		}
+		public override int GetHashCode() => HashCode.Combine(Id, _coordinate, _radius, _isFinalState, IsDrawable, _text);
 
-		public override string ToString() => 
-			$"(co-ordinate: {coordinate}, Radius: {radius}, Text: '{_text}', FinalState: {_isFinalState})";
+		public override string ToString()
+		{
+			string text = $"co-ordinate: {_coordinate}, Radius: {_radius}, Text: '{_text}', FinalState: {_isFinalState})";
+			if (!string.IsNullOrWhiteSpace(Id))
+				text = $"(id: {Id}, {text}";
+			else
+				text = $"({text}";
+			return text;
+		}
     }
 }

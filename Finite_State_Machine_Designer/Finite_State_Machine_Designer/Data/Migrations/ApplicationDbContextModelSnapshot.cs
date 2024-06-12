@@ -23,31 +23,16 @@ namespace Finite_State_Machine_Designer.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("FiniteStateTransitions", b =>
-                {
-                    b.Property<string>("StatesId")
-                        .HasColumnType("nchar(64)");
-
-                    b.Property<string>("TransitionId")
-                        .HasColumnType("nchar(64)");
-
-                    b.HasKey("StatesId", "TransitionId");
-
-                    b.HasIndex("TransitionId");
-
-                    b.ToTable("FiniteStateTransitions");
-                });
-
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteState", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(64)
-                        .HasColumnType("nchar(64)")
+                        .HasMaxLength(36)
+                        .HasColumnType("nchar(36)")
                         .IsFixedLength();
 
                     b.Property<string>("FiniteStateMachineId")
                         .IsRequired()
-                        .HasColumnType("nchar(64)");
+                        .HasColumnType("nchar(36)");
 
                     b.Property<bool>("IsDrawable")
                         .HasColumnType("bit");
@@ -81,8 +66,8 @@ namespace Finite_State_Machine_Designer.Migrations
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteStateMachine", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(64)
-                        .HasColumnType("nchar(64)")
+                        .HasMaxLength(36)
+                        .HasColumnType("nchar(36)")
                         .IsFixedLength();
 
                     b.Property<string>("Description")
@@ -116,13 +101,17 @@ namespace Finite_State_Machine_Designer.Migrations
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.Transition", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(64)
-                        .HasColumnType("nchar(64)")
+                        .HasMaxLength(36)
+                        .HasColumnType("nchar(36)")
                         .IsFixedLength();
 
                     b.Property<string>("FiniteStateMachineId")
                         .IsRequired()
-                        .HasColumnType("nchar(64)");
+                        .HasColumnType("nchar(36)");
+
+                    b.Property<string>("FromId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsReversed")
                         .HasColumnType("bit");
@@ -143,6 +132,10 @@ namespace Finite_State_Machine_Designer.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ToId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -358,21 +351,6 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("FiniteStateTransitions", b =>
-                {
-                    b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteState", null)
-                        .WithMany()
-                        .HasForeignKey("StatesId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired();
-
-                    b.HasOne("Finite_State_Machine_Designer.Client.FSM.Transition", null)
-                        .WithMany()
-                        .HasForeignKey("TransitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Finite_State_Machine_Designer.Client.FSM.FiniteState", b =>

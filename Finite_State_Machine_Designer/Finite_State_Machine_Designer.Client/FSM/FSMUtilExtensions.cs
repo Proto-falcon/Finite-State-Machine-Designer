@@ -12,9 +12,9 @@
             foreach (var transition in fsm.Transitions)
                 foreach (var state in fsm.States)
                 {
-                    if (state == transition.FromState)
+                    if (state == transition.FromState && !ReferenceEquals(state, transition.FromState))
                         transition.FromState = state;
-                    if (state == transition.ToState)
+                    if (state == transition.ToState && !ReferenceEquals(state, transition.ToState))
                         transition.ToState = state;
                 }
         }

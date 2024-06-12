@@ -40,7 +40,16 @@ export function saveAsSvg(fsm, colour, backgroundColour, scale = 1) {
  * @param {FiniteStateMachine} fsm
  */
 export function saveAsJson(fsm) {
-    let fsmJson = new Blob([JSON.stringify(fsm)], {type: "application/json"});
+    fsm.id = null;
+    fsm.states.forEach(
+        /** @param {FiniteState} state */
+        state => state.id = null
+    );
+    fsm.transitions.forEach(
+        /** @param {Transition} transition */
+        transition => transition.id = null
+    )
+    let fsmJson = new Blob([JSON.stringify(fsm, FSMCanvasUtils.ignoreNull)], { type: "application/json" });
     downloadFile(fsmJson, "Finite State Machine");
 }
 

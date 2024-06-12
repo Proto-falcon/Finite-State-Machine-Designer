@@ -36,6 +36,7 @@ export class CanvasCoordinate {
 
 /**
  * @typedef {{
+ *      id: string,
  *      coordinate: CanvasCoordinate,
  *      radius: number,
  *      isFinalState: boolean,
@@ -44,6 +45,7 @@ export class CanvasCoordinate {
  * }} FiniteState
  */
 export class FiniteState {
+    id = "";
     coordinate = new CanvasCoordinate();
     radius = 1;
     isFinalState = false;
@@ -63,6 +65,7 @@ export class FiniteState {
 
 /**
  * @typedef {{
+ *      id: string,
  *      fromState: FiniteState,
  *      fromCoord: CanvasCoordinate,
  *      fromAngle: number,
@@ -81,6 +84,7 @@ export class FiniteState {
  * }} Transition
  */
 export class Transition {
+    id = "";
     fromState = new FiniteState();
     fromCoord = new CanvasCoordinate();
     fromAngle = 0;
@@ -100,6 +104,7 @@ export class Transition {
 
 /**
  * @typedef {{
+ *      id: string,
  *      name: string,
  *      description: string,
  *      width: number,
@@ -112,6 +117,7 @@ export class Transition {
  * }} FiniteStateMachine
  */
 export class FiniteStateMachine {
+    id = "";
     name = "";
     description = "";
     width = 0;
@@ -249,7 +255,7 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
         if (!transition.isCurved) {
             drawingCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
             drawingCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
-            arrowCoord = new CanvasCoordinate(transition.toCoord.x, transition.toCoord.y);
+            arrowCoord = transition.toCoord;
         }
         else {
             let centreCoord = transition.centerArc;
@@ -480,4 +486,11 @@ export function loadFSM() {
     };
     let result = JSON.parse(fsmJSONText);
     return result;
+}
+
+export function ignoreNull(key, value) {
+    if (value === null) {
+        return undefined
+    }
+    return value;
 }

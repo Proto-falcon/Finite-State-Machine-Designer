@@ -83,7 +83,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				}
 
 				_selectedState = newState;
-				fsm.AddState(newState);
+				fsm.States.Add(newState);
 				_logger.LogInformation("Created state at canvas position: {Coordinate}", coordinate);
 				_selectedTransition = null;
 				return coordinate;
@@ -144,7 +144,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						fromCoord, toCoord);
 					return null;
 				}
-				fsm.AddTransition(newTransition);
+				fsm.Transitions.Add(newTransition);
 				_selectedTransition = newTransition;
 				_logger.LogInformation("Created a transition: {Transition}", newTransition);
 				_selectedState = null;
