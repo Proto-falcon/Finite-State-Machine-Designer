@@ -19,7 +19,7 @@
     <h1>Finite State Machines</h1>
 </SectionContent>
 
-<div style="display:grid; justify-content:center;">
+<div class="curent-fsm-section">
     @if (!_finishLoadingFSM)
     {
         <Loading Height="10em" Width="10em" Style="border-width: 1em; justify-self: center;" />
@@ -35,7 +35,7 @@
             <input id="canvasName" class="canvas-name" type="text" name="name" placeholder="Name"
                    @bind:event="oninput" @bind="_currentFSM.Name" />
         </div>
-        <div>
+        <div class="save-section">
             @if (_currentlySaving)
             {
                 <Loading Height="1.5em" Width="1.5em" Style="border-width: 0.2em;" />
@@ -54,7 +54,7 @@
             }
         </div>
         <details>
-            <summary style="font-size: 1.5em; user-select: none;">Description</summary>
+            <summary class="canvas-desc-summary">Description</summary>
             <div class="canvas-desc-group canvas-info-group">
                 <label class="canvas-desc-label" for="canvasDesc">Description:</label>
                 <textarea id="canvasDesc" name="Description" placeholder="Description" rows="10" cols="50"

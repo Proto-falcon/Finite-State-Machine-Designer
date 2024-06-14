@@ -2,6 +2,11 @@
     text-decoration:underline;
 }
 
+.curent-fsm-section {
+    display: grid;
+    justify-content: center;
+}
+
 .canvas-name-group {
     width: 30em;
 }
@@ -17,6 +22,11 @@
 .canvas-desc-group {
     text-align: left;
     display: grid;
+}
+
+.canvas-desc-summary {
+    font-size: 1.5em;
+    user-select: none;
 }
 
 .canvas-desc-label {
@@ -50,6 +60,10 @@
 .current-save-button {
     display: inline;
     width: fit-content;
+}
+
+.save-section {
+    height: 2em;
 }
 
 @keyframes blinker {
