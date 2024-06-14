@@ -99,6 +99,7 @@
                 ApplicationUser? fetchedUser = dbContext.Users
                 .Where(user => user.NormalizedUserName == userName.ToUpper())
                 .Include(user => user.StateMachines)
+                .AsNoTrackingWithIdentityResolution()
                 .FirstOrDefault();
                 if (fetchedUser is ApplicationUser)
                     _user = fetchedUser;

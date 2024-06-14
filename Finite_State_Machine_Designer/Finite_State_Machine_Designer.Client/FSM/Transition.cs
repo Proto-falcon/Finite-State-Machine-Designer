@@ -8,37 +8,35 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
         public Transition(FiniteState fromState, FiniteState toState)
         {
-            _toState = toState;
             _fromState = fromState;
+            _toState = toState;
         }
 
         public string Id { get; set; } = string.Empty;
 
-        private FiniteState _toState = new() { IsDrawable = false };
         private FiniteState _fromState = new() { IsDrawable = false };
+        private FiniteState _toState = new() { IsDrawable = false };
 
-        [NotMapped]
         public FiniteState FromState
         {
             get => _fromState;
             set
             {
                 _fromState = value;
-                if (ReferenceEquals(_toState, _fromState))
+                if (_fromState is not null && ReferenceEquals(_toState, _fromState))
                     _radius = 0.75 * _fromState.Radius;
             }
         }
 
         public string FromId { get; set; } = string.Empty;
 
-        [NotMapped]
         public FiniteState ToState
         {
             get => _toState;
             set
             {
                 _toState = value;
-                if (ReferenceEquals(_toState, _fromState))
+                if (_toState is not null && ReferenceEquals(_toState, _fromState))
                     _radius = 0.75 * _fromState.Radius;
             }
         }
@@ -55,22 +53,25 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                double x;
-                double y;
-                if (!IsCurved)
+                double x = 0;
+                double y = 0;
+                if (_fromState is not null)
                 {
-                    float radius = 1;
-                    if (_fromState.Radius > 0)
-                        radius = _fromState.Radius;
-                    double angle = Angle;
-                    x = _fromState.Coordinate.X + (Math.Cos(angle) * radius);
-                    y = _fromState.Coordinate.Y + (Math.Sin(angle) * radius);
-                }
-                else
-                {
-                    double fromAngle = FromAngle;
-                    x = CenterArc.X + (_radius * Math.Cos(fromAngle));
-                    y = CenterArc.Y + (_radius * Math.Sin(fromAngle));
+                    if (!IsCurved)
+                    {
+                        float radius = 1;
+                        if (_fromState.Radius > 0)
+                            radius = _fromState.Radius;
+                        double angle = Angle;
+                        x = _fromState.Coordinate.X + (Math.Cos(angle) * radius);
+                        y = _fromState.Coordinate.Y + (Math.Sin(angle) * radius);
+                    }
+                    else
+                    {
+                        double fromAngle = FromAngle;
+                        x = CenterArc.X + (_radius * Math.Cos(fromAngle));
+                        y = CenterArc.Y + (_radius * Math.Sin(fromAngle));
+                    }
                 }
                 return new(x, y);
             }
@@ -86,21 +87,24 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                double x;
-                double y;
-                if (!IsCurved)
+                double x = 0;
+                double y = 0;
+                if (_toState is not null)
                 {
-                    float radius = 1;
-                    if (_toState.Radius > 0)
-                        radius = _toState.Radius;
-                    x = (Math.Cos(Angle + Math.PI) * radius) + _toState.Coordinate.X;
-                    y = (Math.Sin(Angle + Math.PI) * radius) + _toState.Coordinate.Y;
-                }
-                else
-                {
-                    double toAngle = ToAngle;
-                    x = CenterArc.X + (_radius * Math.Cos(toAngle));
-                    y = CenterArc.Y + (_radius * Math.Sin(toAngle));
+                    if (!IsCurved)
+                    {
+                        float radius = 1;
+                        if (_toState.Radius > 0)
+                            radius = _toState.Radius;
+                        x = (Math.Cos(Angle + Math.PI) * radius) + _toState.Coordinate.X;
+                        y = (Math.Sin(Angle + Math.PI) * radius) + _toState.Coordinate.Y;
+                    }
+                    else
+                    {
+                        double toAngle = ToAngle;
+                        x = CenterArc.X + (_radius * Math.Cos(toAngle));
+                        y = CenterArc.Y + (_radius * Math.Sin(toAngle));
+                    }
                 }
                 return new(x, y);
             }
@@ -115,7 +119,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                if (IsCurved)
+                if (_fromState is not null && IsCurved)
                 {
                     if (_fromState != _toState)
                     {
@@ -147,7 +151,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                if (IsCurved)
+                if (_toState is not null && IsCurved)
                 {
                     if (_fromState != _toState)
                     {
@@ -178,7 +182,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                if (_fromState != _toState)
+                if (_fromState != _toState && _fromState is not null && _toState is not null)
                 {
                     CanvasCoordinate dCoord = _toState.Coordinate - _fromState.Coordinate;
                     return Math.Atan2(dCoord.Y, dCoord.X);
@@ -209,7 +213,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                if (_fromState == _toState)
+                if (_fromState is not null && _fromState == _toState)
                 {
                     double circleX = _fromState.Coordinate.X + (1.5 * _fromState.Radius * Math.Cos(_selfAngle));
                     double circleY = _fromState.Coordinate.Y + (1.5 * _fromState.Radius * Math.Sin(_selfAngle));
@@ -227,10 +231,14 @@ namespace Finite_State_Machine_Designer.Client.FSM
         {
             get
             {
-                CanvasCoordinate dCoord = new(_toState.Coordinate.X - _fromState.Coordinate.X,
-                    _toState.Coordinate.Y - _fromState.Coordinate.Y);
-                return new(_fromState.Coordinate.X + (dCoord.X * _parallelAxis) - (dCoord.Y * _perpendicularAxis),
-                    _fromState.Coordinate.Y + (dCoord.Y * _parallelAxis) + (dCoord.X * _perpendicularAxis));
+                if (_fromState is not null && _toState is not null)
+                {
+                    CanvasCoordinate dCoord = new(_toState.Coordinate.X - _fromState.Coordinate.X,
+                        _toState.Coordinate.Y - _fromState.Coordinate.Y);
+                    return new(_fromState.Coordinate.X + (dCoord.X * _parallelAxis) - (dCoord.Y * _perpendicularAxis),
+                        _fromState.Coordinate.Y + (dCoord.Y * _parallelAxis) + (dCoord.X * _perpendicularAxis));
+                }
+                return new (0, 0);
             }
         }
 
@@ -268,7 +276,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
             {
                 if (_fromState != _toState)
                     return _radius;
-                return 0.75 * _fromState.Radius;
+                if (_fromState is not null)
+                    return 0.75 * _fromState.Radius;
+                return 0;
             }
             set => _radius = value;
         }
