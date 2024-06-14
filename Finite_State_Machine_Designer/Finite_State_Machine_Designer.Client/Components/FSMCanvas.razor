@@ -196,6 +196,7 @@
 		}
 	}
 
+	#region Mouse Events
 	private async void MouseDownHandler(MouseEventArgs mouseEventArgs)
 	{
 		_lastMousePos = new CanvasCoordinate(mouseEventArgs.OffsetX, mouseEventArgs.OffsetY);
@@ -342,7 +343,9 @@
 			}
 		}
 	}
+	#endregion
 
+	#region Key Events
 	private async void KeyHandler(KeyboardEventArgs keyboardEventArgs)
 	{
 		if (CheckJsModule(JsModule))
@@ -366,6 +369,7 @@
 		_superScriptMode = false;
 		_subScriptMode = !_subScriptMode;
 	}
+	#endregion
 
 	private async void DeselectState(FocusEventArgs focusEventArgs)
 	{
@@ -378,6 +382,8 @@
 		await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		_logger.LogInformation("Canvas isn't the focused element in the page.");
 	}
+
+	#region File Management
 
 	private async void SaveAsPNG(MouseEventArgs mouseEventArgs)
 	{
@@ -414,6 +420,7 @@
 				{
 					fsm.RemoveDuplicateStates();
 					_fsmDrawer.FSM = fsm;
+					await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _fsmDrawer.FSM);
 					await _fsmDrawer.DrawMachineAsync();
 				}
 			}
@@ -423,6 +430,7 @@
 			}
 		}
 	}
+	#endregion
 
 	async ValueTask IAsyncDisposable.DisposeAsync()
 	{

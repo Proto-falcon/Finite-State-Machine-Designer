@@ -18,6 +18,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public int Height { get; set; }
 
+		/// <summary>
+		/// The list includes "Invisible states" for incoming transitions
+		/// </summary>
         public List<FiniteState> States { get => _states; set => _states = value; }
 		private List<FiniteState> _states = [];
 
@@ -45,21 +48,15 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			// r is radius of circle
 			foreach (var state in _states)
 			{
-				CanvasCoordinate coord = state.Coordinate;
+                if (!state.IsDrawable)
+					continue;
+                CanvasCoordinate coord = state.Coordinate;
 				double leftSide = Math.Pow(coordinate.X - coord.X, 2) + Math.Pow(coordinate.Y - coord.Y, 2);
 				double rightSide = Math.Pow(state.Radius, 2);
 				if (leftSide <= rightSide)
 					return state;
 			}
 			return null;
-		}
-
-		public bool RemoveState(FiniteState stateToBeRemoved)
-		{
-			foreach (FiniteState state in _states)
-				if (stateToBeRemoved == state)
-					return _states.Remove(state);
-			return false;
 		}
 
 		public Transition? FindTransition(CanvasCoordinate coordinate)

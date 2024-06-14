@@ -55,7 +55,7 @@ namespace Finite_State_Machine_Designer.Client.Components
 						}
 						break;
 					case "delete":
-						if (_fsmDrawer.FSM.RemoveState(state))
+						if (_fsmDrawer.FSM.States.Remove(state))
 						{
 							List<Transition> connectedTransitions = _fsmDrawer.FSM.FindTransitions(state);
 							foreach (Transition transition in connectedTransitions)
@@ -100,6 +100,10 @@ namespace Finite_State_Machine_Designer.Client.Components
 						}
 						break;
 					case "delete":
+						if (!transition.FromState.IsDrawable)
+							_fsmDrawer.FSM.States.Remove(transition.FromState);
+						if (!transition.ToState.IsDrawable)
+							_fsmDrawer.FSM.States.Remove(transition.ToState);
 						_fsmDrawer.FSM.Transitions.Remove(transition);
 						break;
 					case "return":

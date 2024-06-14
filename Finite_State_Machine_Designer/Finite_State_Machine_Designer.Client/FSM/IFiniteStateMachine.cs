@@ -23,7 +23,5 @@
 		public Transition? FindTransition(CanvasCoordinate coordinate);
 
 		public List<Transition> FindTransitions(FiniteState? state, Predicate<Transition>? filter = null);
-
-		public bool RemoveState(FiniteState stateToBeRemoved);
 	}
 }

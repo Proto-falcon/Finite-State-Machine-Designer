@@ -49,7 +49,7 @@ export function saveAsJson(fsm) {
         /** @param {Transition} transition */
         transition => transition.id = null
     )
-    let fsmJson = new Blob([JSON.stringify(fsm, FSMCanvasUtils.ignoreNull)], { type: "application/json" });
+    let fsmJson = new Blob([JSON.stringify(fsm, FSMCanvasUtils.ignoreNullOrEmpty)], { type: "application/json" });
     downloadFile(fsmJson, "Finite State Machine");
 }
 

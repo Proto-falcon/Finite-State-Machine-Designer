@@ -166,7 +166,6 @@
             {
                 try
                 {
-                    _user.StateMachines.Clear();
                     await using (ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync())
                     {
                     dbContext.Attach(_user);
@@ -189,8 +188,15 @@
                             state.Id = Guid.NewGuid().ToString();
 
                     foreach (Transition transition in _currentFSM.Transitions)
+                                {
                                     if (string.IsNullOrWhiteSpace(transition.Id))
                             transition.Id = Guid.NewGuid().ToString();
+                                    if (string.IsNullOrWhiteSpace(transition.FromState.Id))
+                                    {
+                                        transition.FromState.Id = Guid.NewGuid().ToString();
+                                        transition.FromId = transition.FromState.Id;
+                                    }
+                                }
 
                                 if (string.IsNullOrWhiteSpace(existingFSM.Id)
                                     || string.IsNullOrWhiteSpace(_currentFSM.Id))
@@ -215,6 +221,8 @@
                             foreach (Transition transition in _currentFSM.Transitions)
                             {
                                 transition.Id = Guid.NewGuid().ToString();
+                                if (string.IsNullOrWhiteSpace(transition.FromState.Id))
+                                    transition.FromState.Id = Guid.NewGuid().ToString();
                                 transition.FromId = transition.FromState.Id;
                                 transition.ToId = transition.ToState.Id;
                             }

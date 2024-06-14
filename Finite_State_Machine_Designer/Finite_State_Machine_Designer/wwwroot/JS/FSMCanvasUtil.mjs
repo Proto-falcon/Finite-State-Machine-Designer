@@ -488,9 +488,28 @@ export function loadFSM() {
     return result;
 }
 
-export function ignoreNull(key, value) {
-    if (value === null) {
+/**
+ * A replace function to remove any null values in JSON text.
+ * @param {string} key key of object or index of an array
+ * @param {any} value any value
+ * @returns Any value that is not not null.
+ */
+export function ignoreNullOrEmpty(key, value) {
+    if (value === null || value === undefined) {
         return undefined
     }
+    else if (typeof (value) === "string" && value.trim().length <= 0) {
+        return undefined
+    }
+    else if (Array.isArray(value)) {
+        let tempArray = [];
+        value.forEach(item => {
+            if (item !== null && item !== undefined) {
+                tempArray.push(item);
+            }
+        });
+        value = tempArray;
+    }
+
     return value;
 }

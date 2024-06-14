@@ -71,7 +71,9 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
     let svgHeight = (height * scale).toFixed(numPrecision);
     let svgText = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" >\n`;
     svgText += `<rect width="${svgWidth}" height="${svgHeight}" fill="${backgroundColour}" />\n`;
-    fsm.states.forEach(state => {
+    fsm.states.forEach(
+        /** @param {FiniteState} state */
+        state => {
         if (state.isDrawable) {
             let stateX = (state.coordinate.x * scale).toFixed(numPrecision);
             let stateY = (state.coordinate.y * scale).toFixed(numPrecision);
@@ -98,7 +100,9 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
             });
         }
     });
-    fsm.transitions.forEach(transition => {
+    fsm.transitions.forEach(
+        /** @param {Transition} transition */
+        transition => {
         let arrowCoord = new FSMCanvasUtil.CanvasCoordinate();
         let arrowAngle = transition.angle;
         let fromCoord = new FSMCanvasUtil.CanvasCoordinate(transition.fromCoord.x * scale, transition.fromCoord.y * scale);

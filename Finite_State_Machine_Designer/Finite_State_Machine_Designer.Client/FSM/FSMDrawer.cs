@@ -116,8 +116,16 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		{
 			if (_jsModule is not null)
 			{
-				fromState ??= new(fromPos, 0) { IsDrawable = false };
-				toState ??= new(toPos, 0) { IsDrawable = false };
+				if (fromState is null)
+				{
+					fromState = new(fromPos, 0) { IsDrawable = false };
+					FSM.States.Add(fromState);
+				}
+				if (toState is null)
+				{
+					toState = new(toPos, 0) { IsDrawable = false };
+					FSM.States.Add(toState);
+				}
 
 				Transition newTransition = new(fromState, toState)
 				{
