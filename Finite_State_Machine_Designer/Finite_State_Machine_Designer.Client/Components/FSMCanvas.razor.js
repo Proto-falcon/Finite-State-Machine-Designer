@@ -12,11 +12,12 @@ export let fSMCanvasUtils = FSMCanvasUtils;
 
 /**
  * Downloads a png of the Finite State Machine
- * @param {FiniteStateMachine} fsm
- * @param {string} colour 
+ * @param {FiniteStateMachine} fsm Finite State Machine
+ * @param {string} colour colour of the FSM to be drawn in
+ * @param {number} [scale=1] Scale that the state will be drawn in.
  */
-export function saveAsPNG(fsm, colour) {
-    let pngData = FSMCanvasExport.fsmToPNG(fsm, colour);
+export function saveAsPNG(fsm, colour, scale) {
+    let pngData = FSMCanvasExport.fsmToPNG(fsm, colour, scale);
     let anchor = document.createElement('a');
     anchor.href = pngData;
     anchor.download = "Finite State Machine";
@@ -43,11 +44,17 @@ export function saveAsJson(fsm) {
     fsm.id = null;
     fsm.states.forEach(
         /** @param {FiniteState} state */
-        state => state.id = null
+        state => {
+            state.id = null;
+        }
     );
     fsm.transitions.forEach(
         /** @param {Transition} transition */
-        transition => transition.id = null
+        transition => {
+            transition.id = null;
+            transition.fromId = null;
+            transition.toId = null;
+        }
     )
     let fsmJson = new Blob([JSON.stringify(fsm, FSMCanvasUtils.ignoreNullOrEmpty)], { type: "application/json" });
     downloadFile(fsmJson, "Finite State Machine");

@@ -1,6 +1,7 @@
 ﻿@using System.Text
 @using System.Text.RegularExpressions
 @using FSM
+@using Enums
 @inherits ModuleCheckBaseComponent
 @rendermode InteractiveWebAssembly
 @implements IAsyncDisposable
@@ -9,13 +10,14 @@
 
 <div class="center canvas-top-buttons">
 	Export as:
-	<button class="canvas-button" @onclick="SaveAsPNG">PNG</button>
-	<form class="svg-form">
-		<input class="svg-scale-input" type="number" min="0" placeholder="SVG export Scale" step="0.01"
-		@bind:event="oninput" @bind="_canvasExportScale" />
-		<button class="canvas-button" @onclick="SaveAsSvg">SVG</button>
-	</form>
-	<button class="canvas-button" @onclick="SaveAsJson">JSON</button>
+	<input class="scale-input" type="number" min="0" placeholder="Export Scale" step="0.01"
+	@bind:event="oninput" @bind="_canvasExportScale" />
+	<select class="export-select" @bind="_exportType">
+		<option value="@ExportTypes.Png">PNG</option>
+		<option value="@ExportTypes.Svg">SVG</option>
+		<option value="@ExportTypes.Json">JSON (scale doesn't affect this option)</option>
+	</select>
+	<button class="canvas-button" @onclick="ExportCanvas">Export</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
 	<AuthorizeView>
 		<button class="canvas-button">
@@ -63,7 +65,7 @@
 	@onkeydown:preventDefault
 	@onkeydown="KeyHandler"
 	@onmousemove="MoveMouseHandler"
-	@onblur="DeselectState"
+	@onblur="DeselectObject"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
@@ -83,6 +85,7 @@
 
 	private ElementReference? _canvasElement;
 	private ElementReference? _jsonUpload;
+	private ExportTypes _exportType { get; set; } = ExportTypes.Png;
 	private float _canvasExportScale { get; set; } = 1;
 	private Timer? _drawTimer;
 	private bool _canResizeState = false;
@@ -371,36 +374,26 @@
 	}
 	#endregion
 
-	private async void DeselectState(FocusEventArgs focusEventArgs)
-	{
-		_fsmDrawer.SelectedState = null;
-		_caretVisible = false;
-
-		if (_drawTimer is not null)
-			await _drawTimer.DisposeAsync();
-
-		await _fsmDrawer.DrawMachineAsync(_caretVisible);
-		_logger.LogInformation("Canvas isn't the focused element in the page.");
-	}
-
 	#region File Management
-
-	private async void SaveAsPNG(MouseEventArgs mouseEventArgs)
+	private async void ExportCanvas(MouseEventArgs mouseEventArgs)
 	{
 		if (CheckJsModule(JsModule))
-			await JsModule.InvokeVoidAsync("saveAsPNG", _fsmDrawer.FSM, _colour);
-	}
-
-	private async void SaveAsSvg(MouseEventArgs mouseEventArgs)
-	{
-		if (CheckJsModule(JsModule))
-			await JsModule.InvokeVoidAsync("saveAsSvg", _fsmDrawer.FSM, _colour, _canvasBackgroundColour, _canvasExportScale);
-	}
-
-	private async void SaveAsJson(MouseEventArgs mouseEventArgs)
-	{
-		if (CheckJsModule(JsModule))
-			await JsModule.InvokeVoidAsync("saveAsJson", _fsmDrawer.FSM);
+		{
+			switch (_exportType)
+			{
+				case ExportTypes.Png:
+					await JsModule.InvokeVoidAsync("saveAsPNG", _fsmDrawer.FSM, _colour, _canvasExportScale);
+					break;
+				case ExportTypes.Svg:
+					await JsModule.InvokeVoidAsync("saveAsSvg", _fsmDrawer.FSM, _colour,
+						_canvasBackgroundColour, _canvasExportScale);
+					break;
+				case ExportTypes.Json:
+				default:
+					await JsModule.InvokeVoidAsync("saveAsJson", _fsmDrawer.FSM);
+					break;
+			}
+		}
 	}
 
 	private async void UploadJson(MouseEventArgs mouseEventArgs)
@@ -431,6 +424,19 @@
 		}
 	}
 	#endregion
+
+	private async void DeselectObject(FocusEventArgs focusEventArgs)
+	{
+		_fsmDrawer.SelectedState = null;
+		_fsmDrawer.SelectedTransition = null;
+		_caretVisible = false;
+
+		if (_drawTimer is not null)
+			await _drawTimer.DisposeAsync();
+
+		await _fsmDrawer.DrawMachineAsync(_caretVisible);
+		_logger.LogInformation("Canvas isn't the focused element in the page.");
+	}
 
 	async ValueTask IAsyncDisposable.DisposeAsync()
 	{

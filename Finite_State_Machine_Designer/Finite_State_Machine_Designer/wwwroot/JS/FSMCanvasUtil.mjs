@@ -206,28 +206,32 @@ export function drawBackgroundColour(colour, drawingCtx) {
  * @param {string} colour Colour when drawn
  * @param {boolean} editable Flag to show vertical bar appear and reappear in popular text editors.
  * @param {CanvasRenderingContext2D} drawingCtx A 2d canvas rendering context
+ * @param {number} [scale=1] Scale that the state will be drawn in.
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawState(state, colour, editable, drawingCtx) {
+export function drawState(state, colour, editable, drawingCtx, scale = 1) {
     if (drawingCtx === undefined || drawingCtx === null) {
         drawingCtx = canvasCtx;
     }
     if (checkCanvas(drawingCtx)) {
         drawingCtx.beginPath();
         drawingCtx.strokeStyle = colour;
-        let stateCoord = state.coordinate;
-        drawingCtx.arc(stateCoord.x, stateCoord.y, state.radius, 0, 2 * Math.PI);
+        drawingCtx.lineWidth = scale;
+        let stateCoord = { x: state.coordinate.x * scale, y: state.coordinate.y * scale };
+        let stateRadius = state.radius * scale;
+        drawingCtx.arc(stateCoord.x, stateCoord.y, stateRadius, 0, 2 * Math.PI);
         drawingCtx.closePath();
         drawingCtx.stroke();
 
         if (state.isFinalState) {
             drawingCtx.beginPath();
-            drawingCtx.arc(stateCoord.x, stateCoord.y, state.radius * FINALSTATECIRCLERATIO, 0, 2 * Math.PI);
+            drawingCtx.arc(stateCoord.x, stateCoord.y, stateRadius * FINALSTATECIRCLERATIO, 0, 2 * Math.PI);
             drawingCtx.closePath();
             drawingCtx.stroke();
         }
 
-        drawCanvasText(drawingCtx, stateCoord.x, stateCoord.y, colour, state.text.split("\n"), editable);
+        drawCanvasText(drawingCtx, state.coordinate.x, state.coordinate.y, colour,
+            state.text.split("\n"), editable, CANVASTEXTVERTICAL.Centre, scale);
 
         return true;
     }
@@ -240,9 +244,10 @@ export function drawState(state, colour, editable, drawingCtx) {
  * @param {string} colour Colour of the transition
  * @param {boolean} editable Flag to tell that there should be caret appear
  * @param {CanvasRenderingContext2D} drawingCtx A 2d canvas rendering context
+ * @param {number} [scale=1] Scale that the state will be drawn in.
  * @returns {boolean} True when created successfully, otherwise can't create it because canvas (context) doesn't exist.
  */
-export function drawTransition(transition, colour, editable, drawingCtx) {
+export function drawTransition(transition, colour, editable, drawingCtx, scale = 1) {
     if (drawingCtx === undefined || drawingCtx === null) {
         drawingCtx = canvasCtx;
     }
@@ -251,29 +256,34 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
         let arrowAngle = transition.angle;
 
         drawingCtx.strokeStyle = colour;
+        drawingCtx.lineWidth = scale;
         drawingCtx.beginPath();
         if (!transition.isCurved) {
-            drawingCtx.moveTo(transition.fromCoord.x, transition.fromCoord.y);
-            drawingCtx.lineTo(transition.toCoord.x, transition.toCoord.y);
+            let fromCoord = { x: transition.fromCoord.x * scale, y: transition.fromCoord.y * scale };
+            let toCoord = { x: transition.toCoord.x * scale, y: transition.toCoord.y * scale };
+            drawingCtx.moveTo(fromCoord.x, fromCoord.y);
+            drawingCtx.lineTo(toCoord.x, toCoord.y);
             arrowCoord = transition.toCoord;
         }
         else {
             let centreCoord = transition.centerArc;
-            drawingCtx.arc(centreCoord.x, centreCoord.y, transition.radius, transition.fromAngle, transition.toAngle, transition.isReversed);
+            drawingCtx.arc(centreCoord.x * scale, centreCoord.y * scale, transition.radius * scale,
+                transition.fromAngle, transition.toAngle, transition.isReversed);
             arrowAngle = transition.toAngle;
             arrowCoord = transition.toCoord;
             arrowAngle += (transition.isReversed ? -1 : 1) * (Math.PI / 2);
         }
         drawingCtx.stroke();
         drawingCtx.closePath();
-        drawArrow(arrowCoord.x, arrowCoord.y, arrowAngle, colour, ARROWWIDTH, ARROWHEIGHT, drawingCtx);
+        drawArrow(arrowCoord.x * scale, arrowCoord.y * scale, arrowAngle,
+            colour, ARROWWIDTH * scale, ARROWHEIGHT * scale, drawingCtx);
 
         let textCoordInfo = SetTransitionTextCoords(transition, drawingCtx);
         let textX = textCoordInfo.textX;
         let textY = textCoordInfo.textY;
         let vertialAlignment = textCoordInfo.vertialAlignment;
 
-        drawCanvasText(drawingCtx, textX, textY, colour, transition.text.split("\n"), editable, vertialAlignment);
+        drawCanvasText(drawingCtx, textX, textY, colour, transition.text.split("\n"), editable, vertialAlignment, scale);
         return true;
     }
     return false;
@@ -283,11 +293,12 @@ export function drawTransition(transition, colour, editable, drawingCtx) {
  * Coordinates and angle of text for transition.
  * @param {Transition} transition
  * @param {CanvasRenderingContext2D} drawingCtx 2D canvas drawing context
+ * @param {number} [scale=1] Scale that the state will be drawn in.
  * @returns {{textX: number, textY: number, textAngle: number, vertialAlignment: number}}
  * First two numbers are coordinates, the thrid is the text angle.
  * The last one is the vertical alignment of text.
  */
-export function SetTransitionTextCoords(transition, drawingCtx) {
+export function SetTransitionTextCoords(transition, drawingCtx, scale = 1) {
     let textX = 0;
     let textY = 0;
     let textAngle = 0;
@@ -295,18 +306,20 @@ export function SetTransitionTextCoords(transition, drawingCtx) {
     let textLines = transition.text.split("\n");
     let longestLine = "";
     textLines.forEach(x => longestLine = x.length > longestLine.length ? x : longestLine);
+    let halfLongestLineWidth = drawingCtx.measureText(longestLine).width / 2;
 
     if (!transition.fromState.isDrawable) {
-        textX = transition.fromCoord.x - ((drawingCtx.measureText(longestLine).width / 2 + 20) * Math.cos(transition.angle));
-        textY = transition.fromCoord.y - ((FONTSIZE / 2) * textLines.length * Math.sin(transition.angle));
+        let absLineWidth = (halfLongestLineWidth + 20);
+        textX = (transition.fromCoord.x - (absLineWidth * Math.cos(transition.angle))) * scale;
+        textY = (transition.fromCoord.y - ((FONTSIZE / 2) * textLines.length * Math.sin(transition.angle))) * scale;
     }
     else {
         if (!transition.isCurved) {
             let fromCoord = transition.fromCoord;
             let toCoord = transition.toCoord;
 
-            textX = ((toCoord.x + fromCoord.x) / 2);
-            textY = ((toCoord.y + fromCoord.y) / 2);
+            textX = ((toCoord.x + fromCoord.x) / 2) * scale;
+            textY = ((toCoord.y + fromCoord.y) / 2) * scale;
             /**
              * Gives the angle between the transition and positive y-axis
              * (positive y is down when dealing with position in webpages)
@@ -321,14 +334,14 @@ export function SetTransitionTextCoords(transition, drawingCtx) {
 
             textAngle = (((endAngle + startAngle) / 2)) + (transition.isReversed * Math.PI);
             let cos = Math.cos(textAngle);
-            textX = transition.centerArc.x + (cos * (transition.radius + 5));
-            textY = transition.centerArc.y + (Math.sin(textAngle) * (transition.radius + 5));
+            textX = (transition.centerArc.x + (cos * (transition.radius + 5))) * scale;
+            textY = (transition.centerArc.y + (Math.sin(textAngle) * (transition.radius + 5))) * scale;
         }
 
         let cos = Math.cos(textAngle);
         let sin = Math.sin(textAngle);
-        let cornerPointX = (drawingCtx.measureText(longestLine).width / 2 + 5) * (cos > 0 ? 1 : -1);
-        let cornerPointY = 20 * (sin > 0 ? 1 : -1);
+        let cornerPointX = (halfLongestLineWidth + 5) * (cos > 0 ? 1 : -1) * scale;
+        let cornerPointY = 20 * (sin > 0 ? 1 : -1) * scale;
         let slide = (Math.pow(sin, 41) * cornerPointX)
             - (Math.pow(cos, 11) * cornerPointY);
         textX += cornerPointX - sin * slide;
@@ -349,8 +362,7 @@ export function SetTransitionTextCoords(transition, drawingCtx) {
             }
         }
     }
-
-    return { textX: textX, textY: textY, textAngle: textAngle, vertialAlignment: vertialAlignment };
+    return { textX, textY, textAngle, vertialAlignment };
 }
 
 /**

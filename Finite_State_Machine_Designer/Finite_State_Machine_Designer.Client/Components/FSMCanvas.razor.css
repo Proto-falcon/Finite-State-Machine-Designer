@@ -72,6 +72,10 @@
     display: none
 }
 
+.export-select {
+    height: 2em;
+}
+
 .canvas-button {
     background-color: #ffffff
 }
@@ -94,13 +98,6 @@ form {
     margin-bottom: 0.5em;
 }
 
-.svg-scale-input {
-    width: 5em;
-}
-
-.svg-form {
-    display: inline;
-    padding: 10px;
-    border: 2px solid #ffffff;
-    border-radius: 5px;
+.scale-input {
+    width: 4.5em;
 }

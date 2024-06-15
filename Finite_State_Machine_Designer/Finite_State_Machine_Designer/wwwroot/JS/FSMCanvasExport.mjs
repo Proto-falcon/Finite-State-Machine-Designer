@@ -9,23 +9,60 @@
 
 /**
  * Converts FSM in canvas to PNG
- * @param {FiniteStateMachine} fsm
- * @param {string} colour 
+ * @param {FiniteStateMachine} fsm Finite State Machine
+ * @param {string} colour colour of the FSM to be drawn in
+ * @param {number} [scale=1] Scale that the state will be drawn in.
  * @returns {string} Data URL of FSM canvas PNG
  */
-export function fsmToPNG(fsm, colour) {
+export function fsmToPNG(fsm, colour, scale = 1) {
     /** @type {HTMLCanvasElement} */
     let tmpCanvas = document.createElement("canvas");
-    tmpCanvas.width = FSMCanvasUtil.canvasElement.width;
-    tmpCanvas.height = FSMCanvasUtil.canvasElement.height;
+    tmpCanvas.width = FSMCanvasUtil.canvasElement.width * scale;
+    tmpCanvas.height = FSMCanvasUtil.canvasElement.height * scale;
     let tmpCanvasCtx = tmpCanvas.getContext("2d");
     tmpCanvasCtx.font = FSMCanvasUtil.CANVASTEXTFONTSTYLE;
 
+    /** @type {CanvasRenderingContext2D} */
+    let pngDrawingCtx = {
+        canvas: tmpCanvasCtx.canvas,
+        beginPath: () => tmpCanvasCtx.beginPath(),
+        closePath: () => tmpCanvasCtx.closePath(),
+        get lineWidth() {
+            return tmpCanvasCtx.lineWidth;
+        },
+        set lineWidth(value) {
+            tmpCanvasCtx.lineWidth = value;
+        },
+        get strokeStyle() {
+            return tmpCanvasCtx.strokeStyle;
+        },
+        set strokeStyle(value) {
+            tmpCanvasCtx.strokeStyle = value;
+        },
+        get fillStyle() {
+            return tmpCanvasCtx.fillStyle;
+        },
+        set fillStyle(value) {
+            tmpCanvasCtx.fillStyle = value;
+        },
+        arc: (x, y, radius, startAngle, endAngle, counterClockwise = false) => tmpCanvasCtx.arc(x, y, radius, startAngle, endAngle, counterClockwise),
+        moveTo: (x, y) => tmpCanvasCtx.moveTo(x, y),
+        lineTo: (x, y) => tmpCanvasCtx.lineTo(x, y),
+        stroke: () => tmpCanvasCtx.stroke(),
+        measureText: (text) => tmpCanvasCtx.measureText(text),
+        fillText: (text, x, y) => {
+            tmpCanvasCtx.font = `${FSMCanvasUtil.FONTSIZE * scale}px ${FSMCanvasUtil.FONTSTYLE}`;
+            tmpCanvasCtx.fillText(text, x, y);
+            tmpCanvasCtx.font = FSMCanvasUtil.CANVASTEXTFONTSTYLE;
+        },
+        fill: () => tmpCanvasCtx.fill()
+    };
+
     fsm.states.forEach(state =>
-        FSMCanvasUtil.drawState(state, colour, false, tmpCanvasCtx)
+        FSMCanvasUtil.drawState(state, colour, false, pngDrawingCtx, scale)
     );
     fsm.transitions.forEach(transition =>
-        FSMCanvasUtil.drawTransition(transition, colour, false, tmpCanvasCtx)
+        FSMCanvasUtil.drawTransition(transition, colour, false, pngDrawingCtx, scale)
     );
 
     return tmpCanvas.toDataURL('image/png');
