@@ -285,7 +285,8 @@ namespace Finite_State_Machine_Designer.Client.FSM
             set => _radius = value;
         }
 
-        public bool IsCurved => Math.Abs(_perpendicularAxis) >= _minPerpendicularDistance || _fromState == _toState;
+        public bool IsCurved => Math.Abs(_perpendicularAxis) >= _minPerpendicularDistance
+            || (_fromState is not null && _fromState == _toState);
 
         private string _text = string.Empty;
 
