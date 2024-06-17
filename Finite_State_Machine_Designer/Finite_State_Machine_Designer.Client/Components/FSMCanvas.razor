@@ -15,7 +15,7 @@
 	<select class="export-select" @bind="_exportType">
 		<option value="@ExportTypes.Png">PNG</option>
 		<option value="@ExportTypes.Svg">SVG</option>
-		<option value="@ExportTypes.Json">JSON (scale doesn't affect this option)</option>
+		<option value="@ExportTypes.Json">JSON</option>
 	</select>
 	<button class="canvas-button" @onclick="ExportCanvas">Export</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
@@ -158,7 +158,7 @@
 				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
 				if (fsm is not null)
 				{
-					fsm.RemoveDuplicateStates();
+					fsm.SanitiseFsm();
 					_fsmDrawer.FSM = fsm;
 				}
 				_fsmDrawer.FSM.Width = Width;
@@ -411,7 +411,7 @@
 				IFiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("loadJsonUpload", _jsonUpload);
 				if (fsm is not null)
 				{
-					fsm.RemoveDuplicateStates();
+					fsm.SanitiseFsm();
 					_fsmDrawer.FSM = fsm;
 					await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _fsmDrawer.FSM);
 					await _fsmDrawer.DrawMachineAsync();

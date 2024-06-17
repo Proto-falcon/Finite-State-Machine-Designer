@@ -7,9 +7,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
     {
 		public string Id { get; set; } = string.Empty;
 
-        [JsonIgnore]
-		public string UserId { get; set; } = string.Empty;
-
         public string Name { get; set; } = string.Empty;
 
         public string Description { get; set; } = string.Empty;
@@ -21,11 +18,31 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// <summary>
 		/// The list includes "Invisible states" for incoming transitions
 		/// </summary>
-        public List<FiniteState> States { get => _states; set => _states = value; }
+        public List<FiniteState> States
+		{
+			get => _states;
+			set
+			{
+				if (value is not null)
+					_states = value;
+				else
+					_states = [];
+			}
+		}
 		private List<FiniteState> _states = [];
 
-		public List<Transition> Transitions { get => _transitions; set => _transitions = value; }
-		private List<Transition> _transitions = [];
+		public List<Transition> Transitions
+        {
+            get => _transitions;
+            set
+            {
+                if (value is not null)
+                    _transitions = value;
+                else
+                    _transitions = [];
+            }
+        }
+        private List<Transition> _transitions = [];
 
 		private int _transitionSearchRadius;
 		public int TransitionSearchRadius

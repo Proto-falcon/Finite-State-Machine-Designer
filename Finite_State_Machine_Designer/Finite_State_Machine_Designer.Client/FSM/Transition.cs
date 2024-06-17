@@ -29,7 +29,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
             }
         }
 
-        public string FromId { get; set; } = string.Empty;
+        public string FromStateId { get; set; } = string.Empty;
 
         [NotMapped]
         public FiniteState ToState
@@ -43,7 +43,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
             }
         }
 
-        public string ToId { get; set; } = string.Empty;
+        public string ToStateId { get; set; } = string.Empty;
 
         /// <summary>
         /// It's the <see cref="CanvasCoordinate"/> that the transition originates from the edge

@@ -31,9 +31,9 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public void UpdateSelfTransition(Transition transition, CanvasCoordinate coord);
 
-		public void SnapState(FiniteState state);
+		public bool SnapState(FiniteState state);
 
-		public void SnapState(FiniteState state, FiniteState otherState);
+		public bool SnapState(FiniteState state, FiniteState otherState);
 
 		public Task<bool> DrawMachineAsync(bool lineVisible = false);
 	}

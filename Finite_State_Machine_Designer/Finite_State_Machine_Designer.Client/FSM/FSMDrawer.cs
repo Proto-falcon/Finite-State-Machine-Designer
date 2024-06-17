@@ -2,10 +2,10 @@
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
-    public class FSMDrawer(ILogger<IFSMDrawer> logger, IFiniteStateMachine fsm) : IFSMDrawer
-    {
-        private readonly ILogger _logger = logger;
-        private IJSObjectReference? _jsModule;
+	public class FSMDrawer(ILogger<IFSMDrawer> logger, IFiniteStateMachine fsm) : IFSMDrawer
+	{
+		private readonly ILogger _logger = logger;
+		private IJSObjectReference? _jsModule;
 		private string _nonSelectedColour = "#ff0000";
 		private string _selectedColour = "#0000ff";
 		private readonly int _snapPadding = 6;
@@ -91,16 +91,18 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			return null;
 		}
 
-		public void MoveState(FiniteState state, CanvasCoordinate newCoord, CanvasCoordinate lastCoord, bool snapState = false)
+		public void MoveState(FiniteState state, CanvasCoordinate newCoord,
+			CanvasCoordinate lastCoord, bool snapState = false)
 		{
+			CanvasCoordinate lastStateCoord = state.Coordinate;
 			state.Coordinate = newCoord + _selectedStateCoordOffset;
-
+			
 			if (snapState)
 				SnapState(state);
 
-			List<Transition> transitions = fsm.FindTransitions(
-						_selectedState, x => !x.FromState.IsDrawable);
-			CanvasCoordinate dCoord = newCoord - lastCoord;
+			List<Transition> transitions = fsm
+				.FindTransitions(_selectedState, x => !x.FromState.IsDrawable);
+			CanvasCoordinate dCoord = state.Coordinate - lastStateCoord;
 			foreach (var transition in transitions)
 			{
 				// Moves the non-drawable states from incoming transitions
@@ -314,8 +316,13 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// Snaps a state to any other states x or y coordinates.
 		/// </summary>
 		/// <param name="state">A finite state.</param>
-		public void SnapState(FiniteState state)
+		/// <returns>
+		/// <see langword="true"/> when state snapped to other states,
+		/// otherwise <see langword="false"/>.
+		/// </returns>
+		public bool SnapState(FiniteState state)
 		{
+			bool isSnapped = false;
 			bool xSnapped = false;
 			bool ySnapped = false;
 
@@ -331,12 +338,14 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				{
 					x = otherState.Coordinate.X;
 					xSnapped = true;
+					isSnapped = true;
 				}
 
 				if (Math.Abs(state.Coordinate.Y - otherState.Coordinate.Y) < _snapPadding)
 				{
 					y = otherState.Coordinate.Y;
 					ySnapped = true;
+					isSnapped = true;
 				}
 
 				if (xSnapped && ySnapped)
@@ -344,6 +353,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			}
 
 			state.Coordinate = new CanvasCoordinate(x, y);
+			return isSnapped;
 		}
 
 		/// <summary>
@@ -351,10 +361,15 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		/// </summary>
 		/// <param name="state">First finite state</param>
 		/// <param name="otherState">Second finite state</param>
-		public void SnapState(FiniteState state, FiniteState otherState)
+		/// <returns>
+		/// <see langword="true"/> when state snapped to other state,
+		/// otherwise <see langword="false"/>.
+		/// </returns>
+		public bool SnapState(FiniteState state, FiniteState otherState)
 		{
+			bool isSnapped = false;
 			if (state == otherState)
-				return;
+				return true;
 
 			double x = state.Coordinate.X;
 			double y = state.Coordinate.Y;
@@ -362,14 +377,17 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			if (Math.Abs(state.Coordinate.X - otherState.Coordinate.X) < _snapPadding)
 			{
 				x = otherState.Coordinate.X;
+				isSnapped = true;
 			}
 
 			if (Math.Abs(state.Coordinate.Y - otherState.Coordinate.Y) < _snapPadding)
 			{
 				y = otherState.Coordinate.Y;
+				isSnapped = true;
 			}
 
 			state.Coordinate = new CanvasCoordinate(x, y);
+			return isSnapped;
 		}
 
 		public async Task<bool> DrawMachineAsync(bool lineVisible = false)
@@ -401,7 +419,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					);
 				}
 				foreach (Transition transition in fsm.Transitions)
-                {
+				{
 					editable = false;
 					currentColour = _nonSelectedColour;
 
@@ -418,7 +436,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 						editable && lineVisible && transition.ToState.IsDrawable
 					);
 				}
-                return true;
+				return true;
 			}
 			return false;
 		}
