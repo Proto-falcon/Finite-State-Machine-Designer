@@ -32,7 +32,7 @@
                         fromStateDeDuped = true;
                     }
 
-                    if (!ReferenceEquals(state, transition.ToState))
+                    if (ReferenceEquals(state, transition.ToState))
                         toStateDeDuped = true;
                     else if (state == transition.ToState && !ReferenceEquals(state, transition.ToState))
                     {
