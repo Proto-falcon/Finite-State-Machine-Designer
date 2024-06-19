@@ -15,19 +15,19 @@ namespace Finite_State_Machine_Designer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nchar(36)", fixedLength: true, maxLength: 36, nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Width = table.Column<int>(type: "int", nullable: false),
                     Height = table.Column<int>(type: "int", nullable: false),
-                    TransitionSearchRadius = table.Column<int>(type: "int", nullable: false)
+                    TransitionSearchRadius = table.Column<int>(type: "int", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_StateMachines", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StateMachines_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_StateMachines_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -62,8 +62,8 @@ namespace Finite_State_Machine_Designer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nchar(36)", fixedLength: true, maxLength: 36, nullable: false),
-                    FromId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ToId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FromStateId = table.Column<string>(type: "nchar(36)", nullable: true),
+                    ToStateId = table.Column<string>(type: "nchar(36)", nullable: true),
                     SelfAngle = table.Column<double>(type: "float", nullable: false),
                     ParallelAxis = table.Column<double>(type: "float", nullable: false),
                     PerpendicularAxis = table.Column<double>(type: "float", nullable: false),
@@ -84,12 +84,22 @@ namespace Finite_State_Machine_Designer.Migrations
                         principalTable: "StateMachines",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Transitions_States_FromStateId",
+                        column: x => x.FromStateId,
+                        principalTable: "States",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Transitions_States_ToStateId",
+                        column: x => x.ToStateId,
+                        principalTable: "States",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_StateMachines_UserId",
+                name: "IX_StateMachines_ApplicationUserId",
                 table: "StateMachines",
-                column: "UserId");
+                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_States_FiniteStateMachineId",
@@ -100,16 +110,26 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "IX_Transitions_FiniteStateMachineId",
                 table: "Transitions",
                 column: "FiniteStateMachineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transitions_FromStateId",
+                table: "Transitions",
+                column: "FromStateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transitions_ToStateId",
+                table: "Transitions",
+                column: "ToStateId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "States");
+                name: "Transitions");
 
             migrationBuilder.DropTable(
-                name: "Transitions");
+                name: "States");
 
             migrationBuilder.DropTable(
                 name: "StateMachines");

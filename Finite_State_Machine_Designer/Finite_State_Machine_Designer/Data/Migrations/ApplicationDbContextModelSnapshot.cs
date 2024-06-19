@@ -70,6 +70,10 @@ namespace Finite_State_Machine_Designer.Migrations
                         .HasColumnType("nchar(36)")
                         .IsFixedLength();
 
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -84,16 +88,12 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.Property<int>("TransitionSearchRadius")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int>("Width")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ApplicationUserId");
 
                     b.ToTable("StateMachines");
                 });
@@ -109,9 +109,8 @@ namespace Finite_State_Machine_Designer.Migrations
                         .IsRequired()
                         .HasColumnType("nchar(36)");
 
-                    b.Property<string>("FromId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("FromStateId")
+                        .HasColumnType("nchar(36)");
 
                     b.Property<bool>("IsReversed")
                         .HasColumnType("bit");
@@ -135,9 +134,8 @@ namespace Finite_State_Machine_Designer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ToId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("ToStateId")
+                        .HasColumnType("nchar(36)");
 
                     b.ComplexProperty<Dictionary<string, object>>("CenterArc", "Finite_State_Machine_Designer.Client.FSM.Transition.CenterArc#CanvasCoordinate", b1 =>
                         {
@@ -151,6 +149,10 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FiniteStateMachineId");
+
+                    b.HasIndex("FromStateId");
+
+                    b.HasIndex("ToStateId");
 
                     b.ToTable("Transitions");
                 });
@@ -366,7 +368,7 @@ namespace Finite_State_Machine_Designer.Migrations
                 {
                     b.HasOne("Finite_State_Machine_Designer.Data.ApplicationUser", null)
                         .WithMany("StateMachines")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -378,6 +380,20 @@ namespace Finite_State_Machine_Designer.Migrations
                         .HasForeignKey("FiniteStateMachineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteState", "FromState")
+                        .WithOne()
+                        .HasForeignKey("Finite_State_Machine_Designer.Client.FSM.Transition", "FromStateId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Finite_State_Machine_Designer.Client.FSM.FiniteState", "ToState")
+                        .WithOne()
+                        .HasForeignKey("Finite_State_Machine_Designer.Client.FSM.Transition", "ToStateId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("FromState");
+
+                    b.Navigation("ToState");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

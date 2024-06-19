@@ -24,30 +24,55 @@ namespace Finite_State_Machine_Designer.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<FiniteStateMachine>()
-                .Property(fsm => fsm.Id)
-                .IsFixedLength()
-                .HasMaxLength(36);
-
-            modelBuilder.Entity<FiniteStateMachine>()
                 .HasKey(fsm => fsm.Id);
 
             modelBuilder.Entity<FiniteState>()
                 .HasKey(state => state.Id);
+            
+            modelBuilder.Entity<Transition>()
+                .HasKey(transition => transition.Id);
+
+            modelBuilder.Entity<FiniteStateMachine>()
+                .Property(fsm => fsm.Id)
+                .IsFixedLength()
+                .HasMaxLength(36)
+				.ValueGeneratedNever();
 
             modelBuilder.Entity<FiniteState>()
                 .Property(state => state.Id)
                 .IsFixedLength()
-                .HasMaxLength(36);
+                .HasMaxLength(36)
+                .ValueGeneratedNever();
+
+			/// The length of GUIDs converted to string in terms of byte pairs is 36
+			/// This due to the 4 extra hyphens '-'
+			modelBuilder.Entity<Transition>()
+				.Property(transition => transition.Id)
+				.IsFixedLength()
+				.HasMaxLength(36)
+				.ValueGeneratedNever();
 
             modelBuilder.Entity<Transition>()
-                .HasKey(transition => transition.Id);
+                .HasOne(transition => transition.FromState)
+                .WithOne()
+                .HasForeignKey<Transition>(transition => transition.FromStateId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
-            /// The length of GUIDs converted to string in terms of byte pairs is 36
-            /// This due to the 4 extra hyphens '-'
             modelBuilder.Entity<Transition>()
-                .Property(transition => transition.Id)
-                .IsFixedLength()
-                .HasMaxLength(36);
+                .HasOne(transition => transition.ToState)
+                .WithOne()
+                .HasForeignKey<Transition>(transition => transition.ToStateId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Transition>()
+                .HasIndex(transition => transition.FromStateId)
+                .IsUnique(false);
+
+            modelBuilder.Entity<Transition>()
+                .HasIndex(transition => transition.ToStateId)
+                .IsUnique(false);
 
             modelBuilder.Entity<FiniteStateMachine>()
                 .HasMany(fsm => fsm.Transitions)
@@ -62,7 +87,6 @@ namespace Finite_State_Machine_Designer.Data
             modelBuilder.Entity<ApplicationUser>()
                 .HasMany(user => user.StateMachines)
                 .WithOne()
-                .HasForeignKey(fsm => fsm.UserId)
                 .IsRequired();
 
             base.OnModelCreating(modelBuilder);

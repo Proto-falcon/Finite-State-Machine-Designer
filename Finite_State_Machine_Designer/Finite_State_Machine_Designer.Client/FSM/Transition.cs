@@ -17,7 +17,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
         private FiniteState _fromState = new() { IsDrawable = false };
         private FiniteState _toState = new() { IsDrawable = false };
 
-        [NotMapped]
         public FiniteState FromState
         {
             get => _fromState;
@@ -31,7 +30,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
         public string FromStateId { get; set; } = string.Empty;
 
-        [NotMapped]
         public FiniteState ToState
         {
             get => _toState;
