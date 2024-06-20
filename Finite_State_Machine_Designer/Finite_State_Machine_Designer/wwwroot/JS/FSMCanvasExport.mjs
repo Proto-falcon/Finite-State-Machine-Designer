@@ -173,7 +173,7 @@ export function fsmToSVG(fsm, width, height, colour, backgroundColour, numPrecis
             svgText += `<path fill="none" stroke="${colour}" stroke-width="${scale.toFixed(numPrecision)}"`
                 + ` d="M ${fromCoord.x.toFixed(numPrecision)} ${fromCoord.y.toFixed(numPrecision)}`
                 + ` A ${scaledTransitionRadius.toFixed(numPrecision)} ${scaledTransitionRadius.toFixed(numPrecision)}`
-                + ` ${0} ${(Math.abs(toAngle - fromAngle) > Math.PI) * 1} ${1}`
+                + ` ${0} ${(Math.abs(toAngle - fromAngle) > Math.PI) * !transition.isReversed * 1} ${!transition.isReversed * 1}`
                 + ` ${toCoord.x.toFixed(numPrecision)} ${toCoord.y.toFixed(numPrecision)}" />\n`;
         }
 
