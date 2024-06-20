@@ -10,12 +10,6 @@ namespace Finite_State_Machine_Designer.Data
         public DbSet<Transition> Transitions { get; set; }
         public DbSet<FiniteState> States { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.EnableSensitiveDataLogging();
-            base.OnConfiguring(optionsBuilder);
-        }
-
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
             configurationBuilder.ComplexProperties<CanvasCoordinate>();

@@ -36,12 +36,11 @@ namespace Finite_State_Machine_Designer.Data
             await dbContext.Database.ExecuteSqlAsync(@$"UPDATE dbo.StateMachines
             SET Name={fsm.Name}, Description={fsm.Description}, Width={fsm.Width},
             Height={fsm.Height}, TransitionSearchRadius={fsm.TransitionSearchRadius}
-            WHERE Id={fsm.Id}");
-            
-            await dbContext.Database.ExecuteSqlAsync($@"DELETE FROM dbo.Transitions
-            where FiniteStateMachineId = {fsm.Id}");
-            await dbContext.Database.ExecuteSqlAsync($@"DELETE FROM dbo.States
-            WHERE FiniteStateMachineId = {fsm.Id}");
+            WHERE Id={fsm.Id};
+            DELETE FROM dbo.Transitions
+            where FiniteStateMachineId = {fsm.Id};
+            DELETE FROM dbo.States
+            WHERE FiniteStateMachineId = {fsm.Id};");
 
             await AddStates(dbContext, fsm, false);
             await AddTransitions(dbContext, fsm, false);
@@ -67,7 +66,7 @@ namespace Finite_State_Machine_Designer.Data
             for (int i = 0; i < fsm.States.Count; i++)
             {
                 FiniteState state = fsm.States[i];
-                if (newGuids || Guid.TryParse(state.Id, out _))
+                if (newGuids || !Guid.TryParse(state.Id, out _))
                     state.Id = Guid.NewGuid().ToString();
                 parameters.Add(new($"Id{i}", state.Id));
                 parameters.Add(new($"FsmId{i}", fsm.Id));
@@ -104,7 +103,7 @@ namespace Finite_State_Machine_Designer.Data
             for (int i = 0; i < fsm.Transitions.Count; i++)
             {
                 Transition transition = fsm.Transitions[i];
-                if (newGuids || Guid.TryParse(transition.Id, out _))
+                if (newGuids || !Guid.TryParse(transition.Id, out _))
                     transition.Id = Guid.NewGuid().ToString();
                 transition.FromStateId = transition.FromState.Id;
                 transition.ToStateId = transition.ToState.Id;
