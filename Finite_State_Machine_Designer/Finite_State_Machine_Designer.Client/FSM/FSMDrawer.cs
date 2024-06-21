@@ -121,12 +121,12 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				if (fromState is null)
 				{
 					fromState = new(fromPos, 0) { IsDrawable = false };
-					FSM.States.Add(fromState);
+					fsm.States.Add(fromState);
 				}
 				if (toState is null)
 				{
 					toState = new(toPos, 0) { IsDrawable = false };
-					FSM.States.Add(toState);
+					fsm.States.Add(toState);
 				}
 
 				Transition newTransition = new(fromState, toState)
@@ -398,44 +398,45 @@ namespace Finite_State_Machine_Designer.Client.FSM
 				bool editable;
 				string currentColour;
 
-				foreach (FiniteState state in fsm.States)
+				Parallel.ForEach(fsm.States, async state =>
 				{
-					if (!state.IsDrawable)
-						continue;
-					editable = false;
-					currentColour = _nonSelectedColour;
+                    if (!state.IsDrawable)
+                        return;
+                    editable = false;
+                    currentColour = _nonSelectedColour;
 
-					if (state == _selectedState)
-					{
-						currentColour = _selectedColour;
-						editable = true;
-					}
+                    if (state == _selectedState)
+                    {
+                        currentColour = _selectedColour;
+                        editable = true;
+                    }
 
-					await _jsModule.InvokeAsync<bool>(
-						"fSMCanvasUtils.drawState",
-						state,
-						currentColour,
-						editable && lineVisible
-					);
-				}
-				foreach (Transition transition in fsm.Transitions)
+                    await _jsModule.InvokeAsync<bool>(
+                        "fSMCanvasUtils.drawState",
+                        state,
+                        currentColour,
+                        editable && lineVisible
+                    );
+                });
+
+				Parallel.ForEach(fsm.Transitions, async transition =>
 				{
-					editable = false;
-					currentColour = _nonSelectedColour;
+                    editable = false;
+                    currentColour = _nonSelectedColour;
 
-					if (transition == _selectedTransition)
-					{
-						editable = true;
-						currentColour = _selectedColour;
-					}
-					
-					await _jsModule.InvokeAsync<bool>(
-						"fSMCanvasUtils.drawTransition",
-						transition,
-						currentColour,
-						editable && lineVisible && transition.ToState.IsDrawable
-					);
-				}
+                    if (transition == _selectedTransition)
+                    {
+                        editable = true;
+                        currentColour = _selectedColour;
+                    }
+
+                    await _jsModule.InvokeAsync<bool>(
+                        "fSMCanvasUtils.drawTransition",
+                        transition,
+                        currentColour,
+                        editable && lineVisible && transition.ToState.IsDrawable
+                    );
+                });
 				return true;
 			}
 			return false;
