@@ -12,18 +12,23 @@ namespace Finite_State_Machine_Designer.Data
         /// </summary>
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
+        /// <param name="newGuids">By default it's <see langword="true"/> where it generates
+        /// new GUIDs for states even if they're already an existing GUID,
+        /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task AddFSM(DbContext dbContext, FiniteStateMachine fsm, string userId)
+        public async static Task AddFSM(DbContext dbContext, FiniteStateMachine fsm, string userId,
+            bool newGuids = true)
         {
-            fsm.Id = Guid.NewGuid().ToString();
+            if (newGuids || !Guid.TryParse(fsm.Id, out _))
+                fsm.Id = Guid.NewGuid().ToString();
 
             await dbContext.Database.ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
             (Id, ApplicationUserId, Name, Description, Width, Height, TransitionSearchRadius)
             VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description}, {fsm.Width}, {fsm.Height},
             {fsm.TransitionSearchRadius})");
 
-            await AddStates(dbContext, fsm);
-            await AddTransitions(dbContext, fsm);
+            await AddStates(dbContext, fsm, newGuids);
+            await AddTransitions(dbContext, fsm, newGuids);
         }
 
         /// <summary>
@@ -31,19 +36,13 @@ namespace Finite_State_Machine_Designer.Data
         /// </summary>
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
-        public async static Task UpdateFsm(DbContext dbContext, FiniteStateMachine fsm)
+        /// <exception cref="OperationCanceledException"/>
+        public async static Task UpdateFsm(DbContext dbContext, FiniteStateMachine fsm, string userId)
         {
-            await dbContext.Database.ExecuteSqlAsync(@$"UPDATE dbo.StateMachines
-            SET Name={fsm.Name}, Description={fsm.Description}, Width={fsm.Width},
-            Height={fsm.Height}, TransitionSearchRadius={fsm.TransitionSearchRadius}
-            WHERE Id={fsm.Id};
-            DELETE FROM dbo.Transitions
-            where FiniteStateMachineId = {fsm.Id};
-            DELETE FROM dbo.States
-            WHERE FiniteStateMachineId = {fsm.Id};");
+            await dbContext.Database.ExecuteSqlAsync(@$"DELETE FROM dbo.StateMachines
+            WHERE Id = {fsm.Id}");
 
-            await AddStates(dbContext, fsm, false);
-            await AddTransitions(dbContext, fsm, false);
+            await AddFSM(dbContext, fsm, userId, false);
         }
 
         /// <summary>
@@ -54,6 +53,7 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="newGuids">By default it's <see langword="true"/> where it generates
         /// new GUIDs for states even if they're already an existing GUID,
         /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
+        /// <exception cref="OperationCanceledException"/>
         public async static Task AddStates(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
         {
@@ -91,6 +91,7 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="newGuids">By default it's <see langword="true"/> where it generates
         /// new GUIDs for states even if they're already an existing GUID,
         /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
+        /// <exception cref="OperationCanceledException"/>
         public async static Task AddTransitions(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
         {
@@ -122,12 +123,23 @@ namespace Finite_State_Machine_Designer.Data
                 parameters.Add(new($"CentreY{i}", transition.CenterArc.Y));
                 parameters.Add(new($"Reversed{i}", transition.IsReversed));
 
-                insertTransitionsCommand += " " + $@"(@Id{i}, @FsmId{i}, @FromStateId{i},
-                @ToStateId{i}, @Text{i}, @ParallelAxis{i}, @MinPerpDist{i},
-                @PerAxis{i}, @SelfAngle{i}, @Radius{i}, @CentreX{i},
-                @CentreY{i}, @Reversed{i}),";
+                if (i > 0)
+                    insertTransitionsCommand += Environment.NewLine;
+                insertTransitionsCommand += 
+                    $@"(@Id{i}, @FsmId{i}, @FromStateId{i}, @ToStateId{i}, @Text{i},
+                @ParallelAxis{i}, @MinPerpDist{i}, @PerAxis{i}, @SelfAngle{i},
+                @Radius{i}, @CentreX{i}, @CentreY{i}, @Reversed{i}),";
             }
             await dbContext.Database.ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
+        }
+
+        public async static Task GetFullFsm(DbContext dbContext, FiniteStateMachine fsm)
+        {
+            fsm.States = await dbContext.Database.SqlQuery<FiniteState>($@"SELECT * FROM dbo.States
+            WHERE FiniteStateMachineId = {fsm.Id}").ToListAsync();
+
+            fsm.Transitions = await dbContext.Database.SqlQuery<Transition>($@"SELECT * FROM dbo.Transitions
+            WHERE FiniteStateMachineId = {fsm.Id}").ToListAsync();
         }
     }
 }
