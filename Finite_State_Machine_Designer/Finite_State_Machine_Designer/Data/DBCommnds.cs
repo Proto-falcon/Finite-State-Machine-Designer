@@ -7,28 +7,64 @@ namespace Finite_State_Machine_Designer.Data
     public static class DBCommnds
     {
         /// <summary>
+        /// Gets List of FSMs depending on page number and size of page
+        /// </summary>
+        /// <param name="dbContext"></param>
+        /// <param name="userId"></param>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        public async static Task<List<FiniteStateMachine>> GetPageOfFsms(DbContext dbContext,
+            string userId, int page, int pageSize)
+            => await dbContext.Database.SqlQuery<FiniteStateMachine>($@"SELECT *
+                    FROM dbo.StateMachines
+                    WHERE ApplicationUserId = {userId}
+                    ORDER BY TimeUpdated DESC
+                    OFFSET {page * pageSize} ROWS
+                    FETCH NEXT {pageSize} ROWS ONLY").ToListAsync();
+
+        /// <summary>
         /// Adds the FSM to a database with a link to user's id via raw SQL queries.
         /// <para>This method doens't have a transaction within it.</para>
+        /// <para>NOTE: When <paramref name="newGuids"/> is <see langword="true"/> it also updates TimeCreated of FSM
+        /// to <see cref="DateTime.UtcNow"/>.</para>
         /// </summary>
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
         /// <param name="newGuids">By default it's <see langword="true"/> where it generates
         /// new GUIDs for states even if they're already an existing GUID,
-        /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
+        /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs
+        /// <para>NOTE: When <see langword="true"/> it also updates TimeCreated of FSM
+        /// to <see cref="DateTime.UtcNow"/>.</para>
+        /// </param>
         /// <exception cref="OperationCanceledException"/>
         public async static Task AddFSM(DbContext dbContext, FiniteStateMachine fsm, string userId,
             bool newGuids = true)
         {
             if (newGuids || !Guid.TryParse(fsm.Id, out _))
+            {
                 fsm.Id = Guid.NewGuid().ToString();
+                fsm.TimeCreated = DateTime.UtcNow;
+            }
+            fsm.TimeUpdated = DateTime.UtcNow;
+            
+            try
+            {
+                await dbContext.Database.ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
+                (Id, ApplicationUserId, Name, Description, Width, Height,
+                TransitionSearchRadius, timeCreated, timeUpdated)
+                VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description}, {fsm.Width}, {fsm.Height},
+                {fsm.TransitionSearchRadius}, {fsm.TimeCreated}, {fsm.TimeUpdated})");
 
-            await dbContext.Database.ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
-            (Id, ApplicationUserId, Name, Description, Width, Height, TransitionSearchRadius)
-            VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description}, {fsm.Width}, {fsm.Height},
-            {fsm.TransitionSearchRadius})");
-
-            await AddStates(dbContext, fsm, newGuids);
-            await AddTransitions(dbContext, fsm, newGuids);
+                await AddStates(dbContext, fsm, newGuids);
+                await AddTransitions(dbContext, fsm, newGuids);
+            }
+            catch (OperationCanceledException)
+            {
+                if (newGuids)
+                    fsm.Id = string.Empty;
+                throw;
+            }
         }
 
         /// <summary>
@@ -58,6 +94,7 @@ namespace Finite_State_Machine_Designer.Data
             FiniteStateMachine fsm, bool newGuids = true)
         {
             List<SqlParameter> parameters = [];
+            List<FiniteState> addedStates = [];
             string insertStatesCommandPrefix = $@"INSERT INTO dbo.States
             (Id, FiniteStateMachineId, IsDrawable, IsFinalState,
             Coordinate_X, Coordinate_Y, Radius, Text)
@@ -67,7 +104,10 @@ namespace Finite_State_Machine_Designer.Data
             {
                 FiniteState state = fsm.States[i];
                 if (newGuids || !Guid.TryParse(state.Id, out _))
+                {
                     state.Id = Guid.NewGuid().ToString();
+                    addedStates.Add(state);
+                }
                 parameters.Add(new($"Id{i}", state.Id));
                 parameters.Add(new($"FsmId{i}", fsm.Id));
                 parameters.Add(new($"Drawable{i}", state.IsDrawable));
@@ -80,7 +120,16 @@ namespace Finite_State_Machine_Designer.Data
                 insertStatesCommand += " " + $@"(@Id{i}, @FsmId{i}, @Drawable{i},
                 @Final{i}, @CoordX{i}, @CoordY{i}, @Radius{i}, @Text{i}),";
             }
-            await dbContext.Database.ExecuteSqlRawAsync(insertStatesCommand[..^1], parameters);
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(insertStatesCommand[..^1], parameters);
+            }
+            catch (OperationCanceledException)
+            {
+                foreach (var state in addedStates)
+                    state.Id = string.Empty;
+                throw;
+            }
         }
 
         /// <summary>
@@ -96,6 +145,7 @@ namespace Finite_State_Machine_Designer.Data
             FiniteStateMachine fsm, bool newGuids = true)
         {
             List<SqlParameter> parameters = [];
+            List<Transition> addedTransitions = [];
             string insertTransitionsCommand = $@"INSERT INTO dbo.Transitions
             (Id, FiniteStateMachineId, FromStateId, ToStateId, Text, ParallelAxis,
 	        MinPerpendicularDistance, PerpendicularAxis, SelfAngle, Radius,
@@ -130,16 +180,16 @@ namespace Finite_State_Machine_Designer.Data
                 @ParallelAxis{i}, @MinPerpDist{i}, @PerAxis{i}, @SelfAngle{i},
                 @Radius{i}, @CentreX{i}, @CentreY{i}, @Reversed{i}),";
             }
-            await dbContext.Database.ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
-        }
-
-        public async static Task GetFullFsm(DbContext dbContext, FiniteStateMachine fsm)
-        {
-            fsm.States = await dbContext.Database.SqlQuery<FiniteState>($@"SELECT * FROM dbo.States
-            WHERE FiniteStateMachineId = {fsm.Id}").ToListAsync();
-
-            fsm.Transitions = await dbContext.Database.SqlQuery<Transition>($@"SELECT * FROM dbo.Transitions
-            WHERE FiniteStateMachineId = {fsm.Id}").ToListAsync();
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
+            }
+            catch (OperationCanceledException)
+            {
+                foreach (Transition trannsition in addedTransitions)
+                    trannsition.Id = string.Empty;
+                throw;
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Finite_State_Machine_Designer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240619194804_FsmModel")]
+    [Migration("20240622164013_FsmModel")]
     partial class FsmModel
     {
         /// <inheritdoc />
@@ -87,6 +87,14 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("TimeCreated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("TimeUpdated")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("TransitionSearchRadius")
                         .HasColumnType("int");

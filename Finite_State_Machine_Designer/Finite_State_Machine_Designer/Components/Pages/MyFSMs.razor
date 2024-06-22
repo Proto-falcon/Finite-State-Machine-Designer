@@ -83,6 +83,8 @@
 
     private ApplicationUser _user = new ApplicationUser();
     private FiniteStateMachine? _currentFSM = null;
+    private int _availableFsmsLimit = 10;
+    private int _fsmsPage = 1;
     private bool _currentlySaving = false;
     private bool _currentSaved = false;
     private bool _currentSavedFailed = false;
@@ -109,12 +111,17 @@
                 return;
             }
             ApplicationUser? fetchedUser = dbContext.Users
-            .Where(user => user.NormalizedUserName == userName.ToUpper())
-            .Include(user => user.StateMachines)
-            .AsNoTrackingWithIdentityResolution()
-            .FirstOrDefault();
+                .Where(user => user.NormalizedUserName == userName.ToUpper())
+                .Include(user => user.StateMachines
+                    .OrderByDescending(fsm => fsm.TimeUpdated)
+                    .Take(_availableFsmsLimit))
+                .AsNoTrackingWithIdentityResolution()
+                .FirstOrDefault();
             if (fetchedUser is ApplicationUser)
+            {
                 _user = fetchedUser;
+                Parallel.ForEach(_user.StateMachines, GetFullFsm);
+            }
             else
                 Navigation.NavigateTo("Account/Login");
         }
@@ -134,12 +141,27 @@
             await SaveCurrentFSM();
     }
 
-    private async Task<List<FiniteStateMachine>> GetUsersFsms()
+    private async void GetFullFsm(FiniteStateMachine fsm)
     {
-        List<FiniteStateMachine> fsms = [];
-        await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
+        await using DbContext dbContext = await DbFactory.CreateDbContextAsync();
+        EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
+        await fsmEntry.Collection(stateMachine => stateMachine.States).LoadAsync();
+        await fsmEntry.Collection(stateMachine => stateMachine.Transitions).LoadAsync();
 
-        return fsms;
+        List<Transition> validTransitions = [];
+
+        foreach (Transition transition in fsm.Transitions)
+        {
+            if (fsm.States.Find(state => state.Id == transition.FromStateId) is FiniteState fromState)
+                transition.FromState = fromState;
+            if (fsm.States.Find(state => state.Id == transition.ToStateId) is FiniteState toState)
+                transition.ToState = toState;
+
+            if (transition.FromState is not null && transition.ToState is not null)
+                validTransitions.Add(transition);
+        }
+
+        fsm.Transitions = validTransitions;
     }
 
     /// <summary>
@@ -185,24 +207,24 @@
                 {
                     await using (ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync())
                     {
-                        dbContext.Attach(_user);
-                        await dbContext.Entry(_user)
-                            .Collection(user => user.StateMachines).LoadAsync();
-                        FiniteStateMachine? existingFSM = null;
-                        existingFSM = _user.StateMachines
-                            .Find(fsmOther => fsmOther.Name == _currentFSM.Name);
+                        FiniteStateMachine? existingFSM = await dbContext.Entry(_user)
+                            .Collection(user => user.StateMachines)
+                            .Query()
+                            .Where(fsm => fsm.Name == _currentFSM.Name)
+                            .FirstOrDefaultAsync();
                         if (existingFSM is not null)
                         {
                             await using var transact = await dbContext.Database.BeginTransactionAsync();
                             try
                             {
+                                _currentFSM.Id = existingFSM.Id;
                                 await DBCommnds.UpdateFsm(dbContext, _currentFSM, _user.Id);
                                 await transact.CommitAsync();
                             }
-                            catch (Exception ex)
+                            catch (OperationCanceledException)
                             {
                                 await transact.RollbackAsync();
-                                throw ex;
+                                throw;
                             }
                         }
                         else
@@ -213,20 +235,10 @@
                                 await DBCommnds.AddFSM(dbContext, _currentFSM, _user.Id);
                                 await transact.CommitAsync();
                             }
-                            catch (Exception ex)
+                            catch (OperationCanceledException)
                             {
                                 await transact.RollbackAsync();
-                                _currentFSM.Id = string.Empty;
-
-                                foreach (FiniteState state in _currentFSM.States)
-                                    state.Id = string.Empty;
-                                foreach (Transition transition in _currentFSM.Transitions)
-                                {
-                                    transition.Id = string.Empty;
-                                    transition.FromStateId = string.Empty;
-                                    transition.ToStateId = string.Empty;
-                                }
-                                throw ex;
+                                throw;
                             }
                         }
                     }
@@ -238,7 +250,8 @@
                 catch (Exception ex)
                 {
                     _currentSavedFailed = true;
-                    _logger.LogError("Couldn't save the current FSM '{FsmName}' from user '{user}'", _currentFSM.Name, _user.Id);
+                    _logger.LogError("Couldn't save the current FSM '{FsmName}' from user '{user}'",
+                    _currentFSM.Name, _user.Id);
                     _logger.LogError(ex.ToString());
                 }
             }

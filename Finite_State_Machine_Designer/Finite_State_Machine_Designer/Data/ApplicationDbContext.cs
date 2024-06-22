@@ -20,23 +20,43 @@ namespace Finite_State_Machine_Designer.Data
             modelBuilder.Entity<FiniteStateMachine>()
                 .HasKey(fsm => fsm.Id);
 
-            modelBuilder.Entity<FiniteState>()
-                .HasKey(state => state.Id);
-            
-            modelBuilder.Entity<Transition>()
-                .HasKey(transition => transition.Id);
-
             modelBuilder.Entity<FiniteStateMachine>()
                 .Property(fsm => fsm.Id)
                 .IsFixedLength()
                 .HasMaxLength(36)
 				.ValueGeneratedNever();
 
+            modelBuilder.Entity<FiniteStateMachine>()
+                .Property(fsm => fsm.TimeCreated)
+                .ValueGeneratedOnAdd()
+                .IsRequired();
+
+            modelBuilder.Entity<FiniteStateMachine>()
+                .Property(fsm => fsm.TimeUpdated)
+                .ValueGeneratedOnAddOrUpdate()
+                .IsRequired();
+
+            modelBuilder.Entity<FiniteStateMachine>()
+                .HasMany(fsm => fsm.Transitions)
+                .WithOne()
+                .IsRequired();
+
+            modelBuilder.Entity<FiniteStateMachine>()
+                .HasMany(fsm => fsm.States)
+                .WithOne()
+                .IsRequired();
+
+            modelBuilder.Entity<FiniteState>()
+                .HasKey(state => state.Id);
+            
             modelBuilder.Entity<FiniteState>()
                 .Property(state => state.Id)
                 .IsFixedLength()
                 .HasMaxLength(36)
                 .ValueGeneratedNever();
+
+            modelBuilder.Entity<Transition>()
+                .HasKey(transition => transition.Id);
 
 			/// The length of GUIDs converted to string in terms of byte pairs is 36
 			/// This due to the 4 extra hyphens '-'
@@ -67,16 +87,6 @@ namespace Finite_State_Machine_Designer.Data
             modelBuilder.Entity<Transition>()
                 .HasIndex(transition => transition.ToStateId)
                 .IsUnique(false);
-
-            modelBuilder.Entity<FiniteStateMachine>()
-                .HasMany(fsm => fsm.Transitions)
-                .WithOne()
-                .IsRequired();
-
-            modelBuilder.Entity<FiniteStateMachine>()
-                .HasMany(fsm => fsm.States)
-                .WithOne()
-                .IsRequired();
 
             modelBuilder.Entity<ApplicationUser>()
                 .HasMany(user => user.StateMachines)

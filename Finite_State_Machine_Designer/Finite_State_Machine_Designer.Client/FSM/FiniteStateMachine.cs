@@ -14,6 +14,10 @@ namespace Finite_State_Machine_Designer.Client.FSM
 
 		public int Height { get; set; }
 
+		public DateTime TimeCreated { get; set; }
+
+		public DateTime TimeUpdated { get; set; }
+
 		/// <summary>
 		/// The list includes "Invisible states" for incoming transitions
 		/// </summary>
