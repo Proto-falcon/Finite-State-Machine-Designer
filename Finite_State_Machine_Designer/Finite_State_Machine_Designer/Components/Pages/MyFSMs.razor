@@ -57,22 +57,23 @@
             <summary class="canvas-desc-summary">Description</summary>
             <div class="canvas-desc-group canvas-info-group">
                 <label class="canvas-desc-label" for="canvasDesc">Description:</label>
-                <textarea id="canvasDesc" name="Description" placeholder="Description" rows="10" cols="50"
-                          @bind:event="oninput" @bind="_currentFSM.Description" />
+                <textarea id="canvasDesc" name="Description"
+                    placeholder="Description" rows="10" cols="50"
+                    @bind:event="oninput" @bind="_currentFSM.Description" />
             </div>
         </details>
-        <div class="current-svg-container">@_renderCurrentFSM</div>
+        <div class="current-svg-container">
+            <img @onload="e => RevokeUrl(_renderCurrentFSM)" src="@_renderCurrentFSM" />
+        </div>
     }
 </div>
 <div style="flex-direction:row;flex-wrap:wrap;">
-    @foreach (FiniteStateMachine fsm in _user.StateMachines)
-    {
-        
-    }
+
 </div>
 <canvas id="hiddenCanvas" style="display:none;"/>
 <!-- Add a grid of FSMs that the logged in user has made
-     The html and css is from the final year project in Uni when trying to display recipe results
+     The html and css is from the final year project in Uni
+     when trying to display recipe results
      flex-grow is used to fill the remaining space in the container
 -->
 @code
@@ -91,7 +92,8 @@
     private bool _finishLoadingFSM = false;
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
-    private MarkupString _renderCurrentFSM = new();
+    private string _renderCurrentFSM = string.Empty;
+    private List<MarkupString> _renderedFsms = [];
 
     protected override void OnInitialized()
     {
@@ -132,9 +134,9 @@
             if (_currentFSM is not null)
             {
                 _currentFSM.SanitiseFsm();
-                _renderCurrentFSM = await GenerateFsmSvg(_currentFSM);
+                _renderCurrentFSM = await GenerateFsmSvg(_currentFSM, 0.5);
             }
-            _finishLoadingFSM = !string.IsNullOrWhiteSpace(_renderCurrentFSM.Value);
+            _finishLoadingFSM = !string.IsNullOrWhiteSpace(_renderCurrentFSM);
             StateHasChanged();
         }
         if (SaveCurrent)
@@ -167,24 +169,30 @@
     /// <summary>
     /// Generates an SVG of the Finite State Machine
     /// </summary>
+    /// <param name="fsm">Finite State Machine</para>
+    /// <param name="scale">Scale the FSM from original canvas dimensions</para>
     /// <returns><see cref="MarkupString"/> that contains the SVG of Finite State Machine</returns>
-    private async Task<MarkupString> GenerateFsmSvg(FiniteStateMachine fsm)
+    private async Task<string> GenerateFsmSvg(FiniteStateMachine fsm, double scale = 1)
     {
-        MarkupString fsmSvg = new();
+        string fsmSvg = string.Empty;
         if (CheckJsModule(JsModule))
         {
-            fsmSvg = new( await JsModule.InvokeAsync<string>("fSMExport.fsmToSVG",
+            fsmSvg = await JsModule.InvokeAsync<string>("fSMExport.fsmToSVG",
                 fsm, fsm.Width, fsm.Height, _colour,
-                _canvasBackgroundColour, 2, 0.5, true));
+                _canvasBackgroundColour, 2, scale, true);
         }
         return fsmSvg;
     }
+
+    private async void RevokeUrl(string url)
+        => await JS.InvokeVoidAsync("URL.revokeObjectURL", url);
 
     private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => SaveCurrent = true;
 
     private async void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         _finishLoadingFSM = false;
+        await SetJsModule("./Components/Pages/MyFSMs.razor.js");
         if (CheckJsModule(JsModule))
             await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentFSM);
     }
