@@ -114,15 +114,18 @@
             }
             ApplicationUser? fetchedUser = dbContext.Users
                 .Where(user => user.NormalizedUserName == userName.ToUpper())
-                .Include(user => user.StateMachines
-                    .OrderByDescending(fsm => fsm.TimeUpdated)
-                    .Take(_availableFsmsLimit))
                 .AsNoTrackingWithIdentityResolution()
                 .FirstOrDefault();
             if (fetchedUser is ApplicationUser)
             {
                 _user = fetchedUser;
-                Parallel.ForEach(_user.StateMachines, GetFullFsm);
+                await dbContext.Entry(_user).Collection(user => user.StateMachines)
+                    .Query()
+                    .OrderByDescending(fsm => fsm.TimeUpdated)
+                    .Take(_availableFsmsLimit)
+                    .AsNoTrackingWithIdentityResolution()
+                    .LoadAsync();
+                await Parallel.ForEachAsync(_user.StateMachines, GetFullFsm);
             }
             else
                 Navigation.NavigateTo("Account/Login");
@@ -143,8 +146,10 @@
             await SaveCurrentFSM();
     }
 
-    private async void GetFullFsm(FiniteStateMachine fsm)
+    private async ValueTask GetFullFsm(FiniteStateMachine fsm, CancellationToken cancelToken)
     {
+        if (cancelToken.IsCancellationRequested)
+            return;
         await using DbContext dbContext = await DbFactory.CreateDbContextAsync();
         EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
         await fsmEntry.Collection(stateMachine => stateMachine.States).LoadAsync();
