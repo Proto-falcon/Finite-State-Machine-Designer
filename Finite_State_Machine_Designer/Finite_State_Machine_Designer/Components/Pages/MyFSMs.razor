@@ -83,6 +83,8 @@
     private ApplicationUser _user = new ApplicationUser();
     private FiniteStateMachine? _currentFSM = null;
     private int _availableFsmsLimit = 10;
+    private double _mainFsmSvgScale = 0.5;
+    private double _listFsmSvgScale = 0.3;
     private int _fsmsPage = 1;
     private bool _currentlySaving = false;
     private bool _currentSaved = false;
@@ -91,7 +93,10 @@
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private string _renderCurrentFSM = string.Empty;
-    private List<MarkupString> _renderedFsms = [];
+    /// <summary>
+    /// Key is Id of FSM and value is URL to SVG
+    /// </summary>
+    private Dictionary<string, string> _fsmSvgUrls = [];
 
     protected override void OnInitialized()
     {
@@ -135,9 +140,9 @@
             if (_currentFSM is not null)
             {
                 _currentFSM.SanitiseFsm();
-                _renderCurrentFSM = await GenerateFsmSvg(_currentFSM, 0.5);
+                _renderCurrentFSM = await GenerateFsmSvg(_currentFSM, _mainFsmSvgScale);
             }
-            _finishLoadingFSM = !string.IsNullOrWhiteSpace(_renderCurrentFSM);
+            _finishLoadingFSM = true;
             StateHasChanged();
         }
         if (SaveCurrent)

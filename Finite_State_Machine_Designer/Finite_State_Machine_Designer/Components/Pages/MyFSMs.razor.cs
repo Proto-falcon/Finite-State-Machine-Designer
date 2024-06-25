@@ -38,7 +38,10 @@ namespace Finite_State_Machine_Designer.Components.Pages
         /// </summary>
         /// <param name="fsm">Finite State Machine</para>
         /// <param name="scale">Scale the FSM from original canvas dimensions</para>
-        /// <returns><see cref="MarkupString"/> that contains the SVG of Finite State Machine</returns>
+        /// <returns>
+        /// <see cref="MarkupString"/> that contains the URL
+        /// of the SVG of Finite State Machine
+        /// </returns>
         private async Task<string> GenerateFsmSvg(FiniteStateMachine fsm, double scale = 1)
         {
             string fsmSvg = string.Empty;
