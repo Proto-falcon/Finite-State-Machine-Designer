@@ -122,12 +122,13 @@
             if (fetchedUser is ApplicationUser)
             {
                 _user = fetchedUser;
-                await dbContext.Entry(_user).Collection(user => user.StateMachines)
+                _user.StateMachines = await dbContext.Entry(_user)
+                    .Collection(user => user.StateMachines)
                     .Query()
                     .OrderByDescending(fsm => fsm.TimeUpdated)
                     .Take(_availableFsmsLimit)
                     .AsNoTrackingWithIdentityResolution()
-                    .LoadAsync();
+                    .ToListAsync();
                 await Parallel.ForEachAsync(_user.StateMachines, GetFullFsm);
             }
             else
