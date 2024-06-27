@@ -5,6 +5,7 @@
 .curent-fsm-section {
     display: grid;
     justify-content: center;
+    grid-template-columns: 1fr 1fr;
 }
 
 .canvas-name-group {
@@ -12,7 +13,7 @@
 }
 
 .canvas-name {
-    width: 30em;
+    width: 26em;
 }
 
 .canvas-info-group {
@@ -21,12 +22,12 @@
 
 .canvas-desc-group {
     text-align: left;
-    display: grid;
 }
 
 .canvas-desc-summary {
     font-size: 1.5em;
     user-select: none;
+    width: fit-content
 }
 
 .canvas-desc-label {
