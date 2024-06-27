@@ -93,6 +93,8 @@ namespace Finite_State_Machine_Designer.Data
         public async static Task AddStates(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
         {
+            if (fsm.States.Count <= 0)
+                return;
             List<SqlParameter> parameters = [];
             List<FiniteState> addedStates = [];
             string insertStatesCommandPrefix = $@"INSERT INTO dbo.States
@@ -144,6 +146,8 @@ namespace Finite_State_Machine_Designer.Data
         public async static Task AddTransitions(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
         {
+            if (fsm.Transitions.Count <= 0)
+                return;
             List<SqlParameter> parameters = [];
             List<Transition> addedTransitions = [];
             string insertTransitionsCommand = $@"INSERT INTO dbo.Transitions

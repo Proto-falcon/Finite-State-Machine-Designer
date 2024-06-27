@@ -32,43 +32,43 @@
     else
     {
         <div>
-        <div class="canvas-name-group canvas-info-group">
-            <h2><label for="canvasName">Name: @_currentFSM.Name</label></h2>
+            <div class="canvas-name-group canvas-info-group">
+                <h2><label for="canvasName">Name: @_currentFSM.Name</label></h2>
                 <input id="canvasName" class="canvas-name" type="text"
                     name="name" placeholder="Name"
-                   @bind:event="oninput" @bind="_currentFSM.Name" />
-        </div>
-        <div class="save-section">
-            @if (_currentlySaving)
-            {
+                    @bind:event="oninput" @bind="_currentFSM.Name" />
+            </div>
+            <div class="save-section">
+                @if (_currentlySaving)
+                {
                     <Loading Height="1.5em" Width="1.5em"
                         Style="border-width: 0.2em;" />
-            }
-            else
-            {
+                }
+                else
+                {
                     <button class="current-save-button"
                     @onclick="SetSaveCurrent">
                         Save
                     </button>
-            }
-            @if (_currentSaved)
-            {
-                <p class="blink">Saved!!</p>
-            }
-            else if (_currentSavedFailed)
-            {
+                }
+                @if (_currentSaved)
+                {
+                    <p class="blink">Saved!!</p>
+                }
+                else if (_currentSavedFailed)
+                {
                     <p class="blink">@_errorSaveMsg</p>
-            }
-        </div>
-        <details>
-            <summary class="canvas-desc-summary">Description</summary>
-            <div class="canvas-desc-group canvas-info-group">
-                <label class="canvas-desc-label" for="canvasDesc">Description:</label>
-                <textarea id="canvasDesc" name="Description"
-                    placeholder="Description" rows="10" cols="50"
-                    @bind:event="oninput" @bind="_currentFSM.Description" />
+                }
             </div>
-        </details>
+            <details>
+                <summary class="canvas-desc-summary">Description</summary>
+                <div class="canvas-desc-group canvas-info-group">
+                    <label class="canvas-desc-label" for="canvasDesc">Description:</label>
+                    <textarea id="canvasDesc" name="Description"
+                placeholder="Description" rows="10" cols="50"
+                        @bind:event="oninput" @bind="_currentFSM.Description" />
+                </div>
+            </details>
         </div>
         <img class="fsm-svg" @onload="e => RevokeUrl(_renderCurrentFSM)"
             src="@_renderCurrentFSM" />
@@ -147,10 +147,12 @@
         if (CheckJsModule(JsModule) && !_finishLoadingFSM)
         {
             await JsModule.InvokeAsync<bool>("fSMCanvasUtils.getCanvasContext", "hiddenCanvas");
-            _currentFSM = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
-            if (_currentFSM is not null)
+            FiniteStateMachine? fsm = await JsModule.InvokeAsync<FiniteStateMachine>("fSMCanvasUtils.loadFSM");
+            if (fsm is not null
+                && fsm.States is not null && fsm.States.Count > 0)
             {
-                _currentFSM.SanitiseFsm();
+                fsm.SanitiseFsm();
+                _currentFSM = fsm;
                 _renderCurrentFSM = await GenerateFsmSvg(_currentFSM, _mainFsmSvgScale);
             }
             _finishLoadingFSM = true;
