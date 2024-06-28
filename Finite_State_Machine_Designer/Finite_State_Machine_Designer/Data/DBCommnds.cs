@@ -14,7 +14,7 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
         /// <returns></returns>
-        public async static Task<List<FiniteStateMachine>> GetPageOfFsms(DbContext dbContext,
+        public async static Task<List<FiniteStateMachine>> GetPageOfFsmsAsync(DbContext dbContext,
             string userId, int page, int pageSize)
             => await dbContext.Database.SqlQuery<FiniteStateMachine>($@"SELECT *
                     FROM dbo.StateMachines
@@ -38,7 +38,7 @@ namespace Finite_State_Machine_Designer.Data
         /// to <see cref="DateTime.UtcNow"/>.</para>
         /// </param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task AddFSM(DbContext dbContext, FiniteStateMachine fsm, string userId,
+        public async static Task AddFSMAsync(DbContext dbContext, FiniteStateMachine fsm, string userId,
             bool newGuids = true)
         {
             if (newGuids || !Guid.TryParse(fsm.Id, out _))
@@ -56,8 +56,8 @@ namespace Finite_State_Machine_Designer.Data
                 VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description}, {fsm.Width}, {fsm.Height},
                 {fsm.TransitionSearchRadius}, {fsm.TimeCreated}, {fsm.TimeUpdated})");
 
-                await AddStates(dbContext, fsm, newGuids);
-                await AddTransitions(dbContext, fsm, newGuids);
+                await AddStatesAsync(dbContext, fsm, newGuids);
+                await AddTransitionsAsync(dbContext, fsm, newGuids);
             }
             catch (OperationCanceledException)
             {
@@ -73,12 +73,12 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task UpdateFsm(DbContext dbContext, FiniteStateMachine fsm, string userId)
+        public async static Task UpdateFsmAsync(DbContext dbContext, FiniteStateMachine fsm, string userId)
         {
             await dbContext.Database.ExecuteSqlAsync(@$"DELETE FROM dbo.StateMachines
             WHERE Id = {fsm.Id}");
 
-            await AddFSM(dbContext, fsm, userId, false);
+            await AddFSMAsync(dbContext, fsm, userId, false);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Finite_State_Machine_Designer.Data
         /// new GUIDs for states even if they're already an existing GUID,
         /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task AddStates(DbContext dbContext,
+        public async static Task AddStatesAsync(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
         {
             if (fsm.States.Count <= 0)
@@ -143,7 +143,7 @@ namespace Finite_State_Machine_Designer.Data
         /// new GUIDs for states even if they're already an existing GUID,
         /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task AddTransitions(DbContext dbContext,
+        public async static Task AddTransitionsAsync(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
         {
             if (fsm.Transitions.Count <= 0)

@@ -78,10 +78,7 @@
 
 </div>
 <canvas id="hiddenCanvas" style="display:none;"/>
-<!-- Add a grid of FSMs that the logged in user has made
-     The html and css is from the final year project in Uni
-     when trying to display recipe results
-     flex-grow is used to fill the remaining space in the container
+<!-- Add a grid of FSMs of only name and description 
 -->
 @code
 {
@@ -91,7 +88,7 @@
 
     private ApplicationUser _user = new ApplicationUser();
     private FiniteStateMachine? _currentFSM = null;
-    private int _availableFsmsLimit = 10;
+    private int _availableFsmsLimit = 20;
     private double _mainFsmSvgScale = 0.5;
     private double _listFsmSvgScale = 0.3;
     private int _fsmsPage = 1;
@@ -139,7 +136,6 @@
                     .Take(_availableFsmsLimit)
                     .AsNoTrackingWithIdentityResolution()
                     .ToListAsync();
-                await Parallel.ForEachAsync(_user.StateMachines, GetFullFsm);
             }
             else
                 Navigation.NavigateTo("Account/Login");
@@ -153,13 +149,13 @@
             {
                 fsm.SanitiseFsm();
                 _currentFSM = fsm;
-                _renderCurrentFSM = await GenerateFsmSvg(_currentFSM, _mainFsmSvgScale);
+                _renderCurrentFSM = await GenerateFsmSvgAsync(_currentFSM, _mainFsmSvgScale);
             }
             _finishLoadingFSM = true;
             StateHasChanged();
         }
         if (SaveCurrent)
-            await SaveCurrentFSM();
+            await SaveCurrentFSMAsync();
     }
 
     private async void RevokeUrl(string url)

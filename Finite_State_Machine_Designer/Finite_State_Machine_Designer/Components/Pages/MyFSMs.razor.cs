@@ -8,7 +8,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
 {
     public partial class MyFSMs
     {
-        private async ValueTask GetFullFsm(
+        private async ValueTask GetFullFsmAsync(
             FiniteStateMachine fsm, CancellationToken cancelToken)
         {
             if (cancelToken.IsCancellationRequested)
@@ -53,7 +53,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
         /// <see cref="MarkupString"/> that contains the URL
         /// of the SVG of Finite State Machine
         /// </returns>
-        private async Task<string> GenerateFsmSvg(
+        private async Task<string> GenerateFsmSvgAsync(
             FiniteStateMachine fsm, double scale = 1)
         {
             string fsmSvg = string.Empty;
@@ -69,7 +69,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
         /// <summary>
         /// Saves the current FSM in use to database.
         /// </summary>
-        private async Task SaveCurrentFSM()
+        private async Task SaveCurrentFSMAsync()
         {
             if (CheckJsModule(JsModule))
             {
@@ -107,7 +107,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                     try
                                     {
                                         _currentFSM.Id = existingFSM.Id;
-                                        await DBCommnds.UpdateFsm(
+                                        await DBCommnds.UpdateFsmAsync(
                                             dbContext,
                                             _currentFSM,
                                             _user.Id);
@@ -125,7 +125,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                         await dbContext.Database.BeginTransactionAsync();
                                     try
                                     {
-                                        await DBCommnds.AddFSM(
+                                        await DBCommnds.AddFSMAsync(
                                             dbContext,
                                             _currentFSM,
                                             _user.Id);
