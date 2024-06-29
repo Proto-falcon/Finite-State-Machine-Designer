@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Finite_State_Machine_Designer.Client.FSM
+﻿namespace Finite_State_Machine_Designer.Client.FSM
 {
     public class Transition
     {
@@ -131,16 +129,11 @@ namespace Finite_State_Machine_Designer.Client.FSM
                         return fromAngle + ((IsReversed ? -1 : 1) * (_fromState.Radius / _radius));
                     }
                     else
-                        return _selfFromAngle;
+                        return _selfAngle - (Math.PI * 0.8);
                 }
                 return Angle;
             }
         }
-
-        /// <summary>
-        /// Angle from the state when the transitions links the same finite state.
-        /// </summary>
-        private double _selfFromAngle;
 
         /// <summary>
         /// Uses one of the formula of a
@@ -163,16 +156,11 @@ namespace Finite_State_Machine_Designer.Client.FSM
                         return toAngle - ((IsReversed ? -1 : 1) * (_toState.Radius / _radius));
                     }
                     else
-                        return _selfToAngle;
+                        return _selfAngle + (Math.PI * 0.8);
                 }
                 return Angle;
             }
         }
-
-        /// <summary>
-        /// Angle to the state when the transitions links the same finite state.
-        /// </summary>
-        private double _selfToAngle;
 
         /// <summary>
         /// Anti-clockwise angle between the coordinates of <see cref="FromState"/> and the <see cref="ToState"/>.
@@ -198,13 +186,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
         public double SelfAngle
         {
             get => _selfAngle;
-            set
-            {
-                _selfAngle = value;
-                double angleOffset = Math.PI * 0.8;
-                _selfFromAngle = _selfAngle - angleOffset;
-                _selfToAngle = _selfAngle + angleOffset;
-            }
+            set => _selfAngle = value;
         }
 
         private CanvasCoordinate _centerArc;
@@ -222,7 +204,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
                 }
                 if (IsCurved)
                     return _centerArc;
-                return default;
+                return new (0,0);
             }
             set => _centerArc = value;
         }

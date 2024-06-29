@@ -252,6 +252,7 @@ export function drawTransition(transition, colour, editable, drawingCtx, scale =
         drawingCtx = canvasCtx;
     }
     if (checkCanvas(drawingCtx)) {
+        /** @type {CanvasCoordinate} */
         let arrowCoord = new CanvasCoordinate();
         let arrowAngle = transition.angle;
 

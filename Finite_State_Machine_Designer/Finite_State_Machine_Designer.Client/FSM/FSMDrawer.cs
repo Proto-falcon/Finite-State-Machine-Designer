@@ -242,14 +242,18 @@ namespace Finite_State_Machine_Designer.Client.FSM
 					transition.CenterArc = new CanvasCoordinate(circleX, circleY);
 					transition.Radius = circleRadius;
 				}
+				else if (transition.FromState == transition.ToState)
+					transition.Radius = 0.75 * transition.FromState.Radius;
 			}
 		}
 
 		/// <summary>
-		/// Updates all the transitions that link back to one state using the given coordinate.
+		/// Updates the self link transition's angles the given coordinate.
 		/// </summary>
 		/// <param name="transition">A state transition that links it self</param>
-		/// <param name="coord">Coordinate that changes the orientation of the self transitions around the state</param>
+		/// <param name="coord">
+		/// Coordinate that changes the orientation of the self transitions around the state
+		/// </param>
 		public void UpdateSelfTransition(Transition transition, CanvasCoordinate coord)
 		{
 			if (transition.FromState != transition.ToState)
