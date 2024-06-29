@@ -1,49 +1,12 @@
 ﻿using Finite_State_Machine_Designer.Client.FSM;
 using Finite_State_Machine_Designer.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.JSInterop;
 
 namespace Finite_State_Machine_Designer.Components.Pages
 {
     public partial class MyFSMs
     {
-        private async ValueTask GetFullFsmAsync(
-            FiniteStateMachine fsm, CancellationToken cancelToken)
-        {
-            if (cancelToken.IsCancellationRequested)
-                return;
-            await using DbContext dbContext =
-                await DbFactory.CreateDbContextAsync(cancelToken);
-            EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
-            await fsmEntry
-                .Collection(stateMachine => stateMachine.States)
-                .LoadAsync(cancelToken);
-            await fsmEntry
-                .Collection(stateMachine => stateMachine.Transitions)
-                .LoadAsync(cancelToken);
-
-            List<Transition> validTransitions = [];
-
-            foreach (Transition transition in fsm.Transitions)
-            {
-                if (fsm.States
-                        .Find(state => state.Id == transition.FromStateId)
-                    is FiniteState fromState)
-                    transition.FromState = fromState;
-                if (fsm.States
-                        .Find(state => state.Id == transition.ToStateId)
-                    is FiniteState toState)
-                    transition.ToState = toState;
-
-                if (transition.FromState is not null
-                    && transition.ToState is not null)
-                    validTransitions.Add(transition);
-            }
-
-            fsm.Transitions = validTransitions;
-        }
-
         /// <summary>
         /// Generates an SVG of the Finite State Machine
         /// </summary>
@@ -78,9 +41,9 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 _currentSaved = false;
                 _currentSavedFailed = false;
                 StateHasChanged();
-                if (_currentFSM is not null)
+                if (_currentDrawnFsm is not null)
                 {
-                    if (string.IsNullOrWhiteSpace(_currentFSM.Name))
+                    if (string.IsNullOrWhiteSpace(_currentDrawnFsm.Name))
                     {
                         _errorSaveMsg = "Please enter a name.";
                         _currentSavedFailed = true;
@@ -98,7 +61,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                     await dbContext.Entry(_user)
                                     .Collection(user => user.StateMachines)
                                     .Query()
-                                    .Where(fsm => fsm.Name == _currentFSM.Name)
+                                    .Where(fsm => fsm.Name == _currentDrawnFsm.Name)
                                     .FirstOrDefaultAsync();
                                 if (existingFSM is not null)
                                 {
@@ -106,10 +69,10 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                         await dbContext.Database.BeginTransactionAsync();
                                     try
                                     {
-                                        _currentFSM.Id = existingFSM.Id;
+                                        _currentDrawnFsm.Id = existingFSM.Id;
                                         await DBCommnds.UpdateFsmAsync(
                                             dbContext,
-                                            _currentFSM,
+                                            _currentDrawnFsm,
                                             _user.Id);
                                         await transact.CommitAsync();
                                     }
@@ -127,7 +90,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                     {
                                         await DBCommnds.AddFSMAsync(
                                             dbContext,
-                                            _currentFSM,
+                                            _currentDrawnFsm,
                                             _user.Id);
                                         await transact.CommitAsync();
                                     }
@@ -140,11 +103,11 @@ namespace Finite_State_Machine_Designer.Components.Pages
                             }
                             _currentSaved = true;
                             await JsModule.InvokeVoidAsync(
-                                "fSMCanvasUtils.saveFSM", _currentFSM);
+                                "fSMCanvasUtils.saveFSM", _currentDrawnFsm);
                             _logger.LogInformation(
                                 "Successfully saved the current "
                                 + "FSM '{FSM}' from user '{user}'",
-                                _currentFSM.Name, _user.Id);
+                                _currentDrawnFsm.Name, _user.Id);
                         }
                         catch (Exception ex)
                         {
@@ -152,7 +115,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                             _logger.LogError(
                                 "Couldn't save the current FSM "
                                 + "'{FsmName}' from user '{user}'",
-                            _currentFSM.Name, _user.Id);
+                            _currentDrawnFsm.Name, _user.Id);
                             _logger.LogError("{ERROR}", ex.ToString());
                         }
                     }

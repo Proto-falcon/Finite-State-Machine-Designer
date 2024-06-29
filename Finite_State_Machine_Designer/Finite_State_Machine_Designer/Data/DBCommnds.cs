@@ -1,11 +1,50 @@
 ﻿using Finite_State_Machine_Designer.Client.FSM;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Finite_State_Machine_Designer.Data
 {
     public static class DBCommnds
     {
+        public async static ValueTask GetFullFsmAsync(DbContext dbContext, 
+            FiniteStateMachine fsm, CancellationToken cancelToken)
+        {
+            if (cancelToken.IsCancellationRequested)
+                return;
+            EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
+            fsm.States = await fsmEntry
+                .Collection(stateMachine => stateMachine.States)
+                .Query()
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync(cancelToken);
+            fsm.Transitions = await fsmEntry
+                .Collection(stateMachine => stateMachine.Transitions)
+                .Query()
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync(cancelToken);
+
+            List<Transition> validTransitions = [];
+
+            foreach (Transition transition in fsm.Transitions)
+            {
+                if (fsm.States
+                        .Find(state => state.Id == transition.FromStateId)
+                    is FiniteState fromState)
+                    transition.FromState = fromState;
+                if (fsm.States
+                        .Find(state => state.Id == transition.ToStateId)
+                    is FiniteState toState)
+                    transition.ToState = toState;
+
+                if (transition.FromState is not null
+                    && transition.ToState is not null)
+                    validTransitions.Add(transition);
+            }
+
+            fsm.Transitions = validTransitions;
+        }
+
         /// <summary>
         /// Gets List of FSMs depending on page number and size of page
         /// </summary>
