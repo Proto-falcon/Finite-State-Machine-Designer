@@ -8,25 +8,55 @@ namespace Finite_State_Machine_Designer.Components.Pages
     public partial class MyFSMs
     {
         /// <summary>
+        /// Gets the user and their basic Finite State Machines' information.
+        /// </summary>
+        private async Task InitialiseUserAsync()
+        {
+            await using ApplicationDbContext dbContext =
+                await DbFactory.CreateDbContextAsync();
+            string? userName = userService.GetUser().Identity?.Name;
+            if (userName is null)
+            {
+                Navigation.NavigateTo("Account/Login");
+                return;
+            }
+            ApplicationUser? fetchedUser = dbContext.Users
+                .Where(user => user.NormalizedUserName == userName.ToUpper())
+                .AsNoTrackingWithIdentityResolution()
+                .FirstOrDefault();
+            if (fetchedUser is not null)
+            {
+                _user = fetchedUser;
+                _user.StateMachines = await dbContext.Entry(_user)
+                    .Collection(user => user.StateMachines)
+                    .Query()
+                    .OrderByDescending(fsm => fsm.TimeUpdated)
+                    .Take(_availableFsmsLimit)
+                    .AsNoTrackingWithIdentityResolution()
+                    .ToListAsync();
+                if (_user.StateMachines.Count > 0)
+                    _lastRecentModifiedTime = _user.StateMachines
+                        .Last().TimeUpdated;
+            }
+            else
+                Navigation.NavigateTo("Account/Login");
+            _finishLoading = true;
+        }
+
+        /// <summary>
         /// Generates an SVG of the Finite State Machine
         /// </summary>
         /// <param name="fsm">Finite State Machine</para>
         /// <param name="scale">Scale the FSM from original canvas dimensions</para>
-        /// <returns>
-        /// <see cref="MarkupString"/> that contains the URL
-        /// of the SVG of Finite State Machine
-        /// </returns>
-        private async Task<string> GenerateFsmSvgAsync(
+        private async Task GenerateFsmSvgAsync(
             FiniteStateMachine fsm, double scale = 1)
         {
-            string fsmSvg = string.Empty;
             if (CheckJsModule(JsModule))
             {
-                fsmSvg = await JsModule.InvokeAsync<string>("fSMExport.fsmToSVG",
+                _fsmSvgUrl = await JsModule.InvokeAsync<string>("fSMExport.fsmToSVG",
                     fsm, fsm.Width, fsm.Height, _colour,
                     _canvasBackgroundColour, 2, scale, true);
             }
-            return fsmSvg;
         }
 
         /// <summary>
@@ -41,7 +71,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 _currentSaved = false;
                 _currentSavedFailed = false;
                 StateHasChanged();
-                if (_currentDrawnFsm is not null)
+                if (_currentDrawnFsm is not null && _user is not null)
                 {
                     if (string.IsNullOrWhiteSpace(_currentDrawnFsm.Name))
                     {

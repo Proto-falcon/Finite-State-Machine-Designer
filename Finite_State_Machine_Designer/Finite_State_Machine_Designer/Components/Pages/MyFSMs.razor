@@ -46,20 +46,28 @@
                     <Loading Height="1.5em" Width="1.5em"
                         Style="border-width: 0.2em;" />
                 }
-                else
+                else if (_currentDrawnFsm is not null 
+                    && _currentDrawnFsm.Name == _currentFsm.Name)
                 {
-                    <button class="current-save-button"
+                    <button class="inline-button"
                     @onclick="SetSaveCurrent">
                         Save
                     </button>
+                    @if (_currentSavedFailed)
+                    {
+                        <p class="blink">@_errorSaveMsg</p>
+                    }
+                    else if (_currentSaved)
+                    {
+                        <p class="blink">Saved!!</p>
+                    }
                 }
-                @if (_currentSaved)
+                else
                 {
-                    <p class="blink">Saved!!</p>
-                }
-                else if (_currentSavedFailed)
-                {
-                    <p class="blink">@_errorSaveMsg</p>
+                    <button class="inline-button" 
+                        @onclick="async (e) => await SetDrawingFsmAsync(_currentFsm)">
+                        Draw
+                    </button>
                 }
             </div>
             <p class="canvas-desc-summary">Description</p>
@@ -73,27 +81,33 @@
         <div class="fsm-svg-section">
         <button 
             @onclick="e => _displayCurrentFsm = false">✖️</button>
-        <img class="fsm-svg" @onload="e => RevokeUrl(_fsmSvgUrl)"
+        <img class="fsm-svg" @onload="e => RevokeUrlAsync(_fsmSvgUrl)"
             src="@_fsmSvgUrl" />
         </div>
     }
 </div>
-@if (_currentDrawnFsm is not null)
+@if (_finishLoading && _currentDrawnFsm is not null)
 {
-    <button @onclick="async (e) => await DisplayFsm(_currentDrawnFsm)">
+    <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
         Currently drawn FSM: @_currentDrawnFsm.Name
     </button>
 }
-@if (_finishLoading)
+@if (_finishLoading && _user is not null)
 {
     <ol class="fsm-list-container">
         @foreach (FiniteStateMachine fsm in _user.StateMachines)
         {
-            <li class="fsm-list-item" @onclick="async (e) => await DisplayFsm(fsm, true)">
+            <li class="fsm-list-item" @onclick="async (e) => await DisplayFsmAsync(fsm, true)">
                 <div><b>@fsm.Name</b></div>
                 <div><b>@fsm.Description</b></div>
                 <div><b>Last Updated: @fsm.TimeUpdated</b></div>
                 <div><b>Creation Time: @fsm.TimeCreated</b></div>
+            </li>
+        }
+        @if (_loadMoreFsms)
+        {
+            <li class="fsm-list-item" style="width:fit-content;font-size:2em;text-align:center; align-content: center;" @onclick="GetMoreFsmsHandler">
+                <b>Load More</b>
             </li>
         }
     </ol>
@@ -113,10 +127,17 @@ else
     [Parameter]
     public bool SaveCurrent { get; set; }
 
-    private ApplicationUser _user = new ApplicationUser();
+    private ApplicationUser? _user = null;
+    /// <summary>
+    /// Current FSM to be viewed.
+    /// </summary>
     private FiniteStateMachine? _currentFsm = null;
+    /// <summary>
+    /// Current FSM that can be drawn.
+    /// </summary>
     private FiniteStateMachine? _currentDrawnFsm = null;
     private int _availableFsmsLimit = 20;
+    private DateTime _lastRecentModifiedTime = DateTime.MinValue;
     private double _mainFsmSvgScale = 0.5;
     private bool _displayCurrentFsm = false;
     private bool _currentlySaving = false;
@@ -124,6 +145,7 @@ else
     private bool _currentSavedFailed = false;
     private bool _finishLoading = false;
     private bool _loadingFsmView = false;
+    private bool _loadMoreFsms = true;
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private string _fsmSvgUrl = string.Empty;
@@ -131,56 +153,14 @@ else
 
     protected override void OnInitialized()
     {
-        Navigation.LocationChanged += HandleLocationChanged;
-    }
-
-    private async Task DisplayFsm(FiniteStateMachine fsm, bool reload = false)
-    {
-        _currentFsm = fsm;
-        _loadingFsmView = true;
-        _displayCurrentFsm = true;
-        if (reload)
-        {
-            await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
-            await DBCommnds.GetFullFsmAsync(dbContext, fsm, CancellationToken.None);
-        }
-
-        _fsmSvgUrl = await GenerateFsmSvgAsync(fsm, _mainFsmSvgScale);
-        _loadingFsmView = false;
+        Navigation.LocationChanged += HandleLocationChangedAsync;
     }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-        {
             await SetJsModule("./Components/Pages/MyFSMs.razor.js");
-            await using ApplicationDbContext dbContext =
-            await DbFactory.CreateDbContextAsync();
-            string? userName = userService.GetUser().Identity?.Name;
-            if (userName is null)
-            {
-                Navigation.NavigateTo("Account/Login");
-                return;
-            }
-            ApplicationUser? fetchedUser = dbContext.Users
-                .Where(user => user.NormalizedUserName == userName.ToUpper())
-                .AsNoTrackingWithIdentityResolution()
-                .FirstOrDefault();
-            if (fetchedUser is ApplicationUser)
-            {
-                _user = fetchedUser;
-                _user.StateMachines = await dbContext.Entry(_user)
-                    .Collection(user => user.StateMachines)
-                    .Query()
-                    .OrderByDescending(fsm => fsm.TimeUpdated)
-                    .Take(_availableFsmsLimit)
-                    .AsNoTrackingWithIdentityResolution()
-                    .ToListAsync();
-            }
-            else
-                Navigation.NavigateTo("Account/Login");
-            _finishLoading = true;
-        }
+
         if (CheckJsModule(JsModule) && _currentDrawnFsm is null)
         {
             await JsModule.InvokeAsync<bool>("fSMCanvasUtils.getCanvasContext",
@@ -192,31 +172,85 @@ else
             {
                 fsm.SanitiseFsm();
                 _currentDrawnFsm = fsm;
-                _fsmSvgUrl = await GenerateFsmSvgAsync(_currentDrawnFsm, _mainFsmSvgScale);
+                await GenerateFsmSvgAsync(_currentDrawnFsm, _mainFsmSvgScale);
             }
-            else
-                _currentDrawnFsm = new FiniteStateMachine();
+            StateHasChanged();
+        }
+
+        if (_user is null)
+        {
+            await InitialiseUserAsync();
             StateHasChanged();
         }
         if (SaveCurrent)
             await SaveCurrentFSMAsync();
     }
 
-    private async void RevokeUrl(string url)
+    private async Task DisplayFsmAsync(FiniteStateMachine fsm, bool reload = false)
+    {
+        _currentFsm = fsm;
+        _loadingFsmView = true;
+        _displayCurrentFsm = true;
+        if (reload)
+        {
+            await using ApplicationDbContext dbContext =
+                await DbFactory.CreateDbContextAsync();
+            await DBCommnds.GetFullFsmAsync(dbContext, fsm, CancellationToken.None);
+        }
+
+        await GenerateFsmSvgAsync(fsm, _mainFsmSvgScale);
+        _loadingFsmView = false;
+    }
+
+    /// <summary>
+    /// Sets the specified FSM to be the one to be currently drawn.
+    /// </summary>
+    /// <param name="fsm">Finite State Machine</param>
+    private async Task SetDrawingFsmAsync(FiniteStateMachine fsm)
+    {
+        if (_user is not null)
+        {
+            _currentDrawnFsm = fsm;
+            if (CheckJsModule(JsModule))
+                await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentDrawnFsm);
+        }
+    }
+
+    private async void GetMoreFsmsHandler(MouseEventArgs mouseEventArgs)
+    {
+        if (_user is not null)
+        {
+            await using ApplicationDbContext dbContext =
+                await DbFactory.CreateDbContextAsync();
+            try
+            {
+                _loadMoreFsms = await DBCommnds.GetMoreFsmsAsync(dbContext, _user,
+                    _lastRecentModifiedTime, _availableFsmsLimit);
+                _lastRecentModifiedTime = _user.StateMachines.Last().TimeUpdated;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Couldn't load more FSMs");
+                _logger.LogError("{ERROR}", ex.ToString());
+            }
+        }
+    }
+
+    private async void RevokeUrlAsync(string url)
         => await JS.InvokeVoidAsync("URL.revokeObjectURL", url);
 
     private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => SaveCurrent = true;
 
-    private async void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    private async void HandleLocationChangedAsync(object? sender, LocationChangedEventArgs e)
     {
-        // _finishLoading = false;
         await SetJsModule("./Components/Pages/MyFSMs.razor.js");
-        if (CheckJsModule(JsModule))
+        if (CheckJsModule(JsModule) && _currentDrawnFsm is not null)
             await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentDrawnFsm);
     }
 
     public void Dispose()
     {
-        Navigation.LocationChanged -= HandleLocationChanged;
+        Navigation.LocationChanged -= HandleLocationChangedAsync;
     }
 }

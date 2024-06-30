@@ -7,17 +7,57 @@ namespace Finite_State_Machine_Designer.Data
 {
     public static class DBCommnds
     {
+        /// <summary>
+        /// Gets more FSMs from user
+        /// </summary>
+        /// <param name="dbContext">Database Context to query with.</param>
+        /// <param name="user">User with Finite State Machines</param>
+        /// <param name="maxTime">
+        /// The time to get more least recent updated FSMs
+        /// </param>
+        /// <param name="numOfFsms"></param>
+        /// <returns><see langword="true"/> for more available FSMs,
+        /// otherwise no more FSMs.</returns>
+        public async static Task<bool> GetMoreFsmsAsync(DbContext dbContext,
+            ApplicationUser user, DateTime maxTime, int numOfFsms = int.MaxValue)
+        {
+            FiniteStateMachine[] newFsms = await dbContext.Entry(user)
+                .Collection(appUser => appUser.StateMachines)
+                .Query()
+                .Where(fsm => fsm.TimeUpdated < maxTime)
+                .OrderByDescending(fsm => fsm.TimeUpdated)
+                .Take(numOfFsms)
+                .AsNoTrackingWithIdentityResolution()
+                .ToArrayAsync();
+            if (newFsms.Length <= 0)
+                return false;
+            user.StateMachines.AddRange(newFsms);
+            return true;
+        }
+
+        /// <summary>
+        /// Loads all the states and transitions of FSM.
+        /// </summary>
+        /// <param name="dbContext">Database Context to query with.</param>
+        /// <param name="fsm">Finite State Machine</param>
+        /// <param name="cancelToken">A cancellation token</param>
         public async static ValueTask GetFullFsmAsync(DbContext dbContext, 
             FiniteStateMachine fsm, CancellationToken cancelToken)
         {
             if (cancelToken.IsCancellationRequested)
                 return;
             EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
+            List<FiniteState> prevStates = fsm.States;
             fsm.States = await fsmEntry
                 .Collection(stateMachine => stateMachine.States)
                 .Query()
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync(cancelToken);
+            if (cancelToken.IsCancellationRequested)
+            {
+                fsm.States = prevStates;
+                return;
+            }
             fsm.Transitions = await fsmEntry
                 .Collection(stateMachine => stateMachine.Transitions)
                 .Query()
@@ -46,38 +86,26 @@ namespace Finite_State_Machine_Designer.Data
         }
 
         /// <summary>
-        /// Gets List of FSMs depending on page number and size of page
-        /// </summary>
-        /// <param name="dbContext"></param>
-        /// <param name="userId"></param>
-        /// <param name="page"></param>
-        /// <param name="pageSize"></param>
-        /// <returns></returns>
-        public async static Task<List<FiniteStateMachine>> GetPageOfFsmsAsync(DbContext dbContext,
-            string userId, int page, int pageSize)
-            => await dbContext.Database.SqlQuery<FiniteStateMachine>($@"SELECT *
-                    FROM dbo.StateMachines
-                    WHERE ApplicationUserId = {userId}
-                    ORDER BY TimeUpdated DESC
-                    OFFSET {page * pageSize} ROWS
-                    FETCH NEXT {pageSize} ROWS ONLY").ToListAsync();
-
-        /// <summary>
         /// Adds the FSM to a database with a link to user's id via raw SQL queries.
         /// <para>This method doens't have a transaction within it.</para>
-        /// <para>NOTE: When <paramref name="newGuids"/> is <see langword="true"/> it also updates TimeCreated of FSM
+        /// <para>NOTE: When <paramref name="newGuids"/> is <see langword="true"/>
+        /// it also updates TimeCreated of FSM
         /// to <see cref="DateTime.UtcNow"/>.</para>
         /// </summary>
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
-        /// <param name="newGuids">By default it's <see langword="true"/> where it generates
+        /// <param name="newGuids">By default it's <see langword="true"/>
+        /// where it generates
         /// new GUIDs for states even if they're already an existing GUID,
-        /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs
-        /// <para>NOTE: When <see langword="true"/> it also updates TimeCreated of FSM
+        /// otherwise <see langword="false"/>
+        /// to only generate new GUIDs when they're are no GUIDs
+        /// <para>NOTE: When <see langword="true"/> it also updates
+        /// TimeCreated of FSM
         /// to <see cref="DateTime.UtcNow"/>.</para>
         /// </param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task AddFSMAsync(DbContext dbContext, FiniteStateMachine fsm, string userId,
+        public async static Task AddFSMAsync(DbContext dbContext,
+            FiniteStateMachine fsm, string userId,
             bool newGuids = true)
         {
             if (newGuids || !Guid.TryParse(fsm.Id, out _))
@@ -89,11 +117,13 @@ namespace Finite_State_Machine_Designer.Data
             
             try
             {
-                await dbContext.Database.ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
+                await dbContext.Database
+                    .ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
                 (Id, ApplicationUserId, Name, Description, Width, Height,
                 TransitionSearchRadius, timeCreated, timeUpdated)
-                VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description}, {fsm.Width}, {fsm.Height},
-                {fsm.TransitionSearchRadius}, {fsm.TimeCreated}, {fsm.TimeUpdated})");
+                VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description},
+                {fsm.Width}, {fsm.Height}, {fsm.TransitionSearchRadius},
+                {fsm.TimeCreated}, {fsm.TimeUpdated})");
 
                 await AddStatesAsync(dbContext, fsm, newGuids);
                 await AddTransitionsAsync(dbContext, fsm, newGuids);
@@ -112,9 +142,11 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
         /// <exception cref="OperationCanceledException"/>
-        public async static Task UpdateFsmAsync(DbContext dbContext, FiniteStateMachine fsm, string userId)
+        public async static Task UpdateFsmAsync(DbContext dbContext,
+            FiniteStateMachine fsm, string userId)
         {
-            await dbContext.Database.ExecuteSqlAsync(@$"DELETE FROM dbo.StateMachines
+            await dbContext.Database
+                .ExecuteSqlAsync(@$"DELETE FROM dbo.StateMachines
             WHERE Id = {fsm.Id}");
 
             await AddFSMAsync(dbContext, fsm, userId, false);
@@ -125,9 +157,11 @@ namespace Finite_State_Machine_Designer.Data
         /// </summary>
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
-        /// <param name="newGuids">By default it's <see langword="true"/> where it generates
+        /// <param name="newGuids">By default it's <see langword="true"/>
+        /// where it generates
         /// new GUIDs for states even if they're already an existing GUID,
-        /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
+        /// otherwise <see langword="false"/> to only generate new GUIDs 
+        /// when they're are no GUIDs</param>
         /// <exception cref="OperationCanceledException"/>
         public async static Task AddStatesAsync(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
@@ -163,7 +197,8 @@ namespace Finite_State_Machine_Designer.Data
             }
             try
             {
-                await dbContext.Database.ExecuteSqlRawAsync(insertStatesCommand[..^1], parameters);
+                await dbContext.Database
+                    .ExecuteSqlRawAsync(insertStatesCommand[..^1], parameters);
             }
             catch (OperationCanceledException)
             {
@@ -178,9 +213,11 @@ namespace Finite_State_Machine_Designer.Data
         /// </summary>
         /// <param name="fsm">New Finite State Machine</param>
         /// <param name="dbContext">dbContext to insert FSM to database</param>
-        /// <param name="newGuids">By default it's <see langword="true"/> where it generates
+        /// <param name="newGuids">By default it's <see langword="true"/>
+        /// where it generates
         /// new GUIDs for states even if they're already an existing GUID,
-        /// otherwise <see langword="false"/> to only generate new GUIDs when they're are no GUIDs</param>
+        /// otherwise <see langword="false"/> to only generate new GUIDs 
+        /// when they're are no GUIDs</param>
         /// <exception cref="OperationCanceledException"/>
         public async static Task AddTransitionsAsync(DbContext dbContext,
             FiniteStateMachine fsm, bool newGuids = true)
@@ -208,7 +245,8 @@ namespace Finite_State_Machine_Designer.Data
                 parameters.Add(new($"ToStateId{i}", transition.ToStateId));
                 parameters.Add(new($"Text{i}", transition.Text));
                 parameters.Add(new($"ParallelAxis{i}", transition.ParallelAxis));
-                parameters.Add(new($"MinPerpDist{i}", transition.MinPerpendicularDistance));
+                parameters.Add(new($"MinPerpDist{i}",
+                    transition.MinPerpendicularDistance));
                 parameters.Add(new($"PerAxis{i}", transition.PerpendicularAxis));
                 parameters.Add(new($"SelfAngle{i}", transition.SelfAngle));
                 parameters.Add(new($"Radius{i}", transition.Radius));
@@ -225,7 +263,8 @@ namespace Finite_State_Machine_Designer.Data
             }
             try
             {
-                await dbContext.Database.ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
+                await dbContext.Database
+                    .ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
             }
             catch (OperationCanceledException)
             {
