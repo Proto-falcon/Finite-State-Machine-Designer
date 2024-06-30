@@ -109,3 +109,10 @@
     border: solid 1px #ffffff;
     list-style: none;
 }
+
+.load-more-button {
+    width: fit-content;
+    font-size: 2em;
+    text-align: center;
+    align-content: center;
+}

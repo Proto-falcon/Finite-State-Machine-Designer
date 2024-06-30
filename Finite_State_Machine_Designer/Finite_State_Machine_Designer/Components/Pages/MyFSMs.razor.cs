@@ -37,6 +37,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 if (_user.StateMachines.Count > 0)
                     _lastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;
+                if (_user.StateMachines.Count < _availableFsmsLimit)
+                    _loadMoreFsms = false;
             }
             else
                 Navigation.NavigateTo("Account/Login");
