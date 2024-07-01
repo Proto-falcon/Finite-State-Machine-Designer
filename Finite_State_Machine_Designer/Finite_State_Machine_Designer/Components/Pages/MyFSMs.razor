@@ -88,29 +88,59 @@
 </div>
 @if (_finishLoading && _currentDrawnFsm is not null)
 {
-    <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
-        Currently drawn FSM: @_currentDrawnFsm.Name
-    </button>
+    <div style="display:grid; 
+grid-template-columns:0.75fr 1fr 1fr; height:min-content;">
+        <div>
+        <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
+            Currently drawn FSM:<br/> @_currentDrawnFsm.Name
+        </button>
+        </div>
+        <div>
+            <input style="width:100%" type="text" 
+            placeholder="Search for name or description"
+                   @bind:event="oninput" @bind="_searchFsmQuery" />
+        </div>
+        <div>
+            @if (!_searching)
+            {
+                <button @onclick="QueryFsms" >🔎</button>
+            }
+            else
+            {
+                <Loading Height="1.7em" Width="1.7em"
+                    Style="border-width: 0.2em; justify-self: center;" />
+            }
+        </div>
+    </div>
 }
 @if (_finishLoading && _user is not null)
 {
-    <ol class="fsm-list-container">
-        @foreach (FiniteStateMachine fsm in _user.StateMachines)
-        {
-            <li class="fsm-list-item" @onclick="async (e) => await DisplayFsmAsync(fsm, true)">
-                <div><b>@fsm.Name</b></div>
-                <div><b>@fsm.Description</b></div>
-                <div><b>Last Updated: @fsm.TimeUpdated</b></div>
-                <div><b>Creation Time: @fsm.TimeCreated</b></div>
-            </li>
-        }
-        @if (_loadMoreFsms)
-        {
-            <li class="fsm-list-item load-more-button" @onclick="GetMoreFsmsHandler">
-                <b>Load More</b>
-            </li>
-        }
-    </ol>
+    @if (_user.StateMachines.Count <= 0)
+    {
+        <h2 style="text-align:center;">No ohter FSMs found.</h2>
+    }
+    else
+    {
+        <ol class="fsm-list-container">
+            @foreach (FiniteStateMachine fsm in _user.StateMachines)
+            {
+                <li class="fsm-list-item" 
+                    @onclick="async (e) => await DisplayFsmAsync(fsm, true)">
+                    <div><b>@fsm.Name</b></div>
+                    <div><b>@fsm.Description</b></div>
+                    <div><b>Last Updated: @fsm.TimeUpdated</b></div>
+                    <div><b>Creation Time: @fsm.TimeCreated</b></div>
+                </li>
+            }
+            @if (_loadMoreFsms)
+            {
+                <li class="fsm-list-item load-more-button" 
+                    @onclick="GetMoreFsmsHandler">
+                    <b>Load More</b>
+                </li>
+            }
+        </ol>
+    }
 }
 else
 {
@@ -137,6 +167,7 @@ else
     /// </summary>
     private FiniteStateMachine? _currentDrawnFsm = null;
     private int _availableFsmsLimit = 20;
+    private string _searchFsmQuery { get; set; } = string.Empty;
     private DateTime _lastRecentModifiedTime = DateTime.MinValue;
     private double _mainFsmSvgScale = 0.5;
     private bool _displayCurrentFsm = false;
@@ -144,6 +175,7 @@ else
     private bool _currentSaved = false;
     private bool _currentSavedFailed = false;
     private bool _finishLoading = false;
+    private bool _searching = false;
     private bool _loadingFsmView = false;
     private bool _loadMoreFsms = true;
     private const string _canvasBackgroundColour = "#313338";
@@ -186,6 +218,11 @@ else
             await SaveCurrentFSMAsync();
     }
 
+    /// <summary>
+    /// Loads all the information needed to view the FSM
+    /// </summary>
+    /// <param name="fsm">Finite State Machine</param>
+    /// <param name="reload">Reloads all of the states and transitions</param>
     private async Task DisplayFsmAsync(FiniteStateMachine fsm, bool reload = false)
     {
         _currentFsm = fsm;
@@ -202,6 +239,23 @@ else
         _loadingFsmView = false;
     }
 
+    private async Task QueryFsms(MouseEventArgs mouseEventArgs)
+    {
+        if (_user is not null)
+        {
+            _searching = true;
+            StateHasChanged();
+            await Task.Delay(5_000);
+            await using ApplicationDbContext dbContext 
+                = await DbFactory.CreateDbContextAsync();
+            _user.StateMachines = await dbContext.StateMachines
+                .Where(fsm => fsm.Name.Contains(_searchFsmQuery)
+                    || fsm.Description.Contains(_searchFsmQuery))
+                .ToListAsync();
+            _searching = false;
+        }
+    }
+
     /// <summary>
     /// Sets the specified FSM to be the one to be currently drawn.
     /// </summary>
@@ -212,7 +266,8 @@ else
         {
             _currentDrawnFsm = fsm;
             if (CheckJsModule(JsModule))
-                await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentDrawnFsm);
+                await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", 
+                _currentDrawnFsm);
         }
     }
 
@@ -242,7 +297,8 @@ else
 
     private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => SaveCurrent = true;
 
-    private async void HandleLocationChangedAsync(object? sender, LocationChangedEventArgs e)
+    private async void HandleLocationChangedAsync(object? sender,
+        LocationChangedEventArgs e)
     {
         await SetJsModule("./Components/Pages/MyFSMs.razor.js");
         if (CheckJsModule(JsModule) && _currentDrawnFsm is not null)
