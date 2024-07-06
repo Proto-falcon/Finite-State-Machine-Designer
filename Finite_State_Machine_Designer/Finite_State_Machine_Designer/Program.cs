@@ -30,6 +30,11 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
+    .AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = Environment.GetEnvironmentVariable("Auth_Google_ClientId_FSM") ?? "";
+        googleOptions.ClientSecret = Environment.GetEnvironmentVariable("Auth_Google_ClientSecret_FSM") ?? "";
+    })
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");

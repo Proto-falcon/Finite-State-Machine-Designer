@@ -5,6 +5,7 @@
 @using System.Text
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
+@using QRCoder;
 @using Finite_State_Machine_Designer.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -38,9 +39,7 @@ else
             </li>
             <li>
                 <p>Scan the QR Code or enter this key <kbd>@sharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
-                <div class="alert alert-info">Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</a>.</div>
-                <div></div>
-                <div data-url="@authenticatorUri"></div>
+                <div class="alert svg-qrCode-container">@authenticatorQrCodeSvg</div>
             </li>
             <li>
                 <p>
@@ -72,7 +71,7 @@ else
     private string? message;
     private ApplicationUser user = default!;
     private string? sharedKey;
-    private string? authenticatorUri;
+    private MarkupString authenticatorQrCodeSvg = new ();
     private IEnumerable<string>? recoveryCodes;
 
     [CascadingParameter]
@@ -131,7 +130,8 @@ else
         sharedKey = FormatKey(unformattedKey!);
 
         var email = await UserManager.GetEmailAsync(user);
-        authenticatorUri = GenerateQrCodeUri(email!, unformattedKey!);
+        authenticatorQrCodeSvg = new MarkupString(GenerateQrCodeUri(email!, unformattedKey!));
+        StateHasChanged();
     }
 
     private string FormatKey(string unformattedKey)
@@ -153,12 +153,24 @@ else
 
     private string GenerateQrCodeUri(string email, string unformattedKey)
     {
-        return string.Format(
+        string qrCodeUri = string.Format(
             CultureInfo.InvariantCulture,
             AuthenticatorUriFormat,
-            UrlEncoder.Encode("Microsoft.AspNetCore.Identity.UI"),
+            UrlEncoder.Encode("FSM Designer"),
             UrlEncoder.Encode(email),
             unformattedKey);
+
+        string qrCodeImage = "";
+
+        using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
+        using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(qrCodeUri,
+            QRCodeGenerator.ECCLevel.Q))
+        using (SvgQRCode qrCode = new (qrCodeData))
+        {
+            qrCodeImage = qrCode.GetGraphic(5);
+        }
+
+        return qrCodeImage;
     }
 
     private sealed class InputModel

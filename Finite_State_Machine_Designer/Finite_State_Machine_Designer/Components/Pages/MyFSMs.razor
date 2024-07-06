@@ -86,15 +86,18 @@
         </div>
     }
 </div>
-@if (_finishLoading && _currentDrawnFsm is not null)
+@if (_finishLoading)
 {
     <div style="display:grid; 
 grid-template-columns:0.75fr 1fr 1fr; height:min-content;">
-        <div>
-        <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
-            Currently drawn FSM:<br/> @_currentDrawnFsm.Name
-        </button>
-        </div>
+        @if (_currentDrawnFsm is not null)
+        {
+            <div>
+            <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
+                Currently drawn FSM:<br/> @_currentDrawnFsm.Name
+            </button>
+            </div>
+        }
         <div>
             <input style="width:100%" type="text" 
             placeholder="Search for name or description"
@@ -117,7 +120,7 @@ grid-template-columns:0.75fr 1fr 1fr; height:min-content;">
 {
     @if (_user.StateMachines.Count <= 0)
     {
-        <h2 style="text-align:center;">No ohter FSMs found.</h2>
+        <h2 style="text-align:center;">No other FSMs found.</h2>
     }
     else
     {
@@ -178,6 +181,7 @@ else
     private bool _searching = false;
     private bool _loadingFsmView = false;
     private bool _loadMoreFsms = true;
+    private bool _JsModuleDisposed = false;
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private string _fsmSvgUrl = string.Empty;
@@ -193,7 +197,7 @@ else
         if (firstRender)
             await SetJsModule("./Components/Pages/MyFSMs.razor.js");
 
-        if (CheckJsModule(JsModule) && _currentDrawnFsm is null)
+        if (!_JsModuleDisposed && CheckJsModule(JsModule) && _currentDrawnFsm is null)
         {
             await JsModule.InvokeAsync<bool>("fSMCanvasUtils.getCanvasContext",
                 "hiddenCanvas");
@@ -245,13 +249,21 @@ else
         {
             _searching = true;
             StateHasChanged();
-            await Task.Delay(5_000);
-            await using ApplicationDbContext dbContext 
-                = await DbFactory.CreateDbContextAsync();
-            _user.StateMachines = await dbContext.StateMachines
-                .Where(fsm => fsm.Name.Contains(_searchFsmQuery)
-                    || fsm.Description.Contains(_searchFsmQuery))
-                .ToListAsync();
+            try
+            {
+                await using ApplicationDbContext dbContext 
+                    = await DbFactory.CreateDbContextAsync();
+                _user.StateMachines = await dbContext.Users.Where(user => user.Id == _user.Id)
+                    .SelectMany(user => user.StateMachines)
+                    .Where(fsm => fsm.Name.Contains(_searchFsmQuery)
+                        || fsm.Description.Contains(_searchFsmQuery))
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Ran to problem trying to find FSMs from user {0}", _user.Id);
+                _logger.LogError(new EventId(1, "Coudn't Find FSMs"), ex, "Coudn't Find FSMs");
+            }
             _searching = false;
         }
     }
@@ -303,6 +315,7 @@ else
         await SetJsModule("./Components/Pages/MyFSMs.razor.js");
         if (CheckJsModule(JsModule) && _currentDrawnFsm is not null)
             await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", _currentDrawnFsm);
+        _JsModuleDisposed = true;
     }
 
     public void Dispose()
