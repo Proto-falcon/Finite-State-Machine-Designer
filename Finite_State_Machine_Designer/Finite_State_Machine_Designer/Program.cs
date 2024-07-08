@@ -32,6 +32,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddGoogle(googleOptions =>
     {
+        googleOptions.SaveTokens = true;
         googleOptions.AccessDeniedPath = "/Account/Login";
         googleOptions.ClientId = Environment.GetEnvironmentVariable("Auth_Google_ClientId_FSM") ?? "";
         googleOptions.ClientSecret = Environment.GetEnvironmentVariable("Auth_Google_ClientSecret_FSM") ?? "";
