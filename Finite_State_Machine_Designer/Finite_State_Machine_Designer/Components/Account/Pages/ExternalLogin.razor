@@ -139,6 +139,20 @@
             result = await UserManager.AddLoginAsync(user, externalLoginInfo);
             if (result.Succeeded)
             {
+                if (externalLoginInfo.AuthenticationTokens is not null)
+                {
+                    var accessToken = externalLoginInfo.AuthenticationTokens
+                        .FirstOrDefault(token => token.Name.Contains("access_token"));
+
+                    if (accessToken is not null)
+                    {
+                        var tokenResult = await UserManager.SetAuthenticationTokenAsync(
+                            user, externalLoginInfo.LoginProvider,
+                            accessToken.Name, accessToken.Value);
+                        foreach (var error in tokenResult.Errors)
+                            Logger.LogError("Set acces Token Error: {0}", error.Description);
+                    }
+                }
                 Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
 
                 var userId = await UserManager.GetUserIdAsync(user);
