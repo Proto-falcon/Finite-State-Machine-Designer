@@ -1,7 +1,6 @@
 ﻿@page "/MyFSMs"
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore.ChangeTracking
 @using Finite_State_Machine_Designer.Data
 @using Finite_State_Machine_Designer.Services
 @using Finite_State_Machine_Designer.Client.FSM
@@ -53,14 +52,6 @@
                     @onclick="SetSaveCurrent">
                         Save
                     </button>
-                    @if (_currentSavedFailed)
-                    {
-                        <p class="blink">@_errorSaveMsg</p>
-                    }
-                    else if (_currentSaved)
-                    {
-                        <p class="blink">Saved!!</p>
-                    }
                 }
                 else
                 {
@@ -69,11 +60,21 @@
                         Draw
                     </button>
                 }
+                @if (!string.IsNullOrWhiteSpace(_errorMsg))
+                {
+                    <p class="blink">@_errorMsg</p>
+                }
+                else if (_currentSaved)
+                {
+                    <p class="blink">Saved!!</p>
+                }
             </div>
             <p class="canvas-desc-summary">Description</p>
             <div class="canvas-desc-group canvas-info-group">
                 <label class="canvas-desc-label" for="canvasDesc">Description:</label>
-                <textarea id="canvasDesc" name="Description"
+                <textarea id="canvasDesc" name="Description" 
+                    readonly="@(_currentDrawnFsm is null
+                    || _currentDrawnFsm.Name != _currentFsm.Name)"
             placeholder="Description" rows="10" cols="69"
                     @bind:event="oninput" @bind="_currentFsm.Description" />
             </div>
@@ -88,19 +89,26 @@
 </div>
 @if (_finishLoading)
 {
-    <div style="display:grid; 
-grid-template-columns:0.75fr 1fr 1fr; height:min-content;">
+    <div class="button-row-grid">
         @if (_currentDrawnFsm is not null)
         {
             <div>
             <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
-                Currently drawn FSM:<br/> @_currentDrawnFsm.Name
-            </button>
+                Currently drawn FSM:<br/>
+                    @if (_currentDrawnFsm.Name.Length > (_maxNameDisplayLength/2))
+                    {
+                        <text>@_currentDrawnFsm.Name[..((_maxNameDisplayLength / 2) - 3)]...</text>
+                    }
+                    else
+                    {
+                        <text>@_currentDrawnFsm.Name</text>
+                    }
+                </button>
             </div>
         }
         <div>
-            <input style="width:100%" type="text" 
-            placeholder="Search for name or description"
+            <input class="fsm-query-input" type="text"
+                   placeholder="Search for name or description"
                    @bind:event="oninput" @bind="_searchFsmQuery" />
         </div>
         <div>
@@ -129,8 +137,30 @@ grid-template-columns:0.75fr 1fr 1fr; height:min-content;">
             {
                 <li class="fsm-list-item" 
                     @onclick="async (e) => await DisplayFsmAsync(fsm, true)">
-                    <div><b>@fsm.Name</b></div>
-                    <div><b>@fsm.Description</b></div>
+                    <div>
+                        <b>
+                        @if (fsm.Name.Length > 36)
+                        {
+                            <text>@fsm.Name[..(_maxNameDisplayLength-3)]...</text>
+                        }
+                        else
+                        {
+                                <text>@fsm.Name</text>
+                        }
+                        </b>
+                    </div>
+                    <div>
+                        <b>
+                        @if (fsm.Description.Length > _maxDescDisplayLength)
+                        {
+                            <text>@fsm.Description[..(_maxDescDisplayLength-3)]...</text>
+                        }
+                        else
+                        {
+                            <text>@fsm.Description</text>
+                        }
+                        </b>
+                    </div>
                     <div><b>Last Updated: @fsm.TimeUpdated</b></div>
                     <div><b>Creation Time: @fsm.TimeCreated</b></div>
                 </li>
@@ -176,16 +206,17 @@ else
     private bool _displayCurrentFsm = false;
     private bool _currentlySaving = false;
     private bool _currentSaved = false;
-    private bool _currentSavedFailed = false;
     private bool _finishLoading = false;
     private bool _searching = false;
     private bool _loadingFsmView = false;
     private bool _loadMoreFsms = true;
     private bool _JsModuleDisposed = false;
+    private int _maxDescDisplayLength = 100;
+    private int _maxNameDisplayLength = 36;
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private string _fsmSvgUrl = string.Empty;
-    private string _errorSaveMsg = "Couldn't save!! Something went wrong.";
+    private string _errorMsg = "";
 
     protected override void OnInitialized()
     {
@@ -276,10 +307,21 @@ else
     {
         if (_user is not null)
         {
-            _currentDrawnFsm = fsm;
             if (CheckJsModule(JsModule))
-                await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", 
-                _currentDrawnFsm);
+            {
+                _errorMsg = "";
+                await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", fsm);
+
+                _currentDrawnFsm = await JsModule.InvokeAsync<FiniteStateMachine>(
+                    "fSMCanvasUtils.loadFSM",
+                    fsm);
+
+                if (_currentDrawnFsm is null)
+                {
+                    _errorMsg = $"Couldn't set the FSM '{fsm.Name}' to drawable";
+                    _logger.LogError("Couldn't set the FSM {Name} to drawable", fsm.Name);
+                }
+            }
         }
     }
 

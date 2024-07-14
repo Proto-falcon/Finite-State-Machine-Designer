@@ -48,6 +48,16 @@
     resize: none;
 }
 
+.button-row-grid {
+    display: grid;
+    grid-template-columns: 0.75fr 1fr 1fr;
+    height: min-content;
+}
+
+.fsm-query-input {
+    width: 100%
+}
+
 .canvas-details {
     position: relative;
     bottom: 1.9em;
@@ -108,6 +118,7 @@
     padding: 0.2em;
     border: solid 1px #ffffff;
     list-style: none;
+    cursor: pointer
 }
 
 .load-more-button {

@@ -71,19 +71,15 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 SaveCurrent = false;
                 _currentlySaving = true;
                 _currentSaved = false;
-                _currentSavedFailed = false;
+                _errorMsg = "";
                 StateHasChanged();
                 if (_currentDrawnFsm is not null && _user is not null)
                 {
                     if (string.IsNullOrWhiteSpace(_currentDrawnFsm.Name))
                     {
-                        _errorSaveMsg = "Please enter a name.";
-                        _currentSavedFailed = true;
+                        _errorMsg = "Please enter a name.";
                     }
                     else
-                    {
-                        _errorSaveMsg = "Couldn't save!! Something went wrong.";
-
                         try
                         {
                             await using (ApplicationDbContext dbContext =
@@ -143,14 +139,13 @@ namespace Finite_State_Machine_Designer.Components.Pages
                         }
                         catch (Exception ex)
                         {
-                            _currentSavedFailed = true;
+                            _errorMsg = "Couldn't save!! Something went wrong.";
                             _logger.LogError(
                                 "Couldn't save the current FSM "
                                 + "'{FsmName}' from user '{user}'",
                             _currentDrawnFsm.Name, _user.Id);
                             _logger.LogError("{ERROR}", ex.ToString());
                         }
-                    }
                 }
                 _currentlySaving = false;
                 StateHasChanged();
