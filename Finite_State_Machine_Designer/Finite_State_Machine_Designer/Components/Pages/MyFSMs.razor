@@ -364,8 +364,6 @@ else
         {
             await using DbContext dbContext = await DbFactory.CreateDbContextAsync();
             result = await DBCommands.DeleteFsms(dbContext, _logger, ids);
-            /// Figure out a way to prevent page loading FSM info when clicking the delete button
-            /// and show changes after successull deletion
             if (!result)
             {
                 _errorMsg = "Something went wrong trying to delete FSM";

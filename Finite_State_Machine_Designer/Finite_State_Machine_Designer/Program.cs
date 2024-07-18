@@ -19,7 +19,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
-builder.Services.AddScoped<AuthenticationStateProvider, PersistingServerAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider,
+    PersistingServerAuthenticationStateProvider>();
 builder.Services.AddScoped<UserService>();
 builder.Services.TryAddEnumerable(
     ServiceDescriptor.Scoped<CircuitHandler, UserCircuitHandler>());
@@ -34,23 +35,29 @@ builder.Services.AddAuthentication(options =>
     {
         googleOptions.SaveTokens = true;
         googleOptions.AccessDeniedPath = "/Account/Login";
-        googleOptions.ClientId = Environment.GetEnvironmentVariable("Auth_Google_ClientId_FSM") ?? "";
-        googleOptions.ClientSecret = Environment.GetEnvironmentVariable("Auth_Google_ClientSecret_FSM") ?? "";
+        googleOptions.ClientId = Environment
+            .GetEnvironmentVariable("Auth_Google_ClientId_FSM") ?? "";
+        googleOptions.ClientSecret = Environment
+            .GetEnvironmentVariable("Auth_Google_ClientSecret_FSM") ?? "";
         googleOptions.Validate();
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddIdentityCore<ApplicationUser>(
+        options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
+    IdentityNoOpEmailSender>();
 
 var app = builder.Build();
 
@@ -63,7 +70,9 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    /// The default HSTS value is 30 days.
+    /// You may want to change this for production scenarios,
+    /// see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
