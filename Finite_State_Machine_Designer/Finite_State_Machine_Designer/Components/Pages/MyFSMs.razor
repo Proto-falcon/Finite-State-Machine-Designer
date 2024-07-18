@@ -22,14 +22,10 @@
     style="@(!_displayCurrentFsm ? "display:none;" : "")
     @(_loadingFsmView ? "grid-template-columns: 1fr;" : "")">
     @if (_loadingFsmView)
-    {
-        <Loading Height="10em" Width="10em"
-            Style="border-width: 1em; justify-self: center;" />
-    }
+    { <Loading Height="10em" Width="10em"
+            Style="border-width: 1em; justify-self: center;" /> }
     else if (_currentFsm is null)
-    {
-        <h2>No FSM currently in use</h2>
-    }
+    { <h2>No FSM currently in use</h2> }
     else
     {
         <div>
@@ -41,10 +37,8 @@
             </div>
             <div class="save-section">
                 @if (_currentlySaving)
-                {
-                    <Loading Height="1.5em" Width="1.5em"
-                        Style="border-width: 0.2em;" />
-                }
+                { <Loading Height="1.5em" Width="1.5em"
+                        Style="border-width: 0.2em;" /> }
                 else if (_currentDrawnFsm is not null 
                     && _currentDrawnFsm.Name == _currentFsm.Name)
                 {
@@ -61,13 +55,8 @@
                     </button>
                 }
                 @if (!string.IsNullOrWhiteSpace(_errorMsg))
-                {
-                    <p class="blink">@_errorMsg</p>
-                }
-                else if (_currentSaved)
-                {
-                    <p class="blink">Saved!!</p>
-                }
+                { <p class="blink">@_errorMsg</p> }
+                else if (_currentSaved) { <p class="blink">Saved!!</p> }
             </div>
             <p class="canvas-desc-summary">Description</p>
             <div class="canvas-desc-group canvas-info-group">
@@ -96,30 +85,35 @@
             <button @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
                 Currently drawn FSM:<br/>
                     @if (_currentDrawnFsm.Name.Length > (_maxNameDisplayLength/2))
-                    {
-                        <text>@_currentDrawnFsm.Name[..((_maxNameDisplayLength / 2) - 3)]...</text>
-                    }
-                    else
-                    {
-                        <text>@_currentDrawnFsm.Name</text>
-                    }
+                    { <text>
+                          @_currentDrawnFsm.Name[..((_maxNameDisplayLength / 2) - 3)]...
+                      </text> }
+                    else { <text>@_currentDrawnFsm.Name</text> }
                 </button>
             </div>
         }
         <div>
             <input class="fsm-query-input" type="text"
-                   placeholder="Search for name or description"
-                   @bind:event="oninput" @bind="_searchFsmQuery" />
-        </div>
-        <div>
+                placeholder="Search for name or description"
+                @bind:event="oninput" @bind="_searchFsmQuery" />
             @if (!_searching)
-            {
-                <button @onclick="QueryFsms" >🔎</button>
-            }
+            { <button @onclick="QueryFsms">🔎</button> }
             else
             {
                 <Loading Height="1.7em" Width="1.7em"
                     Style="border-width: 0.2em; justify-self: center;" />
+            }
+        </div>
+        <div>
+            <button style="@(_bulkDelete ? "background-color:#a45cbd": null)"
+                @onclick="e => _bulkDelete = !_bulkDelete">
+                Multi-Delete FSMs
+                </button>
+            @if (_bulkDelete)
+            {
+                <button @onclick="async e => await DeleteFsms(_markDeleteFsms.ToArray())">
+                    Delete Fsms
+                </button>
             }
         </div>
     </div>
@@ -139,26 +133,34 @@
                     @onclick="async (e) => await DisplayFsmAsync(fsm, true)">
                     <div>
                         <b>
-                        @if (fsm.Name.Length > 36)
+                        @if (fsm.Name.Length > _maxNameDisplayLength)
+                        { <text>@fsm.Name[..(_maxNameDisplayLength-3)]...</text> }
+                        else { <text>@fsm.Name</text> }
+                        </b>
+                        @if (!_bulkDelete)
                         {
-                            <text>@fsm.Name[..(_maxNameDisplayLength-3)]...</text>
+                            <button class="delete-button"
+                            @onclick:stopPropagation
+                            @onclick="async e => await DeleteFsms(fsm.Id)">
+                                Delete
+                            </button>
                         }
                         else
                         {
-                                <text>@fsm.Name</text>
+                            <button
+                                @onclick:stopPropagation
+                                @onclick="e => AddFsmToDelete(fsm.Id)"
+                                style="@(_markDeleteFsms.Contains(fsm.Id)
+                                ? "background-color:#a45cbd": null)">
+                                Mark for delete
+                            </button>
                         }
-                        </b>
                     </div>
                     <div>
                         <b>
                         @if (fsm.Description.Length > _maxDescDisplayLength)
-                        {
-                            <text>@fsm.Description[..(_maxDescDisplayLength-3)]...</text>
-                        }
-                        else
-                        {
-                            <text>@fsm.Description</text>
-                        }
+                        { <text>@fsm.Description[..(_maxDescDisplayLength-3)]...</text> }
+                        else { <text>@fsm.Description</text> }
                         </b>
                     </div>
                     <div><b>Last Updated: @fsm.TimeUpdated</b></div>
@@ -212,7 +214,9 @@ else
     private bool _loadMoreFsms = true;
     private bool _JsModuleDisposed = false;
     private int _maxDescDisplayLength = 100;
-    private int _maxNameDisplayLength = 36;
+    private int _maxNameDisplayLength = 30;
+    private bool _bulkDelete = false;
+    private readonly List<string> _markDeleteFsms = [];
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private string _fsmSvgUrl = string.Empty;
@@ -250,7 +254,10 @@ else
             StateHasChanged();
         }
         if (SaveCurrent)
+        {
             await SaveCurrentFSMAsync();
+            await GetUserFsms();
+        }
     }
 
     /// <summary>
@@ -267,7 +274,7 @@ else
         {
             await using ApplicationDbContext dbContext =
                 await DbFactory.CreateDbContextAsync();
-            await DBCommnds.GetFullFsmAsync(dbContext, fsm, CancellationToken.None);
+            await DBCommands.GetFullFsmAsync(dbContext, fsm, CancellationToken.None);
         }
 
         await GenerateFsmSvgAsync(fsm, _mainFsmSvgScale);
@@ -284,7 +291,8 @@ else
             {
                 await using ApplicationDbContext dbContext 
                     = await DbFactory.CreateDbContextAsync();
-                _user.StateMachines = await dbContext.Users.Where(user => user.Id == _user.Id)
+                _user.StateMachines = await dbContext.Users
+                    .Where(user => user.Id == _user.Id)
                     .SelectMany(user => user.StateMachines)
                     .Where(fsm => fsm.Name.Contains(_searchFsmQuery)
                         || fsm.Description.Contains(_searchFsmQuery))
@@ -292,8 +300,10 @@ else
             }
             catch (Exception ex)
             {
-                _logger.LogError("Ran to problem trying to find FSMs from user {0}", _user.Id);
-                _logger.LogError(new EventId(1, "Coudn't Find FSMs"), ex, "Coudn't Find FSMs");
+                _logger.LogError("Ran to problem trying to find FSMs from user {0}",
+                _user.Id);
+                _logger.LogError(new EventId(1, "Coudn't Find FSMs"), ex,
+                "Coudn't Find FSMs");
             }
             _searching = false;
         }
@@ -333,7 +343,7 @@ else
                 await DbFactory.CreateDbContextAsync();
             try
             {
-                _loadMoreFsms = await DBCommnds.GetMoreFsmsAsync(dbContext, _user,
+                _loadMoreFsms = await DBCommands.GetMoreFsmsAsync(dbContext, _user,
                     _lastRecentModifiedTime, _availableFsmsLimit);
                 _lastRecentModifiedTime = _user.StateMachines.Last().TimeUpdated;
                 StateHasChanged();
@@ -344,6 +354,38 @@ else
                 _logger.LogError("{ERROR}", ex.ToString());
             }
         }
+    }
+
+    private async Task<bool> DeleteFsms(params string[] ids)
+    {
+        _errorMsg = "";
+        bool result = false;
+        if (_user is not null)
+        {
+            await using DbContext dbContext = await DbFactory.CreateDbContextAsync();
+            result = await DBCommands.DeleteFsms(dbContext, _logger, ids);
+            /// Figure out a way to prevent page loading FSM info when clicking the delete button
+            /// and show changes after successull deletion
+            if (!result)
+            {
+                _errorMsg = "Something went wrong trying to delete FSM";
+                if (ids.Length > 1)
+                    _errorMsg += "s";
+            }
+
+            _user.StateMachines = _user.StateMachines
+                .Where(fsm => !ids.Contains(fsm.Id)).ToList();
+        }
+
+        return result;
+    }
+
+    private void AddFsmToDelete(string id)
+    {
+        if (_markDeleteFsms.Contains(id))
+            _markDeleteFsms.Remove(id);
+        else
+            _markDeleteFsms.Add(id);
     }
 
     private async void RevokeUrlAsync(string url)

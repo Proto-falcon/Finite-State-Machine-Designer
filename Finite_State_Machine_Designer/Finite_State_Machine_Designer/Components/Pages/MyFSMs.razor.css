@@ -51,11 +51,17 @@
 .button-row-grid {
     display: grid;
     grid-template-columns: 0.75fr 1fr 1fr;
+    justify-items: center;
     height: min-content;
 }
 
+.button-row-grid > div:nth-child(2) {
+    display: inline;
+    width: 100%;
+}
+
 .fsm-query-input {
-    width: 100%
+    width: 89%
 }
 
 .canvas-details {
@@ -119,6 +125,22 @@
     border: solid 1px #ffffff;
     list-style: none;
     cursor: pointer
+}
+
+.fsm-list-item > div:first-child {
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-items: end;
+}
+
+.fsm-list-item  b:first-child {
+    justify-self: start;
+}
+
+.delete-button {
+    width: fit-content;
 }
 
 .load-more-button {

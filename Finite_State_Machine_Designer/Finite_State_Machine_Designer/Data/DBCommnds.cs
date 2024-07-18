@@ -5,8 +5,50 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Finite_State_Machine_Designer.Data
 {
-    public static class DBCommnds
+    public static class DBCommands
     {
+        /// <summary>
+        /// Delete Fsms in the database via Ids.
+        /// </summary>
+        /// <param name="dbContext">Database Context to query with.</param>
+        /// <param name="fsmIds">Finite State Machine Ids</param>
+        /// <returns>
+        /// <see langword="true"/> for successfully deleting FSMs,
+        /// otherwise <see langword="false"/> for unsuccessful.
+        /// </returns>
+        public async static Task<bool> DeleteFsms(DbContext dbContext,
+            ILogger? logger = null,
+            params string[] fsmIds)
+        {
+            if (fsmIds.Length <= 0)
+                return true;
+            string deleteQuery = "DELETE dbo.StateMachines WHERE Id IN ( ";
+
+            List<SqlParameter> parameters = [];
+
+            for (int i = 0; i < fsmIds.Length; i++)
+            {
+                string fsmId = fsmIds[i];
+                parameters.Add(new SqlParameter($"id{i}", fsmId));
+                deleteQuery += $"@id{i}, ";
+            }
+            deleteQuery = deleteQuery.TrimEnd(',', ' ') + " )";
+            await using var transact = await dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(deleteQuery, parameters);
+                await transact.CommitAsync();
+                return true;
+            }
+            catch (OperationCanceledException ex)
+            {
+                await transact.RollbackAsync();
+                logger?.LogError("Coudln't delete the Finite State Machines");
+                logger?.LogError("{Error}", ex.ToString());
+                return false;
+            }
+        }
+
         /// <summary>
         /// Gets more FSMs from user
         /// </summary>

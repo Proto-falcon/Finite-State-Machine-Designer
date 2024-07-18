@@ -8,32 +8,58 @@ namespace Finite_State_Machine_Designer.Components.Pages
     public partial class MyFSMs
     {
         /// <summary>
+        /// Gets <see cref="_user"/> FSMs from database.
+        /// Doesn't also load States and transitions.
+        /// </summary>
+        private async Task GetUserFsms()
+        {
+            if (_user is not null)
+            {
+                await using ApplicationDbContext dbContext
+                    = await DbFactory.CreateDbContextAsync();
+                try
+                {
+                    _user.StateMachines = await dbContext.Entry(_user)
+                        .Collection(user => user.StateMachines)
+                        .Query()
+                        .OrderByDescending(fsm => fsm.TimeUpdated)
+                        .Take(_availableFsmsLimit)
+                        .AsNoTrackingWithIdentityResolution()
+                        .ToListAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Couldn't get Fsms from user - '{User}'", _user.Id);
+                    _logger.LogError("{Error}", ex.ToString());
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets the user and their basic Finite State Machines' information.
         /// </summary>
         private async Task InitialiseUserAsync()
         {
-            await using ApplicationDbContext dbContext =
-                await DbFactory.CreateDbContextAsync();
-            string? userName = userService.GetUser().Identity?.Name;
-            if (userName is null)
+            string? userName = "";
+            ApplicationUser? fetchedUser = null;
+            await using (ApplicationDbContext dbContext =
+                await DbFactory.CreateDbContextAsync())
             {
-                Navigation.NavigateTo("Account/Login");
-                return;
+                userName = userService.GetUser().Identity?.Name;
+                if (userName is null)
+                {
+                    Navigation.NavigateTo("Account/Login");
+                    return;
+                }
+                fetchedUser = dbContext.Users
+                    .Where(user => user.NormalizedUserName == userName.ToUpper())
+                    .AsNoTrackingWithIdentityResolution()
+                    .FirstOrDefault();
             }
-            ApplicationUser? fetchedUser = dbContext.Users
-                .Where(user => user.NormalizedUserName == userName.ToUpper())
-                .AsNoTrackingWithIdentityResolution()
-                .FirstOrDefault();
             if (fetchedUser is not null)
             {
                 _user = fetchedUser;
-                _user.StateMachines = await dbContext.Entry(_user)
-                    .Collection(user => user.StateMachines)
-                    .Query()
-                    .OrderByDescending(fsm => fsm.TimeUpdated)
-                    .Take(_availableFsmsLimit)
-                    .AsNoTrackingWithIdentityResolution()
-                    .ToListAsync();
+                await GetUserFsms();
                 if (_user.StateMachines.Count > 0)
                     _lastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;
@@ -64,7 +90,10 @@ namespace Finite_State_Machine_Designer.Components.Pages
         /// <summary>
         /// Saves the current FSM in use to database.
         /// </summary>
-        private async Task SaveCurrentFSMAsync()
+        /// <returns>
+        /// <see langword="true"/> for successfully saving the FSM
+        /// otherwise, <see langword="false"/>.</returns>
+        private async Task<bool> SaveCurrentFSMAsync()
         {
             if (CheckJsModule(JsModule))
             {
@@ -98,7 +127,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                     try
                                     {
                                         _currentDrawnFsm.Id = existingFSM.Id;
-                                        await DBCommnds.UpdateFsmAsync(
+                                        await DBCommands.UpdateFsmAsync(
                                             dbContext,
                                             _currentDrawnFsm,
                                             _user.Id);
@@ -116,7 +145,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                         await dbContext.Database.BeginTransactionAsync();
                                     try
                                     {
-                                        await DBCommnds.AddFSMAsync(
+                                        await DBCommands.AddFSMAsync(
                                             dbContext,
                                             _currentDrawnFsm,
                                             _user.Id);
@@ -149,7 +178,9 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 }
                 _currentlySaving = false;
                 StateHasChanged();
+                return _currentSaved;
             }
+            return false;
         }
     }
 }
