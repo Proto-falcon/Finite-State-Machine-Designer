@@ -36,9 +36,9 @@ builder.Services.AddAuthentication(options =>
         googleOptions.SaveTokens = true;
         googleOptions.AccessDeniedPath = "/Account/Login";
         googleOptions.ClientId = Environment
-            .GetEnvironmentVariable("Auth_Google_ClientId_FSM") ?? "";
+            .GetEnvironmentVariable("FSM_Auth_Google_ClientId") ?? "";
         googleOptions.ClientSecret = Environment
-            .GetEnvironmentVariable("Auth_Google_ClientSecret_FSM") ?? "";
+            .GetEnvironmentVariable("FSM_Auth_Google_ClientSecret") ?? "";
         googleOptions.Validate();
     })
     .AddIdentityCookies();

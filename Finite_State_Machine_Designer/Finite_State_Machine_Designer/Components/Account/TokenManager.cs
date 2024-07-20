@@ -131,7 +131,7 @@ namespace Finite_State_Machine_Designer.Components.Account
             }
             catch (Exception ex)
             {
-                logger?.LogError("Coudln't get the revocation response");
+                logger?.LogError("Couldn't get the revocation response");
                 logger?.LogError("{Error}", ex.ToString());
                 return false;
             }
