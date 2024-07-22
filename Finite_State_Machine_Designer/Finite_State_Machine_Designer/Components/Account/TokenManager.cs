@@ -38,7 +38,7 @@ namespace Finite_State_Machine_Designer.Components.Account
                         user, externalLoginInfo.LoginProvider,
                         accessToken.Name, accessToken.Value);
                     foreach (var error in tokenResult.Errors)
-                        Logger?.LogError("Set acces Token Error: {Desc}",
+                        Logger?.LogError("Set access Token Error: {Desc}",
                             error.Description);
                     isAdded = tokenResult.Succeeded;
                 }

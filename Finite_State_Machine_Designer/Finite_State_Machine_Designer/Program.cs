@@ -1,6 +1,7 @@
 using Finite_State_Machine_Designer.Client.Pages;
 using Finite_State_Machine_Designer.Components;
 using Finite_State_Machine_Designer.Components.Account;
+using Finite_State_Machine_Designer.Configuration;
 using Finite_State_Machine_Designer.Data;
 using Finite_State_Machine_Designer.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -10,6 +11,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .Configure<EmailServiceConfig>(
+        builder.Configuration.GetSection("FSM:EmailServiceConfig")
+    )
+    .Configure<EmailContentPaths>(
+        builder.Configuration.GetSection("EmailContentPaths")
+    );
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -33,12 +42,15 @@ builder.Services.AddAuthentication(options =>
     })
     .AddGoogle(googleOptions =>
     {
+        GoogleAuth googleAuthOptions = new ();
+        builder.Configuration
+            .GetSection("FSM:ExternalAuths:GoogleAuth")
+            .Bind(googleAuthOptions);
+
         googleOptions.SaveTokens = true;
         googleOptions.AccessDeniedPath = "/Account/Login";
-        googleOptions.ClientId = Environment
-            .GetEnvironmentVariable("FSM_Auth_Google_ClientId") ?? "";
-        googleOptions.ClientSecret = Environment
-            .GetEnvironmentVariable("FSM_Auth_Google_ClientSecret") ?? "";
+        googleOptions.ClientId = googleAuthOptions.ClientId;
+        googleOptions.ClientSecret = googleAuthOptions.ClientSecret;
         googleOptions.Validate();
     })
     .AddIdentityCookies();
@@ -57,8 +69,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
-    IdentityNoOpEmailSender>();
-
+    IdentityEmailSender>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -31,11 +31,13 @@
 
 <div class="row">
     <div class="col-md-4">
-        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
+        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation"
+            method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
+                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email"
+                placeholder="Please enter your email." />
                 <label for="email" class="form-label">Email</label>
                 <ValidationMessage For="() => Input.Email" />
             </div>
@@ -71,13 +73,15 @@
     {
         if (RemoteError is not null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", $"Error from external provider: {RemoteError}", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login",
+                $"Error from external provider: {RemoteError}", HttpContext);
         }
 
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", 
+                "Error loading external login information.", HttpContext);
         }
 
         externalLoginInfo = info;
@@ -139,30 +143,52 @@
             result = await UserManager.AddLoginAsync(user, externalLoginInfo);
             if (result.Succeeded)
             {
-                _ = await TokenManager.AddAccessToken(UserManager, user, externalLoginInfo, Logger);
-                Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
-
-                var userId = await UserManager.GetUserIdAsync(user);
-                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                    NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-                await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-                // If account confirmation is required, we need to show the link if we don't have a real email sender
-                if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                bool addedToken = 
+                    await TokenManager.AddAccessToken(
+                        UserManager, user, externalLoginInfo, Logger);
+                if (!addedToken)
                 {
-                    RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
+                    message = "Couldn't store credentials from "
+                        + $"{externalLoginInfo.ProviderDisplayName} to our database";
+                    if(!(await UserManager.DeleteAsync(user)).Succeeded)
+                        message = "Coudln't delete user due to unable to this:\n" + message;
+                    return;
                 }
+                else
+                {
+                    Logger.LogInformation("User created an account using {Name} provider.",
+                    externalLoginInfo.LoginProvider);
 
-                await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
-                RedirectManager.RedirectTo(ReturnUrl);
+                    var userId = await UserManager.GetUserIdAsync(user);
+                    var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                        NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                        new Dictionary<string, object?> 
+                        { ["userId"] = userId, ["code"] = code });
+                    string token = externalLoginInfo.AuthenticationTokens!
+                        .FirstOrDefault(token => token.Name.Contains("access_token"))!.Value;
+                    await EmailSender.SendConfirmationLinkAsync(
+                        user, token, HtmlEncoder.Default.Encode(callbackUrl));
+
+                    /// If account confirmation is required, we need to show 
+                    /// the link if we don't have a real email sender
+                    if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                    {
+                        RedirectManager.RedirectTo(
+                            "Account/RegisterConfirmation", new() { ["email"] = Input.Email });
+                    }
+
+                    await SignInManager.SignInAsync(
+                        user, isPersistent: false, externalLoginInfo.LoginProvider);
+                    RedirectManager.RedirectTo(ReturnUrl);
+                }
             }
         }
 
-        message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+        message = 
+            $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
     }
 
     private ApplicationUser CreateUser()
@@ -173,17 +199,18 @@
         }
         catch
         {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor");
+            throw new InvalidOperationException($"Can't create an instance of"
+                + $" '{nameof(ApplicationUser)}'. "
+                + $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class"
+                + " and has a parameterless constructor");
         }
     }
 
     private IUserEmailStore<ApplicationUser> GetEmailStore()
     {
         if (!UserManager.SupportsUserEmail)
-        {
-            throw new NotSupportedException("The default UI requires a user store with email support.");
-        }
+            throw new NotSupportedException(
+                "The default UI requires a user store with email support.");
         return (IUserEmailStore<ApplicationUser>)UserStore;
     }
 
