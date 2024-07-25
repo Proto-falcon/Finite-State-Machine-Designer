@@ -167,10 +167,8 @@
                         NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
                         new Dictionary<string, object?> 
                         { ["userId"] = userId, ["code"] = code });
-                    string token = externalLoginInfo.AuthenticationTokens!
-                        .FirstOrDefault(token => token.Name.Contains("access_token"))!.Value;
                     await EmailSender.SendConfirmationLinkAsync(
-                        user, token, HtmlEncoder.Default.Encode(callbackUrl));
+                        user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
                     /// If account confirmation is required, we need to show 
                     /// the link if we don't have a real email sender

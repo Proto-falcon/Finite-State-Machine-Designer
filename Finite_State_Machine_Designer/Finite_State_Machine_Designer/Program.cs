@@ -68,6 +68,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddSingleton<SmtpFactory>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
     IdentityEmailSender>();
 var app = builder.Build();

@@ -9,7 +9,6 @@
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
-@inject PersistentComponentState _persistState
 
 <PageTitle>Register confirmation</PageTitle>
 
@@ -31,20 +30,8 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
-    private bool _sentEmail = false;
-
     protected override async Task OnInitializedAsync()
     {
-        _persistState.RegisterOnPersisting(
-            () =>
-            {
-                _persistState.PersistAsJson(nameof(_sentEmail), _sentEmail);
-                return Task.CompletedTask;
-            }
-        );
-
-        _ = _persistState.TryTakeFromJson(nameof(_sentEmail), out _sentEmail);
-
         if (Email is null)
             RedirectManager.RedirectTo("");
 
@@ -53,18 +40,6 @@
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
             statusMessage = "Error finding user for unspecified email";
-        }
-        else if (!_sentEmail && !string.IsNullOrWhiteSpace(user.Email))
-        {
-            var userId = await UserManager.GetUserIdAsync(user);
-            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            string confirmationLink = NavigationManager.GetUriWithQueryParameters(
-                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                new Dictionary<string, object?> { ["userId"] = userId,
-                ["code"] = code, ["returnUrl"] = ReturnUrl });
-            _ = EmailSender.SendConfirmationLinkAsync(user, user.Email, confirmationLink);
-            _sentEmail = true;
         }
     }
 }

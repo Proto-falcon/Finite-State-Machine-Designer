@@ -1,59 +1,43 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using MailKit.Security;
 using MailKit.Net.Smtp;
 using Finite_State_Machine_Designer.Data;
 using MimeKit;
 using Microsoft.Extensions.Options;
 using Finite_State_Machine_Designer.Configuration;
+using Finite_State_Machine_Designer.Services;
 
 namespace Finite_State_Machine_Designer.Components.Account
 {
     public class IdentityEmailSender
         : IEmailSender<ApplicationUser>
     {
-        private readonly EmailServiceConfig _config;
+        private readonly SmtpFactory _smtpFactory;
         private readonly FormatOptions _formatOptions = new()
         {
             EnsureNewLine = true
         };
-        private readonly SmtpClient _smtpClient;
-        private readonly string _confirmEmailContent;
+        private readonly MailboxAddress _fromServiceAddress;
+        private readonly string _confirmEmailContentText;
+        private readonly string _confirmEmailContentHtml;
         private readonly ILogger<IdentityEmailSender> _logger;
 
         public IdentityEmailSender(IOptions<EmailServiceConfig> config,
+            SmtpFactory smtpFactory,
             IOptions<EmailContentPaths> contentPaths,
             ILogger<IdentityEmailSender> logger)
         {
-            _config = config.Value;
-            _confirmEmailContent 
-                = File.ReadAllText(contentPaths.Value.Confirmation);
+            _smtpFactory = smtpFactory;
+            string htmlContentPath = contentPaths.Value.Confirmation;
+            _confirmEmailContentHtml 
+                = File.ReadAllText(htmlContentPath);
+            _confirmEmailContentText
+                = File.ReadAllText(htmlContentPath.Replace("html", "txt"));
             _logger = logger;
-            _smtpClient = InitialiseClient()
-                ?? throw new NullReferenceException(
-                    "Couldn't initialise/connect smtp client to server");
-        }
-
-        public SmtpClient? InitialiseClient()
-        {
-            try
-            {
-                var emailClient = new SmtpClient();
-                emailClient.Connect("smtp.gmail.com",
-                    465, SecureSocketOptions.SslOnConnect);
-                
-                emailClient.Authenticate(
-                    new SaslMechanismLogin(
-                        _config.DisplayAddress, _config.Password)
-                );
-                return emailClient;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    "Couldn't initialise/connect smtp client to server");
-                _logger.LogError("{Error}", ex.ToString());
-                return null;
-            }
+            if (!MailboxAddress.TryParse(
+                config.Value.DisplayAddress, out _fromServiceAddress))
+                throw new FormatException(
+                    "From address '{FROM}' that successfully connected"
+                    + " to smtp.gmail.com had invalid email format");
         }
 
         public async Task SendConfirmationLinkAsync(ApplicationUser user,
@@ -61,34 +45,44 @@ namespace Finite_State_Machine_Designer.Components.Account
         {
             try
             {
-                _ = MailboxAddress.TryParse(
-                    _config.DisplayAddress, out MailboxAddress fromAddress);
-                if (MailboxAddress.TryParse(
-                    email, out MailboxAddress toAddress))
+                if (await _smtpFactory.InitialiseClient() is SmtpClient smtpClient
+                    && MailboxAddress.TryParse(email, out MailboxAddress toAddress))
                 {
                     var message = new MimeMessage();
-                    message.From.Add(fromAddress);
+                    message.From.Add(_fromServiceAddress);
                     message.To.Add(toAddress);
                     message.Subject = "FSM Designer Confirm Email";
 
-                    message.Body = new TextPart("html")
+                    message.Body = new BodyBuilder()
                     {
-                        Text = _confirmEmailContent
+                        TextBody = _confirmEmailContentText
+                            .Replace("{Confirmation Link}", confirmationLink),
+                        HtmlBody = _confirmEmailContentHtml
                             .Replace("{Confirmation Link}", confirmationLink)
-                    };
+                    }.ToMessageBody();
 
                     string response
-                        = await _smtpClient.SendAsync(_formatOptions, message);
+                        = await smtpClient.SendAsync(_formatOptions, message);
                     _logger.LogInformation(
                         "'smtp.gmail.com' response message: {Response}", response);
+
+                    await smtpClient.DisconnectAsync(true);
+                    smtpClient.Dispose();
                 }
                 else
-                    throw new FormatException(
-                        $"Invalid recipient email address - '{email}'");
+                {
+                    _logger.LogError("Couldn't send {MsgPart2} {MsgPart3}",
+                        "the confirmation link via email due to ",
+                        "smtp client unavailable at the moment");
+                    throw new InvalidOperationException(
+                        $"Couldn't send Confirmation Email to address '{email}'"
+                    );
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError("{Error}", ex.ToString());
+                throw;
             }
         }
 
@@ -96,7 +90,7 @@ namespace Finite_State_Machine_Designer.Components.Account
             string email, string resetCode)
         {
             _logger.LogInformation(
-                "Password reset email Address: {Address}", _config.DisplayAddress);
+                "Password reset email Address: {Address}", _fromServiceAddress);
             return Task.CompletedTask;
         }
 
@@ -104,14 +98,8 @@ namespace Finite_State_Machine_Designer.Components.Account
             string email, string resetLink)
         {
             _logger.LogInformation(
-                "Password reset email Address: {Address}", _config.DisplayAddress);
+                "Password reset email Address: {Address}", _fromServiceAddress);
             return Task.CompletedTask;
-        }
-
-        ~IdentityEmailSender()
-        {
-            _smtpClient?.Disconnect(true);
-            _smtpClient?.Dispose();
         }
     }
 }
