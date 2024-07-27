@@ -18,6 +18,9 @@ builder.Services
     )
     .Configure<EmailContentPaths>(
         builder.Configuration.GetSection("EmailContentPaths")
+    )
+    .Configure<UsersConfig>(
+        builder.Configuration.GetSection("UsersConfig")
     );
 
 // Add services to the container.
@@ -55,7 +58,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+var connectionString = builder.Configuration
+    .GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
@@ -71,6 +75,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(
 builder.Services.AddSingleton<SmtpFactory>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
     IdentityEmailSender>();
+builder.Services.AddHostedService<DeleteUnconfirmedUsersService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

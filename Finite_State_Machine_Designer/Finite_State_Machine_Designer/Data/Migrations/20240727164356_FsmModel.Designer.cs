@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Finite_State_Machine_Designer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240622164013_FsmModel")]
+    [Migration("20240727164356_FsmModel")]
     partial class FsmModel
     {
         /// <inheritdoc />
@@ -21,7 +21,7 @@ namespace Finite_State_Machine_Designer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "8.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -179,6 +179,9 @@ namespace Finite_State_Machine_Designer.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("CreationTime")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)

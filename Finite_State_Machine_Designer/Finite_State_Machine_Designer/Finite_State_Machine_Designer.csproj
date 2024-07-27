@@ -9,11 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="EmailContent\ConfirmationEmail.html" />
+    <None Remove="EmailContent\EmailLayout.html" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="EmailContent\ConfirmationEmail.html">
+    <Content Include="EmailContent\EmailLayout.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

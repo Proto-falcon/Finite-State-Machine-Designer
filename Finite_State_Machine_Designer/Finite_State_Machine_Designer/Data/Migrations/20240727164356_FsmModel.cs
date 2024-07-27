@@ -11,6 +11,13 @@ namespace Finite_State_Machine_Designer.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<long>(
+                name: "CreationTime",
+                table: "AspNetUsers",
+                type: "bigint",
+                nullable: false,
+                defaultValue: 0L);
+
             migrationBuilder.CreateTable(
                 name: "StateMachines",
                 columns: table => new
@@ -136,6 +143,10 @@ namespace Finite_State_Machine_Designer.Migrations
 
             migrationBuilder.DropTable(
                 name: "StateMachines");
+
+            migrationBuilder.DropColumn(
+                name: "CreationTime",
+                table: "AspNetUsers");
         }
     }
 }

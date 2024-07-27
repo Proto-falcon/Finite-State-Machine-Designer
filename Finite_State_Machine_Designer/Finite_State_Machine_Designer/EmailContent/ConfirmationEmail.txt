@@ -1,5 +1,0 @@
-﻿Finite State Machine Designer
-
-Confirm Email
-
-Click <a href="{Confirmation Link}">here</a> to confirm your email address.
