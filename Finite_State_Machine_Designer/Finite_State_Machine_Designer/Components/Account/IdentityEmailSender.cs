@@ -27,7 +27,7 @@ namespace Finite_State_Machine_Designer.Components.Account
             ILogger<IdentityEmailSender> logger)
         {
             _smtpFactory = smtpFactory;
-            string htmlContentPath = contentPaths.Value.Confirmation;
+            string htmlContentPath = contentPaths.Value.EmailLayout;
             _confirmEmailContentHtml 
                 = File.ReadAllText(htmlContentPath);
             _confirmEmailContentText

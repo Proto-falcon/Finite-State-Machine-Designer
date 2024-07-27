@@ -2,6 +2,6 @@
 {
     public class EmailContentPaths
     {
-        public string Confirmation { get; set; } = "";
+        public string EmailLayout { get; set; } = "";
     }
 }
