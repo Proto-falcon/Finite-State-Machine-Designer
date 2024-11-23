@@ -4,6 +4,7 @@ using Finite_State_Machine_Designer.Components.Account;
 using Finite_State_Machine_Designer.Configuration;
 using Finite_State_Machine_Designer.Data;
 using Finite_State_Machine_Designer.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Identity;
@@ -38,25 +39,32 @@ builder.Services.TryAddEnumerable(
     ServiceDescriptor.Scoped<CircuitHandler, UserCircuitHandler>());
 
 builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(options =>
+AuthenticationBuilder authBuilder = builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddGoogle(googleOptions =>
-    {
-        GoogleAuth googleAuthOptions = new ();
-        builder.Configuration
-            .GetSection("FSM:ExternalAuths:GoogleAuth")
-            .Bind(googleAuthOptions);
+    });
 
-        googleOptions.SaveTokens = true;
-        googleOptions.AccessDeniedPath = "/Account/Login";
-        googleOptions.ClientId = googleAuthOptions.ClientId;
-        googleOptions.ClientSecret = googleAuthOptions.ClientSecret;
-        googleOptions.Validate();
-    })
-    .AddIdentityCookies();
+GoogleAuth googleAuthOptions = new();
+builder.Configuration
+    .GetSection("FSM:ExternalAuths:GoogleAuth")
+    .Bind(googleAuthOptions);
+
+if (!string.IsNullOrWhiteSpace(googleAuthOptions.ClientId)
+        && !string.IsNullOrWhiteSpace(googleAuthOptions.ClientSecret))
+{
+    authBuilder.AddGoogle(googleOptions =>
+        {
+            googleOptions.SaveTokens = true;
+            googleOptions.AccessDeniedPath = "/Account/Login";
+            googleOptions.ClientId = googleAuthOptions.ClientId;
+            googleOptions.ClientSecret = googleAuthOptions.ClientSecret;
+            googleOptions.Validate();
+        })
+        .AddIdentityCookies();
+}
+else
+    authBuilder.AddIdentityCookies();
 
 var connectionString = builder.Configuration
     .GetConnectionString("DefaultConnection") 
