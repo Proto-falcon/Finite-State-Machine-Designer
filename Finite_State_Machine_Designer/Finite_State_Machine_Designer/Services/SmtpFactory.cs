@@ -16,11 +16,11 @@ namespace Finite_State_Machine_Designer.Services
             {
                 var emailClient = new SmtpClient();
                 await emailClient.ConnectAsync(_config.SmtpServer,
-                    _config.Port, (SecureSocketOptions)_config.SecureSocketOptions);
+                    _config.Port, SecureSocketOptions.StartTls);
 
                 await emailClient.AuthenticateAsync(
                 new SaslMechanismLogin(
-                        _config.DisplayAddress, _config.Password)
+                        _config.UserName, _config.Password)
                 );
                 return emailClient;
             }

@@ -3,3 +3,8 @@
 {Title}
 
 {Message}
+
+Don't reply to this email.
+
+Yours Sincerely,
+Tobi Adeniji
