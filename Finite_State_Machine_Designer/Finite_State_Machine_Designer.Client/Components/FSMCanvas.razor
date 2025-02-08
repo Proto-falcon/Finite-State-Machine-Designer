@@ -1,6 +1,7 @@
 ﻿@using Enums
 @inherits ModuleCheckBaseComponent
 @rendermode InteractiveWebAssembly
+@inject NavigationManager Navigation
 @implements IAsyncDisposable
 @inject IFSMDrawer _fsmDrawer
 @inject ILogger<FSMCanvas> _logger
@@ -17,21 +18,19 @@
 	<button class="canvas-button" @onclick="ExportCanvas">Export</button>
 	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
 	<AuthorizeView>
-		<button class="canvas-button">
-			<a class="remove-link-style" href="MyFSMs?saveCurrent=true">
-				Save
-			</a>
+		<button class="canvas-button" @onclick="NavToSave">
+			Save
 		</button>
 	</AuthorizeView>
 
 	<button title="ctrl+." class="canvas-button"
-			style="@(_superScriptMode ? "background-color:#a45cbd": null)"
-			@onclick="ToggleSuperScriptHandler">
+	style="@(_superScriptMode ? "background-color:#a45cbd": null)"
+	@onclick="ToggleSuperScriptHandler">
 		aˣ
 	</button>
 	<button title="ctrl+," class="canvas-button"
-			style="@(_subScriptMode ? "background-color:#a45cbd": null)"
-			@onclick="ToggleSubScriptHandler">
+	style="@(_subScriptMode ? "background-color:#a45cbd": null)"
+	@onclick="ToggleSubScriptHandler">
 		aₓ
 	</button>
 </div>
@@ -41,28 +40,28 @@
 		<div class="canvas-name-group">
 			<label for="canvasName">Name:</label>
 			<input id="canvasName" class="canvas-name" type="text" name="name" placeholder="Name"
-				   @bind:event="oninput" @bind="_fsmDrawer.FSM.Name" />
+			@bind:event="oninput" @bind="_fsmDrawer.FSM.Name" />
 		</div>
 		<div class="canvas-desc-group">
 			<label class="canvas-desc-label" for="canvasDesc">Description:</label>
 			<textarea id="canvasDesc" name="Description" placeholder="Description" rows="10" cols="50"
-				   @bind:event="oninput" @bind="_fsmDrawer.FSM.Description" />
+			@bind:event="oninput" @bind="_fsmDrawer.FSM.Description" />
 		</div>
 	</form>
 </details>
 <canvas
-	id="FSMCanvas"
-	@ref="_canvasElement"
-	contenteditable="true"
-	height="@Height"
-	width="@Width"
-	@onmousedown:preventDefault
-	@onmousedown="MouseDownHandler"
-	@onmouseup="MouseUpHandler"
-	@onkeydown:preventDefault
-	@onkeydown="KeyHandler"
-	@onmousemove="MoveMouseHandler"
-	@onblur="DeselectObject"
+id="FSMCanvas"
+@ref="_canvasElement"
+contenteditable="true"
+height="@Height"
+width="@Width"
+@onmousedown:preventDefault
+@onmousedown="MouseDownHandler"
+@onmouseup="MouseUpHandler"
+@onkeydown:preventDefault
+@onkeydown="KeyHandler"
+@onmousemove="MoveMouseHandler"
+@onblur="DeselectObject"
 >
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
@@ -340,6 +339,9 @@
 			}
 		}
 	}
+
+	private void NavToSave(MouseEventArgs mouseEventArgs)
+		=> Navigation.NavigateTo("MyFSMs?saveCurrent=true");
 	#endregion
 
 	#region Key Events

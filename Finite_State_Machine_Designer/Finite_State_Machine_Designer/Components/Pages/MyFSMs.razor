@@ -22,12 +22,17 @@
 
 <div class="current-fsm-section"
     style="@(!_displayCurrentFsm ? "display:none;" : "")
-    @(_loadingFsmView ? "grid-template-columns: 1fr;" : "")">
+    @(_loadingFsmView | _currentFsm is null ? "grid-template-columns: 1fr;" : "")">
     @if (_loadingFsmView)
     { <Loading Height="10em" Width="10em"
         Style="border-width: 1em; justify-self: center;" /> }
     else if (_currentFsm is null)
-    { <h2>No FSM currently in use</h2> }
+    {
+        <p>
+            <h2 class="no-fsm-display">No FSM currently in use</h2>
+            <button @onclick="CloseDisplayFsmHandler">✖️</button>
+        </p>
+    }
     else
     {
         <div>
@@ -71,8 +76,7 @@
             </div>
         </div>
         <div class="fsm-svg-section">
-            <button 
-            @onclick="e => _displayCurrentFsm = false">✖️</button>
+            <button @onclick="CloseDisplayFsmHandler">✖️</button>
             <img class="fsm-svg" @onload="e => RevokeUrlAsync(_fsmSvgUrl)"
             src="@_fsmSvgUrl" />
         </div>
@@ -193,6 +197,7 @@ else
     [SupplyParameterFromQuery]
     [Parameter]
     public bool SaveCurrent { get; set; }
+    private bool _saveFsm = false;
 
     private ApplicationUser? _user = null;
     /// <summary>
@@ -254,8 +259,11 @@ else
             await InitialiseUserAsync();
             StateHasChanged();
         }
-        if (SaveCurrent)
+        if (SaveCurrent && _currentDrawnFsm is not null)
+            await DisplayFsmAsync(_currentDrawnFsm);
+        if (_saveFsm | SaveCurrent)
         {
+            SaveCurrent = false;
             await SaveCurrentFSMAsync();
             await GetUserFsms();
         }
@@ -336,6 +344,12 @@ else
         }
     }
 
+    private void CloseDisplayFsmHandler(MouseEventArgs mouseEventArgs)
+    {
+        _displayCurrentFsm = false;
+        Navigation.NavigateTo("MyFSMs");
+    }
+
     private async void GetMoreFsmsHandler(MouseEventArgs mouseEventArgs)
     {
         if (_user is not null)
@@ -390,7 +404,7 @@ else
     private async void RevokeUrlAsync(string url)
         => await JS.InvokeVoidAsync("URL.revokeObjectURL", url);
 
-    private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => SaveCurrent = true;
+    private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => _saveFsm = true;
 
     private async void HandleLocationChangedAsync(object? sender,
         LocationChangedEventArgs e)

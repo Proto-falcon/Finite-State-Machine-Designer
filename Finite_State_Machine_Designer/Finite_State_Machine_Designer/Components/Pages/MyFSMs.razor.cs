@@ -98,7 +98,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
         {
             if (CheckJsModule(JsModule))
             {
-                SaveCurrent = false;
+                _saveFsm = false;
                 _currentlySaving = true;
                 _currentSaved = false;
                 _errorMsg = "";
@@ -106,9 +106,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 if (_currentDrawnFsm is not null && _user is not null)
                 {
                     if (string.IsNullOrWhiteSpace(_currentDrawnFsm.Name))
-                    {
                         _errorMsg = "Please enter a name.";
-                    }
                     else
                         try
                         {

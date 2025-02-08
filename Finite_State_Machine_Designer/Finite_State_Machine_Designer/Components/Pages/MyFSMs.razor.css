@@ -16,6 +16,11 @@
     background-color: #313338dd;
 }
 
+.no-fsm-display {
+    display: inline;
+    margin-right: 3em;
+}
+
 .canvas-name-group {
     width: 40em;
 }
