@@ -1,4 +1,5 @@
 ﻿using Microsoft.JSInterop;
+using Finite_State_Machine_Designer.Models.FSM;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {

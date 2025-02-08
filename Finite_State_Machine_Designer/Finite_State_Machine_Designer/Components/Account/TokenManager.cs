@@ -113,12 +113,12 @@ namespace Finite_State_Machine_Designer.Components.Account
         private async static Task<bool> RevokeGoogleAccessToken(
             string accessToken, ILogger? logger = null)
         {
-            using HttpClient revokeClient = new ();
+        using HttpClient revokeClient = new ();
             FormUrlEncodedContent content = new ([new ("token", accessToken)]);
 
             try
             {
-                using HttpResponseMessage response =
+            using HttpResponseMessage response =
                     await revokeClient
                     .PostAsync("https://oauth2.googleapis.com/revoke", content);
                 if (!response.IsSuccessStatusCode)

@@ -1,7 +1,9 @@
-﻿using Finite_State_Machine_Designer.Client.FSM;
+﻿using Finite_State_Machine_Designer.Data.Identity;
+using Finite_State_Machine_Designer.Models.FSM;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Logging;
 
 namespace Finite_State_Machine_Designer.Data
 {
@@ -18,7 +20,7 @@ namespace Finite_State_Machine_Designer.Data
         /// </returns>
         public async static Task<bool> DeleteFsms(DbContext dbContext,
             ILogger? logger = null,
-            params string[] fsmIds)
+            params Guid[] fsmIds)
         {
             if (fsmIds.Length <= 0)
                 return true;
@@ -28,7 +30,7 @@ namespace Finite_State_Machine_Designer.Data
 
             for (int i = 0; i < fsmIds.Length; i++)
             {
-                string fsmId = fsmIds[i];
+                Guid fsmId = fsmIds[i];
                 parameters.Add(new SqlParameter($"id{i}", fsmId));
                 deleteQuery += $"@id{i}, ";
             }
@@ -68,12 +70,12 @@ namespace Finite_State_Machine_Designer.Data
                 .Query()
                 .Where(fsm => fsm.TimeUpdated < maxTime)
                 .OrderByDescending(fsm => fsm.TimeUpdated)
-                .Take(numOfFsms)
+                .Take(numOfFsms + 1)
                 .AsNoTrackingWithIdentityResolution()
                 .ToArrayAsync();
-            if (newFsms.Length <= 0)
+            user.StateMachines.AddRange(newFsms[..^1]);
+            if (newFsms.Length <= numOfFsms)
                 return false;
-            user.StateMachines.AddRange(newFsms);
             return true;
         }
 
@@ -147,12 +149,12 @@ namespace Finite_State_Machine_Designer.Data
         /// </param>
         /// <exception cref="OperationCanceledException"/>
         public async static Task AddFSMAsync(DbContext dbContext,
-            FiniteStateMachine fsm, string userId,
+            FiniteStateMachine fsm, Guid userId,
             bool newGuids = true)
         {
-            if (newGuids || !Guid.TryParse(fsm.Id, out _))
+            if (newGuids)
             {
-                fsm.Id = Guid.NewGuid().ToString();
+                fsm.Id = Guid.NewGuid();
                 fsm.TimeCreated = DateTime.UtcNow;
             }
             fsm.TimeUpdated = DateTime.UtcNow;
@@ -173,7 +175,7 @@ namespace Finite_State_Machine_Designer.Data
             catch (OperationCanceledException)
             {
                 if (newGuids)
-                    fsm.Id = string.Empty;
+                    fsm.Id = Guid.Empty;
                 throw;
             }
         }
@@ -185,7 +187,7 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="dbContext">dbContext to insert FSM to database</param>
         /// <exception cref="OperationCanceledException"/>
         public async static Task UpdateFsmAsync(DbContext dbContext,
-            FiniteStateMachine fsm, string userId)
+            FiniteStateMachine fsm, Guid userId)
         {
             await dbContext.Database
                 .ExecuteSqlAsync(@$"DELETE FROM dbo.StateMachines
@@ -220,9 +222,9 @@ namespace Finite_State_Machine_Designer.Data
             for (int i = 0; i < fsm.States.Count; i++)
             {
                 FiniteState state = fsm.States[i];
-                if (newGuids || !Guid.TryParse(state.Id, out _))
+                if (newGuids)
                 {
-                    state.Id = Guid.NewGuid().ToString();
+                    state.Id = Guid.NewGuid();
                     addedStates.Add(state);
                 }
                 parameters.Add(new($"Id{i}", state.Id));
@@ -245,7 +247,7 @@ namespace Finite_State_Machine_Designer.Data
             catch (OperationCanceledException)
             {
                 foreach (var state in addedStates)
-                    state.Id = string.Empty;
+                    state.Id = Guid.Empty;
                 throw;
             }
         }
@@ -276,8 +278,8 @@ namespace Finite_State_Machine_Designer.Data
             for (int i = 0; i < fsm.Transitions.Count; i++)
             {
                 Transition transition = fsm.Transitions[i];
-                if (newGuids || !Guid.TryParse(transition.Id, out _))
-                    transition.Id = Guid.NewGuid().ToString();
+                if (newGuids)
+                    transition.Id = Guid.NewGuid();
                 transition.FromStateId = transition.FromState.Id;
                 transition.ToStateId = transition.ToState.Id;
 
@@ -311,7 +313,7 @@ namespace Finite_State_Machine_Designer.Data
             catch (OperationCanceledException)
             {
                 foreach (Transition trannsition in addedTransitions)
-                    trannsition.Id = string.Empty;
+                    trannsition.Id = Guid.Empty;
                 throw;
             }
         }

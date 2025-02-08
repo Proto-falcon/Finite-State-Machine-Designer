@@ -1,12 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-using System;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Finite_State_Machine_Designer.Migrations
+namespace Finite_State_Machine_Designer.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateIdentitySchema : Migration
+    public partial class Schema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +15,7 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
@@ -29,7 +29,8 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -56,7 +57,7 @@ namespace Finite_State_Machine_Designer.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -77,7 +78,7 @@ namespace Finite_State_Machine_Designer.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -96,10 +97,10 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -116,8 +117,8 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -140,9 +141,9 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(221)", maxLength: 221, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(221)", maxLength: 221, nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -154,6 +155,94 @@ namespace Finite_State_Machine_Designer.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StateMachines",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", fixedLength: true, maxLength: 36, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Width = table.Column<int>(type: "int", nullable: false),
+                    Height = table.Column<int>(type: "int", nullable: false),
+                    TimeCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TimeUpdated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TransitionSearchRadius = table.Column<int>(type: "int", nullable: false),
+                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StateMachines", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StateMachines_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "States",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", fixedLength: true, nullable: false),
+                    IsDrawable = table.Column<bool>(type: "bit", nullable: false),
+                    Radius = table.Column<float>(type: "real", nullable: false),
+                    IsFinalState = table.Column<bool>(type: "bit", nullable: false),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FiniteStateMachineId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Coordinate_X = table.Column<double>(type: "float", nullable: false),
+                    Coordinate_Y = table.Column<double>(type: "float", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_States", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_States_StateMachines_FiniteStateMachineId",
+                        column: x => x.FiniteStateMachineId,
+                        principalTable: "StateMachines",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Transitions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FromStateId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ToStateId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SelfAngle = table.Column<double>(type: "float", nullable: false),
+                    ParallelAxis = table.Column<double>(type: "float", nullable: false),
+                    PerpendicularAxis = table.Column<double>(type: "float", nullable: false),
+                    MinPerpendicularDistance = table.Column<double>(type: "float", nullable: false),
+                    IsReversed = table.Column<bool>(type: "bit", nullable: false),
+                    Radius = table.Column<double>(type: "float", nullable: false),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FiniteStateMachineId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CenterArc_X = table.Column<double>(type: "float", nullable: false),
+                    CenterArc_Y = table.Column<double>(type: "float", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Transitions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Transitions_StateMachines_FiniteStateMachineId",
+                        column: x => x.FiniteStateMachineId,
+                        principalTable: "StateMachines",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Transitions_States_FromStateId",
+                        column: x => x.FromStateId,
+                        principalTable: "States",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Transitions_States_ToStateId",
+                        column: x => x.ToStateId,
+                        principalTable: "States",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -186,7 +275,9 @@ namespace Finite_State_Machine_Designer.Migrations
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
                 table: "AspNetUsers",
-                column: "NormalizedEmail");
+                column: "NormalizedEmail",
+                unique: true,
+                filter: "[NormalizedEmail] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
@@ -194,6 +285,31 @@ namespace Finite_State_Machine_Designer.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StateMachines_ApplicationUserId",
+                table: "StateMachines",
+                column: "ApplicationUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_States_FiniteStateMachineId",
+                table: "States",
+                column: "FiniteStateMachineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transitions_FiniteStateMachineId",
+                table: "Transitions",
+                column: "FiniteStateMachineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transitions_FromStateId",
+                table: "Transitions",
+                column: "FromStateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transitions_ToStateId",
+                table: "Transitions",
+                column: "ToStateId");
         }
 
         /// <inheritdoc />
@@ -215,7 +331,16 @@ namespace Finite_State_Machine_Designer.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Transitions");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "States");
+
+            migrationBuilder.DropTable(
+                name: "StateMachines");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

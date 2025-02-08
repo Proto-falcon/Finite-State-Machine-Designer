@@ -1,4 +1,5 @@
 ﻿using Microsoft.JSInterop;
+using Finite_State_Machine_Designer.Models.FSM;
 
 namespace Finite_State_Machine_Designer.Client.FSM
 {
@@ -59,8 +60,6 @@ namespace Finite_State_Machine_Designer.Client.FSM
 			_nonSelectedColour = colour;
 			_selectedColour = selectedColour;
 			_backgroundColour = backgroundColour;
-			_logger.LogInformation("Current state colours are:\nColour={Colour}\nSelected={Selected}",
-				_nonSelectedColour,_selectedColour);
 		}
 
 		public void SetJsModule(IJSObjectReference jsObjectRef)

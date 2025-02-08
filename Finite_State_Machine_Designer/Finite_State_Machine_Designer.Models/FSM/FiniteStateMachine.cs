@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Finite_State_Machine_Designer.Client.FSM
+namespace Finite_State_Machine_Designer.Models.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
     {
-		public string Id { get; set; } = string.Empty;
+		public Guid Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
 

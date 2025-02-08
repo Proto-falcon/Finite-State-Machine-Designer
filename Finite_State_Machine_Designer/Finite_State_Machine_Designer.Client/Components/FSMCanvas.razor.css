@@ -63,7 +63,7 @@
     width: fit-content;
     list-style: none;
     text-align: right;
-    background-color: #808080;
+    border-color: #808080;
     padding: 5px;
     border-radius: 5px;
 }

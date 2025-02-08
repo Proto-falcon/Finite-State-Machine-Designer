@@ -1,4 +1,4 @@
-using Finite_State_Machine_Designer.Client;
+using Finite_State_Machine_Designer.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;

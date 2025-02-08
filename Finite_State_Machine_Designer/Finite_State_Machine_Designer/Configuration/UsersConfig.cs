@@ -2,6 +2,7 @@
 {
     public class UsersConfig
     {
+        public int VisibleFsmsLimit { get; set; }
         public int MaxUnconfirmedDays { get; set; }
         public int DeleteUnconfirmedInterval { get; set; }
     }

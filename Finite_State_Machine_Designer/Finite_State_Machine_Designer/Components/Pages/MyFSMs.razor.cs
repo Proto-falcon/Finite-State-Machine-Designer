@@ -1,7 +1,8 @@
-﻿using Finite_State_Machine_Designer.Client.FSM;
+﻿using Finite_State_Machine_Designer.Models.FSM;
 using Finite_State_Machine_Designer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using Finite_State_Machine_Designer.Data.Identity;
 
 namespace Finite_State_Machine_Designer.Components.Pages
 {
@@ -23,7 +24,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                         .Collection(user => user.StateMachines)
                         .Query()
                         .OrderByDescending(fsm => fsm.TimeUpdated)
-                        .Take(_availableFsmsLimit)
+                        .Take(_userConfig.Value.VisibleFsmsLimit) 
                         .AsNoTrackingWithIdentityResolution()
                         .ToListAsync();
                 }
@@ -63,7 +64,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 if (_user.StateMachines.Count > 0)
                     _lastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;
-                if (_user.StateMachines.Count < _availableFsmsLimit)
+                if (_user.StateMachines.Count < _userConfig.Value.VisibleFsmsLimit)
                     _loadMoreFsms = false;
             }
             else

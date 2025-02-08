@@ -1,3 +1,4 @@
+using Finite_State_Machine_Designer.Models.FSM;
 using Finite_State_Machine_Designer.Client;
 using Finite_State_Machine_Designer.Client.FSM;
 using Microsoft.AspNetCore.Components.Authorization;

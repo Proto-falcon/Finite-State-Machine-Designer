@@ -1,4 +1,4 @@
-using Finite_State_Machine_Designer.Data;
+using Finite_State_Machine_Designer.Data.Identity;
 using Microsoft.AspNetCore.Identity;
 
 namespace Finite_State_Machine_Designer.Components.Account

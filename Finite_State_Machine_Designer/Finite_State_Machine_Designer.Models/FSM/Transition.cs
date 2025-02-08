@@ -1,4 +1,4 @@
-﻿namespace Finite_State_Machine_Designer.Client.FSM
+﻿namespace Finite_State_Machine_Designer.Models.FSM
 {
     public class Transition
     {
@@ -10,7 +10,7 @@
             _toState = toState;
         }
 
-        public string Id { get; set; } = string.Empty;
+        public Guid Id { get; set; }
 
         private FiniteState _fromState = new() { IsDrawable = false };
         private FiniteState _toState = new() { IsDrawable = false };
@@ -26,7 +26,7 @@
             }
         }
 
-        public string FromStateId { get; set; } = string.Empty;
+        public Guid FromStateId { get; set; }
 
         public FiniteState ToState
         {
@@ -39,7 +39,7 @@
             }
         }
 
-        public string ToStateId { get; set; } = string.Empty;
+        public Guid ToStateId { get; set; }
 
         /// <summary>
         /// It's the <see cref="CanvasCoordinate"/> that the transition originates from the edge
@@ -279,7 +279,7 @@
         public override string ToString()
         {
             string text = $"(";
-            if (!string.IsNullOrWhiteSpace(Id))
+            if (Id != Guid.Empty)
                 text += $"id: {Id}, ";
             text += $"{_fromState} -> {_toState}, Text: '{_text}', ";
             if (!IsCurved)

@@ -1,4 +1,4 @@
-﻿using Finite_State_Machine_Designer.Client.FSM;
+﻿using Finite_State_Machine_Designer.Models.FSM;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using System.Text.RegularExpressions;

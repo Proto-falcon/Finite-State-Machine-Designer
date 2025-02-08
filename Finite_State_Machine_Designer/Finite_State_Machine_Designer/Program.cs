@@ -3,6 +3,7 @@ using Finite_State_Machine_Designer.Components;
 using Finite_State_Machine_Designer.Components.Account;
 using Finite_State_Machine_Designer.Configuration;
 using Finite_State_Machine_Designer.Data;
+using Finite_State_Machine_Designer.Data.Identity;
 using Finite_State_Machine_Designer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -44,7 +45,6 @@ AuthenticationBuilder authBuilder = builder.Services.AddAuthentication(options =
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     });
-
 GoogleAuth googleAuthOptions = new();
 builder.Configuration
     .GetSection("FSM:ExternalAuths:GoogleAuth")
@@ -70,9 +70,10 @@ var connectionString = builder.Configuration
     .GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options => 
+    options.UseSqlServer(connectionString,
+        x => x.MigrationsAssembly("Finite_State_Machine_Designer.Data"))
+);
 
 builder.Services.AddIdentityCore<ApplicationUser>(
         options => options.SignIn.RequireConfirmedAccount = true)
@@ -84,6 +85,11 @@ builder.Services.AddSingleton<SmtpFactory>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
     IdentityEmailSender>();
 builder.Services.AddHostedService<DeleteUnconfirmedUsersService>();
+builder.Services.AddHsts(options =>
+{
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(1);
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

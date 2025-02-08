@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Finite_State_Machine_Designer.Client.FSM
+namespace Finite_State_Machine_Designer.Models.FSM
 {
 	public class FiniteState
 	{
@@ -13,7 +13,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		}
 
 		[JsonIgnore]
-		public string Id { get; set; } = string.Empty;
+		public Guid Id { get; set; }
 
         private CanvasCoordinate _coordinate;
 
@@ -67,7 +67,7 @@ namespace Finite_State_Machine_Designer.Client.FSM
 		public override string ToString()
 		{
 			string text = $"co-ordinate: {_coordinate}, Radius: {_radius}, Text: '{_text}', FinalState: {_isFinalState})";
-			if (!string.IsNullOrWhiteSpace(Id))
+			if (Id != Guid.Empty)
 				text = $"(id: {Id}, {text}";
 			else
 				text = $"({text}";

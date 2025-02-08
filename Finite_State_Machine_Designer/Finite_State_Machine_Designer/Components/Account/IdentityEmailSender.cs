@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using MailKit.Net.Smtp;
-using Finite_State_Machine_Designer.Data;
 using MimeKit;
 using Microsoft.Extensions.Options;
 using Finite_State_Machine_Designer.Configuration;
 using Finite_State_Machine_Designer.Services;
+using Finite_State_Machine_Designer.Data.Identity;
 
 namespace Finite_State_Machine_Designer.Components.Account
 {

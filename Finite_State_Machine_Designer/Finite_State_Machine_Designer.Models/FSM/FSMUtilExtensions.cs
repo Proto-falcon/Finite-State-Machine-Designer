@@ -1,4 +1,4 @@
-﻿namespace Finite_State_Machine_Designer.Client.FSM
+﻿namespace Finite_State_Machine_Designer.Models.FSM
 {
     public static class FSMUtilExtensions
     {

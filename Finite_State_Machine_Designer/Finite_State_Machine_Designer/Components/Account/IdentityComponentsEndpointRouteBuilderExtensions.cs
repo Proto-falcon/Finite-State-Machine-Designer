@@ -1,6 +1,6 @@
 using Finite_State_Machine_Designer.Components.Account.Pages;
 using Finite_State_Machine_Designer.Components.Account.Pages.Manage;
-using Finite_State_Machine_Designer.Data;
+using Finite_State_Machine_Designer.Data.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;

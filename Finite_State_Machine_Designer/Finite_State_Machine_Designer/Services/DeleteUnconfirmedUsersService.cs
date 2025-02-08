@@ -21,7 +21,7 @@ namespace Finite_State_Machine_Designer.Services
                 = TimeSpan.FromDays(usersConfig.Value.DeleteUnconfirmedInterval);
             TimeSpan maxUnconfirmedTime
                 = TimeSpan.FromDays(usersConfig.Value.MaxUnconfirmedDays);
-            using PeriodicTimer timer = new(deletionInterval);
+        using PeriodicTimer timer = new(deletionInterval);
 
             try
             {
