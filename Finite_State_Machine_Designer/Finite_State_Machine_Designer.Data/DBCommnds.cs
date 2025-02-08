@@ -73,7 +73,10 @@ namespace Finite_State_Machine_Designer.Data
                 .Take(numOfFsms + 1)
                 .AsNoTrackingWithIdentityResolution()
                 .ToArrayAsync();
-            user.StateMachines.AddRange(newFsms[..^1]);
+            if (newFsms.Length > numOfFsms)
+                user.StateMachines.AddRange(newFsms[..^1]);
+            else
+                user.StateMachines.AddRange(newFsms);
             if (newFsms.Length <= numOfFsms)
                 return false;
             return true;
