@@ -155,32 +155,23 @@ namespace Finite_State_Machine_Designer.Data
             FiniteStateMachine fsm, Guid userId,
             bool newGuids = true)
         {
-            if (newGuids)
+            if (newGuids | fsm.Id == Guid.Empty)
             {
                 fsm.Id = Guid.NewGuid();
                 fsm.TimeCreated = DateTime.UtcNow;
             }
             fsm.TimeUpdated = DateTime.UtcNow;
             
-            try
-            {
-                await dbContext.Database
-                    .ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
-                (Id, ApplicationUserId, Name, Description, Width, Height,
-                TransitionSearchRadius, timeCreated, timeUpdated)
-                VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description},
-                {fsm.Width}, {fsm.Height}, {fsm.TransitionSearchRadius},
-                {fsm.TimeCreated}, {fsm.TimeUpdated})");
+            await dbContext.Database
+                .ExecuteSqlAsync($@"INSERT INTO dbo.StateMachines
+            (Id, ApplicationUserId, Name, Description, Width, Height,
+            TransitionSearchRadius, timeCreated, timeUpdated)
+            VALUES ({fsm.Id}, {userId}, {fsm.Name}, {fsm.Description},
+            {fsm.Width}, {fsm.Height}, {fsm.TransitionSearchRadius},
+            {fsm.TimeCreated}, {fsm.TimeUpdated})");
 
-                await AddStatesAsync(dbContext, fsm, newGuids);
-                await AddTransitionsAsync(dbContext, fsm, newGuids);
-            }
-            catch (OperationCanceledException)
-            {
-                if (newGuids)
-                    fsm.Id = Guid.Empty;
-                throw;
-            }
+            await AddStatesAsync(dbContext, fsm, newGuids);
+            await AddTransitionsAsync(dbContext, fsm, newGuids);
         }
 
         /// <summary>
@@ -225,7 +216,7 @@ namespace Finite_State_Machine_Designer.Data
             for (int i = 0; i < fsm.States.Count; i++)
             {
                 FiniteState state = fsm.States[i];
-                if (newGuids)
+                if (newGuids | state.Id == Guid.Empty)
                 {
                     state.Id = Guid.NewGuid();
                     addedStates.Add(state);
@@ -242,17 +233,9 @@ namespace Finite_State_Machine_Designer.Data
                 insertStatesCommand += " " + $@"(@Id{i}, @FsmId{i}, @Drawable{i},
                 @Final{i}, @CoordX{i}, @CoordY{i}, @Radius{i}, @Text{i}),";
             }
-            try
-            {
-                await dbContext.Database
-                    .ExecuteSqlRawAsync(insertStatesCommand[..^1], parameters);
-            }
-            catch (OperationCanceledException)
-            {
-                foreach (var state in addedStates)
-                    state.Id = Guid.Empty;
-                throw;
-            }
+
+            await dbContext.Database
+                .ExecuteSqlRawAsync(insertStatesCommand[..^1], parameters);
         }
 
         /// <summary>
@@ -281,7 +264,7 @@ namespace Finite_State_Machine_Designer.Data
             for (int i = 0; i < fsm.Transitions.Count; i++)
             {
                 Transition transition = fsm.Transitions[i];
-                if (newGuids)
+                if (newGuids | transition.Id == Guid.Empty)
                     transition.Id = Guid.NewGuid();
                 transition.FromStateId = transition.FromState.Id;
                 transition.ToStateId = transition.ToState.Id;
@@ -308,17 +291,9 @@ namespace Finite_State_Machine_Designer.Data
                 @ParallelAxis{i}, @MinPerpDist{i}, @PerAxis{i}, @SelfAngle{i},
                 @Radius{i}, @CentreX{i}, @CentreY{i}, @Reversed{i}),";
             }
-            try
-            {
-                await dbContext.Database
-                    .ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
-            }
-            catch (OperationCanceledException)
-            {
-                foreach (Transition trannsition in addedTransitions)
-                    trannsition.Id = Guid.Empty;
-                throw;
-            }
+            
+            await dbContext.Database
+                .ExecuteSqlRawAsync(insertTransitionsCommand[..^1], parameters);
         }
     }
 }

@@ -67,9 +67,11 @@ export class FiniteState {
  * @typedef {{
  *      id: string,
  *      fromState: FiniteState,
+ *      fromStateId: string,
  *      fromCoord: CanvasCoordinate,
  *      fromAngle: number,
  *      toState: FiniteState,
+ *      toStateId: string,
  *      toCoord: CanvasCoordinate,
  *      toAngle: number,
  *      angle: number,
@@ -86,9 +88,11 @@ export class FiniteState {
 export class Transition {
     id = "";
     fromState = new FiniteState();
+    fromStateId = "";
     fromCoord = new CanvasCoordinate();
     fromAngle = 0;
     toState = new FiniteState();
+    toStateId = "";
     toCoord = new CanvasCoordinate();
     toAngle = 0;
     angle = 0;

@@ -41,19 +41,13 @@ export function saveAsSvg(fsm, colour, backgroundColour, scale = 1) {
  * @param {FiniteStateMachine} fsm
  */
 export function saveAsJson(fsm) {
-    fsm.id = null;
-    fsm.states.forEach(
-        /** @param {FiniteState} state */
-        state => {
-            state.id = null;
-        }
-    );
     fsm.transitions.forEach(
         /** @param {Transition} transition */
         transition => {
-            transition.id = null;
-            transition.fromId = null;
-            transition.toId = null;
+            if (transition.fromState.isDrawable) {
+                transition.fromState = null;
+            }
+            transition.toState = null;
         }
     )
     let fsmJson = new Blob([JSON.stringify(fsm, FSMCanvasUtils.ignoreNullOrEmpty)], { type: "application/json" });
@@ -111,7 +105,26 @@ export async function loadJsonUpload(uploadElement) {
     if (uploadElement !== null || uploadElement !== undefined) {
         if (uploadElement.files < 1) return;
         let file = uploadElement.files[0];
+
+        /** @type {FiniteStateMachine} */
         let fsm = await parseJson(file);
+        if (Array.isArray(fsm.transitions) && Array.isArray(fsm.states)) {
+            fsm.transitions.forEach(transition => {
+                /** @type {FiniteState} */
+                let state;
+                if (!transition.fromState.isDrawable) {
+                    state = fsm.states.filter((state) => state.id === transition.fromStateId).pop();
+                    if (state !== undefined || state !== null) {
+                        transition.fromState = state;
+                    }
+                }
+                state = fsm.states.filter((state) => state.id === transition.toStateId).pop();
+                if (state !== undefined || state !== null) {
+                    transition.toState = state;
+                }
+            });
+        }
+
         return fsm;
     }
     return null;

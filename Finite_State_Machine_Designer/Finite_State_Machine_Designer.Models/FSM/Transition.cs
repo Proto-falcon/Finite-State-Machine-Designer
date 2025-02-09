@@ -2,9 +2,9 @@
 {
     public class Transition
     {
-        public Transition() { }
+        public Transition() => Id = Guid.NewGuid();
 
-        public Transition(FiniteState fromState, FiniteState toState)
+        public Transition(FiniteState fromState, FiniteState toState) : this()
         {
             _fromState = fromState;
             _toState = toState;

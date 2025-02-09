@@ -4,15 +4,14 @@ namespace Finite_State_Machine_Designer.Models.FSM
 {
 	public class FiniteState
 	{
-		public FiniteState() { }
+		public FiniteState() => Id = Guid.NewGuid();
 
-		public FiniteState(CanvasCoordinate coord, float rad)
+		public FiniteState(CanvasCoordinate coord, float rad) : this()
 		{
 			_coordinate = coord;
 			_radius = rad;
 		}
 
-		[JsonIgnore]
 		public Guid Id { get; set; }
 
         private CanvasCoordinate _coordinate;

@@ -347,6 +347,7 @@ else
     private void CloseDisplayFsmHandler(MouseEventArgs mouseEventArgs)
     {
         _displayCurrentFsm = false;
+        _currentSaved = false;
         Navigation.NavigateTo("MyFSMs");
     }
 

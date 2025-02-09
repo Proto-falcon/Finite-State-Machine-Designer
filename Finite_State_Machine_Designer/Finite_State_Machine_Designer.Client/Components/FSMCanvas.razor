@@ -413,9 +413,10 @@ width="@Width"
 					await _fsmDrawer.DrawMachineAsync();
 				}
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				await JS.InvokeVoidAsync("alert", "Json file uploaded is malformed");
+				_logger.LogError(ex, "Json file uploaded is malformed");
+				await JS.InvokeVoidAsync("alert", ex.Message.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault());
 			}
 		}
 	}

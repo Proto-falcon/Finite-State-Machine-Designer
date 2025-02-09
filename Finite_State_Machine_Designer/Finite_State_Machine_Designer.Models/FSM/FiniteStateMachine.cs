@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Finite_State_Machine_Designer.Models.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
     {
+		public FiniteStateMachine() => Id = Guid.NewGuid();
+
 		public Guid Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
@@ -54,10 +57,12 @@ namespace Finite_State_Machine_Designer.Models.FSM
 			set => _transitionSearchRadius = value;
 		}
 
+		[JsonIgnore]
 		[NotMapped]
 		public List<FiniteState> InitialStates => _transitions.Where(x => !x.FromState.IsDrawable && x.ToState.IsDrawable)
 			.Select(x => x.ToState).ToList();
 
+		[JsonIgnore]
         [NotMapped]
         public List<FiniteState> FinalStates => _states.Where(x => x.IsFinalState).ToList();
 
