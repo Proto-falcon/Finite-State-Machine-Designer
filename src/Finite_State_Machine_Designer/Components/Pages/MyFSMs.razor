@@ -84,7 +84,7 @@
 </div>
 @if (_finishLoading)
 {
-    <div class="button-row-grid">
+    <div class="button-row-grid" style="@(_currentDrawnFsm is null ? "grid-template-columns: 1fr 1fr" : null)">
         @if (_currentDrawnFsm is not null)
         {
             <div>
@@ -98,7 +98,7 @@
                 </button>
             </div>
         }
-        <div>
+        <div class="button-row-inputs">
             <input class="fsm-query-input" type="text"
             placeholder="Search for name or description"
             @bind:event="oninput" @bind="_searchFsmQuery" />
