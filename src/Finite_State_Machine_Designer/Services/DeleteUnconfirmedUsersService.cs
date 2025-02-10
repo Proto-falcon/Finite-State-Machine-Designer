@@ -19,17 +19,16 @@ namespace Finite_State_Machine_Designer.Services
         {
             TimeSpan deletionInterval
                 = TimeSpan.FromDays(usersConfig.Value.DeleteUnconfirmedInterval);
-            TimeSpan maxUnconfirmedTime
-                = TimeSpan.FromDays(usersConfig.Value.MaxUnconfirmedDays);
+            int maxUnconfirmedDays = usersConfig.Value.MaxUnconfirmedDays;
         using PeriodicTimer timer = new(deletionInterval);
 
             try
             {
                 await DeleteUnconfirmedUsers(
-                        maxUnconfirmedTime, stoppingToken);
+                        maxUnconfirmedDays, stoppingToken);
                 while (await timer.WaitForNextTickAsync(stoppingToken))
                     await DeleteUnconfirmedUsers(
-                        maxUnconfirmedTime, stoppingToken);
+                        maxUnconfirmedDays, stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -37,7 +36,7 @@ namespace Finite_State_Machine_Designer.Services
             }
         }
 
-        private async Task DeleteUnconfirmedUsers(TimeSpan maxUnconfirmedTime,
+        private async Task DeleteUnconfirmedUsers(int maxUnconfirmedDays,
             CancellationToken cancelToken)
         {
             try
@@ -47,11 +46,11 @@ namespace Finite_State_Machine_Designer.Services
                 int numDeleted = await dbContext.Database.ExecuteSqlAsync(
                     @$"DELETE dbo.AspNetUsers
                     WHERE EmailConfirmed = 0
-                    AND ({DateTime.UtcNow.Ticks} - CreationTime) 
-                    >= {maxUnconfirmedTime.Ticks}", cancelToken);
+                    AND DATEDIFF(day, CreationTime, {DateTime.UtcNow}) 
+                    >= {maxUnconfirmedDays}", cancelToken);
                 logger.LogInformation(
                     "Deleted {Num} users that didn't confirm emails for {Time}",
-                    numDeleted, maxUnconfirmedTime);
+                    numDeleted, maxUnconfirmedDays);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
