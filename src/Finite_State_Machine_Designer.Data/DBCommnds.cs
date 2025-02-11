@@ -157,7 +157,7 @@ namespace Finite_State_Machine_Designer.Data
         {
             if (newGuids | fsm.Id == Guid.Empty)
             {
-                fsm.Id = Guid.NewGuid();
+                fsm.Id = Ulid.NewUlid().ToGuid();
                 fsm.TimeCreated = DateTime.UtcNow;
             }
             fsm.TimeUpdated = DateTime.UtcNow;
@@ -218,7 +218,7 @@ namespace Finite_State_Machine_Designer.Data
                 FiniteState state = fsm.States[i];
                 if (newGuids | state.Id == Guid.Empty)
                 {
-                    state.Id = Guid.NewGuid();
+                    state.Id = Ulid.NewUlid().ToGuid();
                     addedStates.Add(state);
                 }
                 parameters.Add(new($"Id{i}", state.Id));
@@ -265,7 +265,7 @@ namespace Finite_State_Machine_Designer.Data
             {
                 Transition transition = fsm.Transitions[i];
                 if (newGuids | transition.Id == Guid.Empty)
-                    transition.Id = Guid.NewGuid();
+                    transition.Id = Ulid.NewUlid().ToGuid();
                 transition.FromStateId = transition.FromState.Id;
                 transition.ToStateId = transition.ToState.Id;
 

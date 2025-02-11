@@ -26,9 +26,6 @@ namespace Finite_State_Machine_Designer.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ApplicationUser>()
-                .Property(user => user.CreationTime);
-
             modelBuilder.Entity<ApplicationUser>(appUserBuilder =>
             {
                 // Primary key
@@ -82,6 +79,8 @@ namespace Finite_State_Machine_Designer.Data
                     .WithOne()
                     .HasForeignKey(ur => ur.UserId)
                     .IsRequired();
+
+                appUserBuilder.Property(user => user.CreationTime);
             });
 
             modelBuilder.Entity<AppUserClaim>(userClaimBuilder =>

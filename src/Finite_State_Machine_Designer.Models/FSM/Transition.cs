@@ -2,7 +2,7 @@
 {
     public class Transition
     {
-        public Transition() => Id = Guid.NewGuid();
+        public Transition() => Id = Ulid.NewUlid().ToGuid();
 
         public Transition(FiniteState fromState, FiniteState toState) : this()
         {

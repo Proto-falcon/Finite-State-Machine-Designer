@@ -5,7 +5,7 @@ namespace Finite_State_Machine_Designer.Models.FSM
 {
 	public class FiniteStateMachine : IFiniteStateMachine
     {
-		public FiniteStateMachine() => Id = Guid.NewGuid();
+		public FiniteStateMachine() => Id = Ulid.NewUlid().ToGuid();
 
 		public Guid Id { get; set; }
 

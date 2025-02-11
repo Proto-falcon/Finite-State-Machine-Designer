@@ -8,8 +8,8 @@ namespace Finite_State_Machine_Designer.Data.Identity
     {
         public ApplicationUser() : base()
         {
-            Id = Guid.NewGuid();
-            SecurityStamp = Guid.NewGuid().ToString();
+            Id = Ulid.NewUlid().ToGuid();
+            SecurityStamp = Ulid.NewUlid().ToGuid().ToString();
         }
 
         /// <summary>

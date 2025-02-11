@@ -4,7 +4,7 @@ namespace Finite_State_Machine_Designer.Models.FSM
 {
 	public class FiniteState
 	{
-		public FiniteState() => Id = Guid.NewGuid();
+		public FiniteState() => Id = Ulid.NewUlid().ToGuid();
 
 		public FiniteState(CanvasCoordinate coord, float rad) : this()
 		{
