@@ -71,7 +71,7 @@ var connectionString = builder.Configuration
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options => 
-    options.UseSqlServer(connectionString,
+        options.UseSqlServer(connectionString,
         x => x.MigrationsAssembly("Finite_State_Machine_Designer.Data"))
 );
 
