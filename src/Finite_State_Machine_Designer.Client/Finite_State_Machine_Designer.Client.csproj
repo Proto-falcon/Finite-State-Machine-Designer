@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
-    <RunAOTCompilation>true</RunAOTCompilation>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
