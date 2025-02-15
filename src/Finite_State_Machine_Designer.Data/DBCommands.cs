@@ -60,9 +60,9 @@ namespace Finite_State_Machine_Designer.Data
         /// The time to get more least recent updated FSMs
         /// </param>
         /// <param name="numOfFsms"></param>
-        /// <returns><see langword="true"/> for more available FSMs,
+        /// <returns><see langword="true"/> for more available FSMs in next page,
         /// otherwise no more FSMs.</returns>
-        public async static Task<bool> GetMoreFsmsAsync(DbContext dbContext,
+        public async static Task<bool> FetchPageFsmsAsync(DbContext dbContext,
             ApplicationUser user, DateTime maxTime, int numOfFsms = int.MaxValue)
         {
             FiniteStateMachine[] newFsms = await dbContext.Entry(user)
@@ -88,13 +88,16 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="dbContext">Database Context to query with.</param>
         /// <param name="fsm">Finite State Machine</param>
         /// <param name="cancelToken">A cancellation token</param>
-        public async static ValueTask GetFullFsmAsync(DbContext dbContext, 
+        public async static Task<FsmResultState> GetFullFsmAsync(DbContext dbContext, 
             FiniteStateMachine fsm, CancellationToken cancelToken)
         {
             if (cancelToken.IsCancellationRequested)
-                return;
-            EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
+                return FsmResultState.Interrupted;
+            List<Transition> prevTransitions = fsm.Transitions;
+            fsm.Transitions = [];
             List<FiniteState> prevStates = fsm.States;
+            fsm.States = [];
+            EntityEntry<FiniteStateMachine> fsmEntry = dbContext.Attach(fsm);
             fsm.States = await fsmEntry
                 .Collection(stateMachine => stateMachine.States)
                 .Query()
@@ -103,12 +106,14 @@ namespace Finite_State_Machine_Designer.Data
             if (cancelToken.IsCancellationRequested)
             {
                 fsm.States = prevStates;
-                return;
+                fsm.Transitions = prevTransitions;
+                return FsmResultState.Interrupted;
             }
+
             fsm.Transitions = await fsmEntry
                 .Collection(stateMachine => stateMachine.Transitions)
                 .Query()
-                .AsNoTrackingWithIdentityResolution()
+                .AsNoTracking()
                 .ToListAsync(cancelToken);
 
             List<Transition> validTransitions = [];
@@ -130,6 +135,8 @@ namespace Finite_State_Machine_Designer.Data
             }
 
             fsm.Transitions = validTransitions;
+
+            return FsmResultState.Success;
         }
 
         /// <summary>
