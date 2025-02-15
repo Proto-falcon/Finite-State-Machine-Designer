@@ -10,9 +10,9 @@ namespace Finite_State_Machine_Designer.Components.Pages
     {
         /// <summary>
         /// Gets <see cref="_user"/> FSMs from database.
-        /// Doesn't also load States and transitions.
+        /// Doesn't load states and transitions.
         /// </summary>
-        private async Task GetUserFsms()
+        private async Task GetUserFsms(DateTime startTime)
         {
             if (_user is not null)
             {
@@ -20,13 +20,11 @@ namespace Finite_State_Machine_Designer.Components.Pages
                     = await DbFactory.CreateDbContextAsync();
                 try
                 {
-                    _user.StateMachines = await dbContext.Entry(_user)
-                        .Collection(user => user.StateMachines)
-                        .Query()
-                        .OrderByDescending(fsm => fsm.TimeUpdated)
-                        .Take(_userConfig.Value.VisibleFsmsLimit) 
-                        .AsNoTrackingWithIdentityResolution()
-                        .ToListAsync();
+                    _loadMoreFsms = await DBCommands.FetchPageFsmsAsync(dbContext, _user, startTime,
+                        _userConfig.Value.VisibleFsmsLimit);
+                    DateTime? mostRecentTime = _user.StateMachines.FirstOrDefault()?.TimeUpdated;
+                    if (mostRecentTime.HasValue)
+                        _recentModifiedTimes.Add(mostRecentTime.Value);
                 }
                 catch (Exception ex)
                 {
@@ -60,7 +58,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
             if (fetchedUser is not null)
             {
                 _user = fetchedUser;
-                await GetUserFsms();
+                await GetUserFsms(DateTime.MaxValue);
                 if (_user.StateMachines.Count > 0)
                     _lastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;

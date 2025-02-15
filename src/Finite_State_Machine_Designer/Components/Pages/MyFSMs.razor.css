@@ -1,4 +1,10 @@
-﻿h2 {
+﻿@media screen and (min-width: 1100px) {
+    .date-created-col, .date-modified-col {
+        width: 11em;
+    }
+}
+
+h2 {
     text-decoration:underline;
 }
 
@@ -60,6 +66,13 @@
     height: min-content;
 }
 
+.display-current-drawn-fsm {
+    width: 13em;
+    text-wrap: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .button-row-inputs {
     width: 100%;
 }
@@ -113,34 +126,36 @@
 }
 
 .fsm-list-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    table-layout: fixed;
+    text-wrap: nowrap;
+    width: 100%;
     margin-top: 1em;
     border: solid 3px #ffffff;
-    padding: 1em;
+    line-height: 2em;
 }
 
-.fsm-list-item {
-    width: 20em;
-    flex-grow: 1;
-    margin: 0.5em;
-    padding: 0.2em;
-    border: solid 1px #ffffff;
-    list-style: none;
-    cursor: pointer
+.fsm-list-container tbody tr {
+    border-top: solid 1px #ffffff;
 }
 
-.fsm-list-item > div:first-child {
-    display: grid;
-    grid-template-rows: 1fr;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    justify-items: end;
+.fsm-list-container tr {
+    td, th {
+        border-right: solid 1px #ffffff;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    td {
+        cursor: pointer;
+    }
 }
 
-.fsm-list-item  b:first-child {
-    justify-self: start;
+.fsm-list-container tr {
+    td:last-child, th:last-child {
+        border-right: none;
+    }
 }
 
 .delete-button {
@@ -148,6 +163,12 @@
 }
 
 .load-more-button {
+    flex-grow: 1;
+    margin: 0.5em;
+    padding: 0.2em;
+    border: solid 1px #ffffff;
+    list-style: none;
+    cursor: pointer;
     width: fit-content;
     font-size: 2em;
     text-align: center;
