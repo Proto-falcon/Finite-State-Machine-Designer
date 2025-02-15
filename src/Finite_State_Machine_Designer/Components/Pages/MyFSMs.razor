@@ -96,27 +96,27 @@
                     <div class="canvas-name-group canvas-info-group">
                         <h2><label for="canvasName">Name: @_currentFsm.Name</label></h2>
                         <input id="canvasName" class="canvas-name" type="text"
-                               name="name" placeholder="Name"
-                               @bind:event="oninput" @bind="_currentFsm.Name" />
+                        name="name" placeholder="Name"
+                        @bind:event="oninput" @bind="_currentFsm.Name" />
                     </div>
                     <div class="save-section">
                         @if (_currentlySaving)
                         {
                             <Loading Height="1.5em" Width="1.5em"
-                                     Style="border-width: 0.2em;" />
+                            Style="border-width: 0.2em;" />
                         }
                         else if (_currentDrawnFsm is not null
                         && _currentDrawnFsm.Name == _currentFsm.Name)
                         {
                             <button class="inline-button"
-                                    @onclick="SetSaveCurrent">
+                            @onclick="SetSaveCurrent">
                                 Save
                             </button>
                         }
                         else
                         {
                             <button class="inline-button"
-                                    @onclick="async (e) => await SetDrawingFsmAsync(_currentFsm)">
+                            @onclick="async (e) => await SetDrawingFsmAsync(_currentFsm)">
                                 Draw
                             </button>
                         }
@@ -133,10 +133,10 @@
                     <div class="canvas-desc-group canvas-info-group">
                         <label class="canvas-desc-label" for="canvasDesc">Description:</label>
                         <textarea id="canvasDesc" name="Description"
-                                  readonly="@(_currentDrawnFsm is null
+                        readonly="@(_currentDrawnFsm is null
                     || _currentDrawnFsm.Name != _currentFsm.Name)"
-                                  placeholder="Description" rows="10" cols="69"
-                                  @bind:event="oninput" @bind="_currentFsm.Description" />
+                        placeholder="Description" rows="10" cols="69"
+                        @bind:event="oninput" @bind="_currentFsm.Description" />
                     </div>
                 </div>
                 <div class="fsm-svg-section">
@@ -153,44 +153,6 @@
         }
     }
 </div>
-@if (_finishLoading)
-{
-    <div class="button-row-grid" style="@(_currentDrawnFsm is null ? "grid-template-columns: 1fr 1fr" : null)">
-        @if (_currentDrawnFsm is not null)
-        {
-            <div>
-                <button class="display-current-drawn-fsm" @onclick="async (e) => await DisplayFsmAsync(_currentDrawnFsm)">
-                    Currently drawn FSM:<br/>
-                    <text>@_currentDrawnFsm.Name</text>
-                </button>
-            </div>
-        }
-        <div class="button-row-inputs">
-            <input class="fsm-query-input" type="text"
-            placeholder="Search for name or description"
-            @bind:event="oninput" @bind="_searchFsmQuery" />
-            @if (!_searching)
-            { <button @onclick="QueryFsms">🔎</button> }
-            else
-            {
-                <Loading Height="1.7em" Width="1.7em"
-                Style="border-width: 0.2em; justify-self: center;" />
-            }
-        </div>
-        <div>
-            <button style="@(_bulkDelete ? "background-color:#a45cbd": null)"
-            @onclick="e => _bulkDelete = !_bulkDelete">
-                Multi-Delete FSMs
-            </button>
-            @if (_bulkDelete)
-            {
-                <button @onclick="async e => await DeleteFsms(_markDeleteFsms.ToArray())">
-                    Delete Fsms
-                </button>
-            }
-        </div>
-    </div>
-}
 @if (_finishLoading && _user is not null)
 {
     @if (_user.StateMachines.Count <= 0)
@@ -199,48 +161,12 @@
     }
     else
     {
-        <table class="fsm-list-container">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th class="date-created-col">Date Created</th>
-                    <th class="date-modified-col">Date Modified</th>
-                    <th style="width: @(_bulkDelete ? "9em" : "5em")">Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (FiniteStateMachine fsm in _user.StateMachines)
-                {
-                    <tr @onclick="async (e) => await DisplayFsmAsync(fsm, true)">
-                        <td>@fsm.Name</td>
-                        <td>@fsm.Description</td>
-                        <td class="date-created-col">@fsm.TimeCreated</td>
-                        <td class="date-modified-col">@fsm.TimeUpdated</td>
-                        <td>
-                            @if (!_bulkDelete)
-                            {
-                                <button class="delete-button"
-                                @onclick:stopPropagation
-                                @onclick="async e => await DeleteFsms(fsm.Id)">
-                                    Delete
-                                </button>
-                            }
-                            else
-                            {
-                                <button @onclick:stopPropagation
-                                @onclick="e => AddFsmToDelete(fsm.Id)"
-                                style="@(_markDeleteFsms.Contains(fsm.Id)
-                                ? "background-color:#a45cbd": null)">
-                                    Mark for delete
-                                </button>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
+        <FsmTable 
+        ClickRowHandler="DisplayFsmAsync"
+        CurrentDrawnFsm="_currentDrawnFsm"
+        DisplayCurrentDrawnFsmHandler="async e => await DisplayFsmAsync(_currentDrawnFsm)"
+        User="_user"
+        SetErrorMsg="text => _errorMsg = text"/>
     }
 }
 else
@@ -269,7 +195,6 @@ else
     /// Current FSM that can be drawn.
     /// </summary>
     private FiniteStateMachine? _currentDrawnFsm = null;
-    private string _searchFsmQuery { get; set; } = string.Empty;
     private DateTime _lastRecentModifiedTime = DateTime.MaxValue;
     /// <summary>
     /// Recent updated times of first FSM in a page from most to least recent
@@ -280,13 +205,10 @@ else
     private bool _currentlySaving = false;
     private bool _currentSaved = false;
     private bool _finishLoading = false;
-    private bool _searching = false;
     private bool _loadingFsmView = false;
     private bool _loadMoreFsms = false;
     private bool _loadPrevFsms = false;
     private bool _JsModuleDisposed = false;
-    private bool _bulkDelete = false;
-    private readonly List<Guid> _markDeleteFsms = [];
     private const string _canvasBackgroundColour = "#313338";
     private const string _colour = "#ffffff";
     private string _fsmSvgUrl = string.Empty;
@@ -343,6 +265,7 @@ else
         _currentFsm = fsm;
         _loadingFsmView = true;
         _displayCurrentFsm = true;
+        StateHasChanged();
         if (reload)
         {
             await using ApplicationDbContext dbContext =
@@ -369,34 +292,7 @@ else
             fsm.Id, fsm.Name);
         }
         _loadingFsmView = false;
-    }
-
-    private async Task QueryFsms(MouseEventArgs mouseEventArgs)
-    {
-        if (_user is not null)
-        {
-            _searching = true;
-            StateHasChanged();
-            try
-            {
-                await using ApplicationDbContext dbContext 
-                    = await DbFactory.CreateDbContextAsync();
-                _user.StateMachines = await dbContext.Users
-                    .Where(user => user.Id == _user.Id)
-                    .SelectMany(user => user.StateMachines)
-                    .Where(fsm => fsm.Name.Contains(_searchFsmQuery)
-                        || fsm.Description.Contains(_searchFsmQuery))
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Ran to problem trying to find FSMs from user {0}",
-                _user.Id);
-                _logger.LogError(new EventId(1, "Coudn't Find FSMs"), ex,
-                "Coudn't Find FSMs");
-            }
-            _searching = false;
-        }
+        StateHasChanged();
     }
 
     /// <summary>
@@ -452,36 +348,6 @@ else
                 _logger.LogError("{ERROR}", ex.ToString());
             }
         }
-    }
-
-    private async Task<bool> DeleteFsms(params Guid[] ids)
-    {
-        _errorMsg = "";
-        bool result = false;
-        if (_user is not null)
-        {
-            await using DbContext dbContext = await DbFactory.CreateDbContextAsync();
-            result = await DBCommands.DeleteFsms(dbContext, _logger, ids);
-            if (!result)
-            {
-                _errorMsg = "Something went wrong trying to delete FSM";
-                if (ids.Length > 1)
-                    _errorMsg += "s";
-            }
-
-            _user.StateMachines = _user.StateMachines
-                .Where(fsm => !ids.Contains(fsm.Id)).ToList();
-        }
-
-        return result;
-    }
-
-    private void AddFsmToDelete(Guid id)
-    {
-        if (_markDeleteFsms.Contains(id))
-            _markDeleteFsms.Remove(id);
-        else
-            _markDeleteFsms.Add(id);
     }
 
     private async void RevokeUrlAsync(string url)

@@ -1,10 +1,4 @@
-﻿@media screen and (min-width: 1100px) {
-    .date-created-col, .date-modified-col {
-        width: 11em;
-    }
-}
-
-h2 {
+﻿h2 {
     text-decoration:underline;
 }
 
@@ -59,28 +53,6 @@ h2 {
     resize: none;
 }
 
-.button-row-grid {
-    display: grid;
-    grid-template-columns: 0.75fr 1fr 1fr;
-    justify-items: center;
-    height: min-content;
-}
-
-.display-current-drawn-fsm {
-    width: 13em;
-    text-wrap: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.button-row-inputs {
-    width: 100%;
-}
-
-.fsm-query-input {
-    width: 89%
-}
-
 .canvas-details {
     position: relative;
     bottom: 1.9em;
@@ -123,43 +95,6 @@ h2 {
 
 .save-section {
     height: 2em;
-}
-
-.fsm-list-container {
-    table-layout: fixed;
-    text-wrap: nowrap;
-    width: 100%;
-    margin-top: 1em;
-    border: solid 3px #ffffff;
-    line-height: 2em;
-}
-
-.fsm-list-container tbody tr {
-    border-top: solid 1px #ffffff;
-}
-
-.fsm-list-container tr {
-    td, th {
-        border-right: solid 1px #ffffff;
-        padding-left: 0.5em;
-        padding-right: 0.5em;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    td {
-        cursor: pointer;
-    }
-}
-
-.fsm-list-container tr {
-    td:last-child, th:last-child {
-        border-right: none;
-    }
-}
-
-.delete-button {
-    width: fit-content;
 }
 
 .load-more-button {

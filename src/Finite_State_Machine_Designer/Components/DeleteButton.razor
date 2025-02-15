@@ -1,0 +1,30 @@
+﻿@if (!BulkDelete)
+{
+    <button class="delete-button"
+    @onclick:stopPropagation
+    @onclick="DeleteFsmHandler">
+        Delete
+    </button>
+}
+else
+{
+    <button @onclick:stopPropagation
+            @onclick="MarkDeleteFsmHandler"
+    style="@(MarkedDelete ? "background-color:#a45cbd" : null)">
+        Mark for delete
+    </button>
+}
+
+@code {
+    [Parameter]
+    public EventCallback<MouseEventArgs> DeleteFsmHandler { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> MarkDeleteFsmHandler { get; set; }
+
+    [Parameter]
+    public bool BulkDelete { get; set; }
+
+    [Parameter]
+    public bool MarkedDelete { get; set; }
+}

@@ -1,0 +1,150 @@
+﻿@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ILogger<FsmTable> _logger
+
+<div class="button-row-grid" style="@(CurrentDrawnFsm is null ? "grid-template-columns: 1fr 1fr" : null)">
+    @if (CurrentDrawnFsm is not null)
+    {
+        <div>
+            <button class="display-current-drawn-fsm" @onclick="DisplayCurrentDrawnFsmHandler">
+                Currently drawn FSM:<br />
+                <text>@CurrentDrawnFsm.Name</text>
+            </button>
+        </div>
+    }
+    <div class="button-row-inputs">
+        <input class="fsm-query-input" type="text"
+        placeholder="Search for name or description"
+        @bind:event="oninput" @bind="_searchFsmQuery" />
+        @if (!_searching)
+        {
+            <button @onclick="QueryFsms">🔎</button>
+        }
+        else
+        {
+            <Loading Height="1.7em" Width="1.7em"
+            Style="border-width: 0.2em; justify-self: center;" />
+        }
+    </div>
+    <div>
+        <button style="@(_bulkDelete ? "background-color:#a45cbd": null)"
+        @onclick="e => _bulkDelete = !_bulkDelete">
+            Multi-Delete FSMs
+        </button>
+        @if (_bulkDelete)
+        {
+            <button @onclick="async e => await DeleteFsms(_markDeleteFsms.ToArray())">
+                Delete Fsms
+            </button>
+        }
+    </div>
+</div>
+
+<table class="fsm-list-container">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th class="date-created-col">Date Created</th>
+            <th class="date-modified-col">Date Modified</th>
+            <th style="width: @(_bulkDelete ? "9em" : "5em")">Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (FiniteStateMachine fsm in User.StateMachines)
+        {
+            <tr>
+                <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Name</td>
+                <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Description</td>
+                <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-created-col">@fsm.TimeCreated</td>
+                <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-modified-col">@fsm.TimeUpdated</td>
+                <td>
+                    <DeleteButton 
+                    BulkDelete="_bulkDelete"
+                    DeleteFsmHandler="async e => await DeleteFsms(fsm.Id)"
+                    MarkDeleteFsmHandler="e => AddFsmToDelete(fsm.Id)"
+                    MarkedDelete="_markDeleteFsms.Contains(fsm.Id)" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public FiniteStateMachine? CurrentDrawnFsm { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> DisplayCurrentDrawnFsmHandler { get; set; }
+
+    [Parameter]
+    public Func<FiniteStateMachine, bool, Task> ClickRowHandler { get; set; }
+
+    [Parameter]
+    public ApplicationUser? User { get; set; }
+
+    [Parameter]
+    public Action<string> SetErrorMsg { get; set; }
+
+    private bool _bulkDelete = false;
+    private readonly List<Guid> _markDeleteFsms = [];
+    private string _searchFsmQuery { get; set; } = string.Empty;
+    private bool _searching = false;
+
+    private async Task<bool> DeleteFsms(params Guid[] ids)
+    {
+        string errorMsg = "";
+        bool result = false;
+        if (User is not null)
+        {
+            await using DbContext dbContext = await DbFactory.CreateDbContextAsync();
+            result = await DBCommands.DeleteFsms(dbContext, _logger, ids);
+            if (!result)
+            {
+                errorMsg = "Something went wrong trying to delete FSM";
+                if (ids.Length > 1)
+                    errorMsg += "s";
+                SetErrorMsg(errorMsg);
+            }
+
+            User.StateMachines = User.StateMachines
+                .Where(fsm => !ids.Contains(fsm.Id)).ToList();
+        }
+
+        return result;
+    }
+
+    private void AddFsmToDelete(Guid id)
+    {
+        if (_markDeleteFsms.Contains(id))
+            _markDeleteFsms.Remove(id);
+        else
+            _markDeleteFsms.Add(id);
+    }
+
+    private async Task QueryFsms(MouseEventArgs mouseEventArgs)
+    {
+        if (User is not null)
+        {
+            _searching = true;
+            StateHasChanged();
+            try
+            {
+                await using ApplicationDbContext dbContext
+                    = await DbFactory.CreateDbContextAsync();
+                User.StateMachines = await dbContext.Users
+                    .Where(user => user.Id == User.Id)
+                    .SelectMany(user => user.StateMachines)
+                    .Where(fsm => fsm.Name.Contains(_searchFsmQuery)
+                        || fsm.Description.Contains(_searchFsmQuery))
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ran to problem trying to find FSMs from user {0}",
+                User.Id);
+            }
+            _searching = false;
+        }
+    }
+}
