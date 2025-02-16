@@ -350,9 +350,11 @@ width="@Width"
 		if (CheckJsModule(JsModule))
 		{
 			if (_fsmDrawer.SelectedState is not null)
-				StateKeyHandler(keyboardEventArgs, _fsmDrawer.SelectedState);
+				_fsmDrawer.SelectedState.Text = KeyHandler(keyboardEventArgs,
+					_fsmDrawer.SelectedState, _fsmDrawer.SelectedState.Text);
 			else if (_fsmDrawer.SelectedTransition is not null)
-				TransitionKeyHandler(keyboardEventArgs, _fsmDrawer.SelectedTransition);
+				_fsmDrawer.SelectedTransition.Text = KeyHandler(keyboardEventArgs,
+					_fsmDrawer.SelectedTransition, _fsmDrawer.SelectedTransition.Text);
 			await _fsmDrawer.DrawMachineAsync(_caretVisible);
 		}
 	}

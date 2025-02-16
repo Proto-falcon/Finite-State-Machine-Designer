@@ -40,37 +40,39 @@ namespace Finite_State_Machine_Designer.Client.Components
 			return false;
 		}
 
-		private void StateKeyHandler(KeyboardEventArgs keyboardEventArgs, FiniteState state)
+        /// <summary>
+        /// Edits the text associated with the FSM object (<see cref="FiniteState"/>, <see cref="Transition"/>)
+        /// </summary>
+        /// <param name="keyboardEventArgs">Event arguments of key events from user</param>
+        /// <param name="fsmObj">FSM object, can only be used with <see cref="FiniteState"/> or <see cref="Transition"/>.</param>
+        /// <param name="textObj">Text associated with <paramref name="fsmObj"/></param>
+        /// <returns>Updated text</returns>
+        private string KeyHandler(KeyboardEventArgs keyboardEventArgs, object fsmObj, string textObj)
 		{
 			if (CheckJsModule(JsModule))
 			{
 				switch (keyboardEventArgs.Key.ToLower())
 				{
 					case "backspace":
-						if (state.Text.Length > 0)
+						if (textObj.Length > 0)
 						{
-							var text = state.Text;
-							state.Text = text[..^1];
+							var text = textObj;
+                            textObj = text[..^1];
 							_caretVisible = true;
 						}
 						break;
 					case "delete":
-						if (_fsmDrawer.FSM.States.Remove(state))
-						{
-							List<Transition> connectedTransitions = _fsmDrawer.FSM.FindTransitions(state);
-							foreach (Transition transition in connectedTransitions)
-								_fsmDrawer.FSM.Transitions.Remove(transition);
-						}
+                        RemoveStateOrTransition(fsmObj);
 						break;
 					case "return":
 					case "enter":
 					case "↵":
-						state.Text += '\n';
+                        textObj += '\n';
 						_caretVisible = true;
 						break;
 					case "spacebar":
 					case " ":
-						state.Text += ' ';
+                        textObj += ' ';
 						_caretVisible = true;
 						break;
 					default:
@@ -78,53 +80,44 @@ namespace Finite_State_Machine_Designer.Client.Components
 							break;
 
 						if (keyboardEventArgs.Key.Length == 1)
-							state.Text = AddText(state.Text, keyboardEventArgs.Key);
+                            textObj = AddText(textObj, keyboardEventArgs.Key);
 						break;
 				}
 			}
+			return textObj;
 		}
 
-		private void TransitionKeyHandler(KeyboardEventArgs keyboardEventArgs, Transition transition)
+        /// <summary>
+        /// Removes FSM object from Finite State Machine
+        /// </summary>
+        /// <param name="obj">
+		/// <para>FSM object, can be <see cref="FiniteState"/> or <see cref="Transition"/>.</para>
+		/// Any other type will do nothing.
+		/// </param>
+        private void RemoveStateOrTransition(object obj)
 		{
-			if (CheckJsModule(JsModule))
+			switch (obj)
 			{
-				switch (keyboardEventArgs.Key.ToLower())
-				{
-					case "backspace":
-						if (transition.Text.Length > 0)
-						{
-							var text = transition.Text;
-							transition.Text = text[..^1];
-
-							_caretVisible = true;
-						}
-						break;
-					case "delete":
-						if (!transition.FromState.IsDrawable)
-							_fsmDrawer.FSM.States.Remove(transition.FromState);
-						if (!transition.ToState.IsDrawable)
-							_fsmDrawer.FSM.States.Remove(transition.ToState);
-						_fsmDrawer.FSM.Transitions.Remove(transition);
-						break;
-					case "return":
-					case "enter":
-					case "↵":
-						transition.Text += '\n';
-						_caretVisible = true;
-						break;
-					case "spacebar":
-					case " ":
-						transition.Text += ' ';
-						_caretVisible = true;
-						break;
-					default:
-						if (UpdateTextStyle(keyboardEventArgs))
-							break;
-
-						if (keyboardEventArgs.Key.Length == 1)
-							transition.Text = AddText(transition.Text, keyboardEventArgs.Key);
-						break;
-				}
+				case FiniteState state:
+                    if (_fsmDrawer.FSM.States.Remove(state))
+                    {
+                        List<Transition> connectedTransitions = _fsmDrawer.FSM.FindTransitions(state);
+                        foreach (Transition transition in connectedTransitions)
+                            _fsmDrawer.FSM.Transitions.Remove(transition);
+                    }
+                    break;
+				case Transition transition:
+                    if (!transition.FromState.IsDrawable)
+                        _fsmDrawer.FSM.States.Remove(transition.FromState);
+                    if (!transition.ToState.IsDrawable)
+                        _fsmDrawer.FSM.States.Remove(transition.ToState);
+                    _fsmDrawer.FSM.Transitions.Remove(transition);
+                    break;
+				default:
+					_logger.LogWarning(
+						"Invalid object of type '{Type}' was passed to be removed from FSM but it will do nothing.",
+                        obj.GetType());
+					break;
 			}
 		}
 
