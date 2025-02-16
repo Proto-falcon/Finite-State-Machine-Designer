@@ -3,6 +3,7 @@ using Finite_State_Machine_Designer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using Finite_State_Machine_Designer.Data.Identity;
+using Finite_State_Machine_Designer.Enums;
 
 namespace Finite_State_Machine_Designer.Components.Pages
 {
@@ -89,22 +90,24 @@ namespace Finite_State_Machine_Designer.Components.Pages
         /// <summary>
         /// Saves the current FSM in use to database.
         /// </summary>
-        /// <returns>
-        /// <see langword="true"/> for successfully saving the FSM
-        /// otherwise, <see langword="false"/>.</returns>
-        private async Task<bool> SaveCurrentFSMAsync()
+        /// <returns>Save State of the current FSM</returns>
+        private async Task<SaveState> SaveCurrentFSMAsync()
         {
             if (CheckJsModule(JsModule))
             {
                 _saveFsm = false;
-                _currentlySaving = true;
-                _currentSaved = false;
+                _fsmSaveState = SaveState.Saving;
+                //_currentlySaving = true;
+                //_currentSaved = false;
                 _errorMsg = "";
                 StateHasChanged();
                 if (_currentDrawnFsm is not null && _user is not null)
                 {
                     if (string.IsNullOrWhiteSpace(_currentDrawnFsm.Name))
+                    {
+                        _fsmSaveState = SaveState.Failed;
                         _errorMsg = "Please enter a name.";
+                    }
                     else
                         try
                         {
@@ -155,16 +158,19 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                     }
                                 }
                             }
-                            _currentSaved = true;
+                            _fsmSaveState = SaveState.Saved;
+                            //_currentSaved = true;
                             await JsModule.InvokeVoidAsync(
                                 "fSMCanvasUtils.saveFSM", _currentDrawnFsm);
                             _logger.LogInformation(
                                 "Successfully saved the current "
                                 + "FSM '{FSM}' from user '{user}'",
                                 _currentDrawnFsm.Name, _user.Id);
+                            _fsmSaveState = SaveState.Saved;
                         }
                         catch (Exception ex)
                         {
+                            _fsmSaveState = SaveState.Failed;
                             _errorMsg = "Couldn't save!! Something went wrong.";
                             _logger.LogError(
                                 "Couldn't save the current FSM "
@@ -173,11 +179,11 @@ namespace Finite_State_Machine_Designer.Components.Pages
                             _logger.LogError("{ERROR}", ex.ToString());
                         }
                 }
-                _currentlySaving = false;
+                //_currentlySaving = false;
                 StateHasChanged();
-                return _currentSaved;
+                return _fsmSaveState;
             }
-            return false;
+            return SaveState.Failed;
         }
     }
 }

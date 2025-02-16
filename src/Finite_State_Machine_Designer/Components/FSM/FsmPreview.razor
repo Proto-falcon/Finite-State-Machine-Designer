@@ -1,0 +1,113 @@
+﻿@using Enums
+<div class="current-fsm-section"
+style="@(Fsm is null | FsmState == FsmResultState.Fail ? "grid-template-columns: 1fr;" : "")">
+    @if (Fsm is null)
+    {
+        _fsmContent = @<h2 class="no-fsm-display">No FSM to display.</h2>;
+    }
+    else
+    {
+        if (FsmState == FsmResultState.Success | FsmState == FsmResultState.MetaDataOnly)
+        {
+            <div>
+                <div class="canvas-name-group canvas-info-group">
+                    <h2><label for="canvasName">Name: @Fsm.Name</label></h2>
+                    <input id="canvasName" class="canvas-name" type="text"
+                    name="name" placeholder="Name"
+                    @bind:event="oninput" @bind="Fsm.Name" />
+                </div>
+                <div class="save-section">
+                    @if (CanSave && FsmSaveState == SaveState.Saving)
+                    {
+                        <Loading Height="1.5em" Width="1.5em"
+                        Style="border-width: 0.2em;" />
+                    }
+                    else if (CanSave)
+                    {
+                        <button class="inline-button"
+                        @onclick="SetSaveHandler">
+                            Save
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="inline-button"
+                        @onclick="SetDrawHandler">
+                            Draw
+                        </button>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ErrorMsg))
+                    {
+                        <p class="blink">@ErrorMsg</p>
+                    }
+                    else if (FsmSaveState == SaveState.Saved)
+                    {
+                        <p class="blink">Saved!!</p>
+                    }
+                </div>
+                <p class="canvas-desc-summary">Description</p>
+                <div class="canvas-desc-group canvas-info-group">
+                    <label class="canvas-desc-label" for="canvasDesc">Description:</label>
+                    <textarea id="canvasDesc" name="Description"
+                    readonly="@ReadonlyDescription"
+                    placeholder="Description" rows="10" cols="69"
+                    @bind:event="oninput" @bind="Fsm.Description" />
+                </div>
+            </div>
+        }
+        switch (FsmState)
+        {
+            case FsmResultState.Success:
+                _fsmContent =@<img class="fsm-svg" @onload="OnLoadFsmSvgHandler"
+                      src="@FsmSvgUrl" />;
+                break;
+            case FsmResultState.MetaDataOnly:
+                _fsmContent = @<h2>Couldn't preview Finite State Machine.</h2>;
+                break;
+            default:
+                _fsmContent = @<h2 class="no-fsm-display">No FSM to display.</h2>;
+                break;
+        }
+    }
+    <div class="fsm-svg-section">
+        <button @onclick="CloseDisplayFsmHandler">✖️</button>
+        @_fsmContent
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public FiniteStateMachine Fsm { get; set; }
+
+    [Parameter]
+    public FsmResultState FsmState { get; set; } = FsmResultState.Fail;
+
+    [Parameter]
+    public bool CanSave { get; set; }
+
+    [Parameter]
+    public bool ReadonlyDescription { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> CloseDisplayFsmHandler { get; set; }
+
+    [Parameter]
+    public string FsmSvgUrl { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<ProgressEventArgs> OnLoadFsmSvgHandler { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> SetSaveHandler { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> SetDrawHandler { get; set; }
+
+    [Parameter]
+    public string? ErrorMsg { get; set; }
+
+    [Parameter]
+    public SaveState FsmSaveState { get; set; }
+
+    private RenderFragment _fsmContent = @<></>;
+}

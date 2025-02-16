@@ -58,7 +58,7 @@
                 <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Description</td>
                 <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-created-col">@fsm.TimeCreated</td>
                 <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-modified-col">@fsm.TimeUpdated</td>
-                <td>
+                <td class="delete-button-cell">
                     <DeleteButton 
                     BulkDelete="_bulkDelete"
                     DeleteFsmHandler="async e => await DeleteFsms(fsm.Id)"

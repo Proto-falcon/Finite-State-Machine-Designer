@@ -4,6 +4,7 @@
 @using Microsoft.Extensions.Options
 @using Configuration
 @using Services
+@using Enums
 @inherits ModuleCheckBaseComponent
 @rendermode InteractiveServer
 @implements IDisposable
@@ -18,141 +19,31 @@
 <SectionContent SectionId="RCL.Layout.MainLayout.TopBarSection">
     <h1>Finite State Machines</h1>
 </SectionContent>
-
-<div class="current-fsm-section"
-    style="@(!_displayCurrentFsm ? "display:none;" : "")
-    @(_loadingFsmView | _currentFsm is null ? "grid-template-columns: 1fr;" : "")">
-    @if (_loadingFsmView)
-    { <Loading Height="10em" Width="10em"
-        Style="border-width: 1em; justify-self: center;" />
-    }
-    else if (_currentFsm is null)
+@if (_displayCurrentFsm)
+{
+    if (_loadingFsmView)
     {
-        <p>
-            <h2 class="no-fsm-display">No FSM to display.</h2>
-            <button @onclick="CloseDisplayFsmHandler">✖️</button>
-        </p>
+        <div class="current-fsm-section" style="grid-template-columns: 1fr;">
+            <Loading Height="10em" Width="10em"
+            Style="border-width: 1em; justify-self: center;" />
+        </div>
     }
     else
     {
-        switch (_currentFsmResult)
-        {
-            case FsmResultState.Success:
-                <div>
-                    <div class="canvas-name-group canvas-info-group">
-                        <h2><label for="canvasName">Name: @_currentFsm.Name</label></h2>
-                        <input id="canvasName" class="canvas-name" type="text"
-                        name="name" placeholder="Name"
-                        @bind:event="oninput" @bind="_currentFsm.Name" />
-                    </div>
-                    <div class="save-section">
-                        @if (_currentlySaving)
-                        {
-                            <Loading Height="1.5em" Width="1.5em"
-                            Style="border-width: 0.2em;" />
-                        }
-                        else if (_currentDrawnFsm is not null
-                        && _currentDrawnFsm.Name == _currentFsm.Name)
-                        {
-                            <button class="inline-button"
-                            @onclick="SetSaveCurrent">
-                                Save
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="inline-button"
-                            @onclick="async (e) => await SetDrawingFsmAsync(_currentFsm)">
-                                Draw
-                            </button>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(_errorMsg))
-                        {
-                            <p class="blink">@_errorMsg</p>
-                        }
-                        else if (_currentSaved)
-                        {
-                            <p class="blink">Saved!!</p>
-                        }
-                    </div>
-                    <p class="canvas-desc-summary">Description</p>
-                    <div class="canvas-desc-group canvas-info-group">
-                        <label class="canvas-desc-label" for="canvasDesc">Description:</label>
-                        <textarea id="canvasDesc" name="Description"
-                        readonly="@(_currentDrawnFsm is null
-                    || _currentDrawnFsm.Name != _currentFsm.Name)"
-                        placeholder="Description" rows="10" cols="69"
-                        @bind:event="oninput" @bind="_currentFsm.Description" />
-                    </div>
-                </div>
-                <div class="fsm-svg-section">
-                    <button @onclick="CloseDisplayFsmHandler">✖️</button>
-                    <img class="fsm-svg" @onload="e => RevokeUrlAsync(_fsmSvgUrl)"
-                    src="@_fsmSvgUrl" />
-                </div>
-                break;
-            case FsmResultState.MetaDataOnly:
-                <div>
-                    <div class="canvas-name-group canvas-info-group">
-                        <h2><label for="canvasName">Name: @_currentFsm.Name</label></h2>
-                        <input id="canvasName" class="canvas-name" type="text"
-                        name="name" placeholder="Name"
-                        @bind:event="oninput" @bind="_currentFsm.Name" />
-                    </div>
-                    <div class="save-section">
-                        @if (_currentlySaving)
-                        {
-                            <Loading Height="1.5em" Width="1.5em"
-                            Style="border-width: 0.2em;" />
-                        }
-                        else if (_currentDrawnFsm is not null
-                        && _currentDrawnFsm.Name == _currentFsm.Name)
-                        {
-                            <button class="inline-button"
-                            @onclick="SetSaveCurrent">
-                                Save
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="inline-button"
-                            @onclick="async (e) => await SetDrawingFsmAsync(_currentFsm)">
-                                Draw
-                            </button>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(_errorMsg))
-                        {
-                            <p class="blink">@_errorMsg</p>
-                        }
-                        else if (_currentSaved)
-                        {
-                            <p class="blink">Saved!!</p>
-                        }
-                    </div>
-                    <p class="canvas-desc-summary">Description</p>
-                    <div class="canvas-desc-group canvas-info-group">
-                        <label class="canvas-desc-label" for="canvasDesc">Description:</label>
-                        <textarea id="canvasDesc" name="Description"
-                        readonly="@(_currentDrawnFsm is null
-                    || _currentDrawnFsm.Name != _currentFsm.Name)"
-                        placeholder="Description" rows="10" cols="69"
-                        @bind:event="oninput" @bind="_currentFsm.Description" />
-                    </div>
-                </div>
-                <div class="fsm-svg-section">
-                    <button @onclick="CloseDisplayFsmHandler">✖️</button>
-                    <h2>Couldn't preview Finite State Machine.</h2>
-                </div>
-                break;
-            default:
-                <p>
-                    <h2 class="no-fsm-display">No FSM to display.</h2>
-                    <button @onclick="CloseDisplayFsmHandler">✖️</button>
-                </p>
-                break;
-        }
+        <FsmPreview 
+            Fsm="_currentFsm"
+            FsmState="_currentFsmResult"
+            CloseDisplayFsmHandler="CloseDisplayFsmHandler"
+            FsmSvgUrl="@_fsmSvgUrl"
+            OnLoadFsmSvgHandler="e => RevokeUrlAsync(_fsmSvgUrl)"
+            CanSave="_currentDrawnFsm is not null && _currentDrawnFsm.Name == _currentFsm?.Name"
+            ReadonlyDescription="_currentDrawnFsm is null || _currentDrawnFsm.Name != _currentFsm?.Name"
+            SetSaveHandler="SetSaveCurrent"
+            SetDrawHandler="async (e) => await SetDrawingFsmAsync(_currentFsm)"
+            ErrorMsg="@_errorMsg"
+            FsmSaveState="_fsmSaveState"/>
     }
-</div>
+}
 @if (_finishLoading && _user is not null)
 {
     @if (_user.StateMachines.Count <= 0)
@@ -202,8 +93,9 @@ else
     private List<DateTime> _recentModifiedTimes = [];
     private double _mainFsmSvgScale = 0.5;
     private bool _displayCurrentFsm = false;
-    private bool _currentlySaving = false;
-    private bool _currentSaved = false;
+    private SaveState _fsmSaveState = SaveState.NotSaved;
+    /// private bool _currentlySaving = false;
+    /// private bool _currentSaved = false;
     private bool _finishLoading = false;
     private bool _loadingFsmView = false;
     private bool _loadMoreFsms = false;
@@ -281,6 +173,10 @@ else
                 fsm.Id, fsm.Name);
             }
         }
+        else
+        {
+            _currentFsmResult = FsmResultState.Success;
+        }
 
         try
         {
@@ -301,30 +197,29 @@ else
     /// <param name="fsm">Finite State Machine</param>
     private async Task SetDrawingFsmAsync(FiniteStateMachine fsm)
     {
-        if (_user is not null)
+        if (_user is not null && CheckJsModule(JsModule))
         {
-            if (CheckJsModule(JsModule))
+            _errorMsg = "";
+            await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", fsm);
+
+            _currentDrawnFsm = await JsModule.InvokeAsync<FiniteStateMachine>(
+                "fSMCanvasUtils.loadFSM",
+                fsm);
+
+            if (_currentDrawnFsm is null)
             {
-                _errorMsg = "";
-                await JsModule.InvokeVoidAsync("fSMCanvasUtils.saveFSM", fsm);
-
-                _currentDrawnFsm = await JsModule.InvokeAsync<FiniteStateMachine>(
-                    "fSMCanvasUtils.loadFSM",
-                    fsm);
-
-                if (_currentDrawnFsm is null)
-                {
-                    _errorMsg = $"Couldn't set the FSM '{fsm.Name}' to drawable";
-                    _logger.LogError("Couldn't set the FSM {Name} to drawable", fsm.Name);
-                }
+                _errorMsg = $"Couldn't set the FSM '{fsm.Name}' to drawable";
+                _logger.LogError("Couldn't set the FSM {Name} to drawable", fsm.Name);
             }
+            StateHasChanged();
         }
     }
 
     private void CloseDisplayFsmHandler(MouseEventArgs mouseEventArgs)
     {
         _displayCurrentFsm = false;
-        _currentSaved = false;
+        // _currentSaved = false;
+        _fsmSaveState = SaveState.NotSaved;
         Navigation.NavigateTo("MyFSMs");
     }
 
@@ -353,7 +248,11 @@ else
     private async void RevokeUrlAsync(string url)
         => await JS.InvokeVoidAsync("URL.revokeObjectURL", url);
 
-    private void SetSaveCurrent(MouseEventArgs mouseEventArgs) => _saveFsm = true;
+    private void SetSaveCurrent(MouseEventArgs mouseEventArgs)
+    {
+        _saveFsm = true;
+        StateHasChanged();
+    }
 
     private async void HandleLocationChangedAsync(object? sender,
         LocationChangedEventArgs e)

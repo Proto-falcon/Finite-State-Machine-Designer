@@ -57,9 +57,11 @@ td {
 }
 
 .fsm-list-container tr {
-    td: last-child, th:last-child
-
-{
-    border-right: none;
+    td: last-child, th:last-child {
+        border-right: none;
+    }
 }
+
+.delete-button-cell:active {
+    background-color: #ffffff54;
 }
