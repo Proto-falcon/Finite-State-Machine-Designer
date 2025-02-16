@@ -11,9 +11,10 @@ namespace Finite_State_Machine_Designer.Components.Pages
     {
         /// <summary>
         /// Gets <see cref="_user"/> FSMs from database.
-        /// Doesn't load states and transitions.
+        /// Doesn't correctly load states and transitions.
         /// </summary>
-        private async Task GetUserFsms(DateTime startTime)
+        /// <param name="maxTime">Max Time to filter the Fsms.</param>
+        private async Task GetUserCurrentFsmsPage(DateTime maxTime)
         {
             if (_user is not null)
             {
@@ -21,11 +22,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
                     = await DbFactory.CreateDbContextAsync();
                 try
                 {
-                    _loadMoreFsms = await DBCommands.FetchPageFsmsAsync(dbContext, _user, startTime,
+                    _loadMoreFsms = await DBCommands.FetchPageFsmsAsync(dbContext, _user, maxTime,
                         _userConfig.Value.VisibleFsmsLimit);
-                    DateTime? mostRecentTime = _user.StateMachines.FirstOrDefault()?.TimeUpdated;
-                    if (mostRecentTime.HasValue)
-                        _recentModifiedTimes.Add(mostRecentTime.Value);
                 }
                 catch (Exception ex)
                 {
@@ -59,9 +57,9 @@ namespace Finite_State_Machine_Designer.Components.Pages
             if (fetchedUser is not null)
             {
                 _user = fetchedUser;
-                await GetUserFsms(DateTime.MaxValue);
+                await GetUserCurrentFsmsPage(DateTime.MaxValue);
                 if (_user.StateMachines.Count > 0)
-                    _lastRecentModifiedTime = _user.StateMachines
+                    _leastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;
                 if (_user.StateMachines.Count < _userConfig.Value.VisibleFsmsLimit)
                     _loadMoreFsms = false;
@@ -97,8 +95,6 @@ namespace Finite_State_Machine_Designer.Components.Pages
             {
                 _saveFsm = false;
                 _fsmSaveState = SaveState.Saving;
-                //_currentlySaving = true;
-                //_currentSaved = false;
                 _errorMsg = "";
                 StateHasChanged();
                 if (_currentDrawnFsm is not null && _user is not null)
@@ -159,7 +155,6 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                 }
                             }
                             _fsmSaveState = SaveState.Saved;
-                            //_currentSaved = true;
                             await JsModule.InvokeVoidAsync(
                                 "fSMCanvasUtils.saveFSM", _currentDrawnFsm);
                             _logger.LogInformation(
@@ -179,7 +174,6 @@ namespace Finite_State_Machine_Designer.Components.Pages
                             _logger.LogError("{ERROR}", ex.ToString());
                         }
                 }
-                //_currentlySaving = false;
                 StateHasChanged();
                 return _fsmSaveState;
             }

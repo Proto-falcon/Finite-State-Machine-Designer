@@ -1,8 +1,4 @@
-﻿h2 {
-    text-decoration:underline;
-}
-
-.current-fsm-section {
+﻿.current-fsm-section {
     position: absolute;
     top: 0;
     left: 0;

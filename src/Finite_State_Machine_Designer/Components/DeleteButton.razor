@@ -10,7 +10,7 @@ else
 {
     <button @onclick:stopPropagation
             @onclick="MarkDeleteFsmHandler"
-    style="@(MarkedDelete ? "background-color:#a45cbd" : null)">
+            class="delete-button" >
         Mark for delete
     </button>
 }
@@ -24,7 +24,4 @@ else
 
     [Parameter]
     public bool BulkDelete { get; set; }
-
-    [Parameter]
-    public bool MarkedDelete { get; set; }
 }

@@ -52,7 +52,7 @@ namespace Finite_State_Machine_Designer.Data
         }
 
         /// <summary>
-        /// Gets more FSMs from user
+        /// Gets page of FSMs from user
         /// </summary>
         /// <param name="dbContext">Database Context to query with.</param>
         /// <param name="user">User with Finite State Machines</param>
@@ -73,6 +73,7 @@ namespace Finite_State_Machine_Designer.Data
                 .Take(numOfFsms + 1)
                 .AsNoTrackingWithIdentityResolution()
                 .ToArrayAsync();
+            user.StateMachines = [];
             if (newFsms.Length > numOfFsms)
                 user.StateMachines.AddRange(newFsms[..^1]);
             else

@@ -46,19 +46,12 @@
 }
 @if (_finishLoading && _user is not null)
 {
-    @if (_user.StateMachines.Count <= 0)
-    {
-        <h2 style="text-align:center;">No other FSMs found.</h2>
-    }
-    else
-    {
-        <FsmTable 
+    <FsmTable
         ClickRowHandler="DisplayFsmAsync"
         CurrentDrawnFsm="_currentDrawnFsm"
         DisplayCurrentDrawnFsmHandler="async e => await DisplayFsmAsync(_currentDrawnFsm)"
         User="_user"
         SetErrorMsg="text => _errorMsg = text"/>
-    }
 }
 else
 {
@@ -86,16 +79,14 @@ else
     /// Current FSM that can be drawn.
     /// </summary>
     private FiniteStateMachine? _currentDrawnFsm = null;
-    private DateTime _lastRecentModifiedTime = DateTime.MaxValue;
+    private DateTime _leastRecentModifiedTime = DateTime.MaxValue;
     /// <summary>
     /// Recent updated times of first FSM in a page from most to least recent
     /// </summary>
-    private List<DateTime> _recentModifiedTimes = [];
+    private List<DateTime> _recentModifiedTimes = [DateTime.MaxValue];
     private double _mainFsmSvgScale = 0.5;
     private bool _displayCurrentFsm = false;
     private SaveState _fsmSaveState = SaveState.NotSaved;
-    /// private bool _currentlySaving = false;
-    /// private bool _currentSaved = false;
     private bool _finishLoading = false;
     private bool _loadingFsmView = false;
     private bool _loadMoreFsms = false;
@@ -143,7 +134,7 @@ else
         {
             SaveCurrent = false;
             await SaveCurrentFSMAsync();
-            await GetUserFsms(_lastRecentModifiedTime);
+            await GetUserCurrentFsmsPage(_recentModifiedTimes.LastOrDefault());
         }
     }
 
@@ -218,7 +209,6 @@ else
     private void CloseDisplayFsmHandler(MouseEventArgs mouseEventArgs)
     {
         _displayCurrentFsm = false;
-        // _currentSaved = false;
         _fsmSaveState = SaveState.NotSaved;
         Navigation.NavigateTo("MyFSMs");
     }
@@ -232,9 +222,9 @@ else
             try
             {
                 _loadMoreFsms = await DBCommands.FetchPageFsmsAsync(dbContext, _user,
-                    _lastRecentModifiedTime, _userConfig.Value.VisibleFsmsLimit);
-                _recentModifiedTimes.Add(_lastRecentModifiedTime);
-                _lastRecentModifiedTime = _user.StateMachines.Last().TimeUpdated;
+                    _leastRecentModifiedTime, _userConfig.Value.VisibleFsmsLimit);
+                _recentModifiedTimes.Add(_leastRecentModifiedTime);
+                _leastRecentModifiedTime = _user.StateMachines.Last().TimeUpdated;
                 StateHasChanged();
             }
             catch (Exception ex)

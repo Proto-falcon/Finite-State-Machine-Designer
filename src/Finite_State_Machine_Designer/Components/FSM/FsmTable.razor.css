@@ -4,6 +4,10 @@
     }
 }
 
+h2 {
+    text-decoration: underline;
+}
+
 .button-row-inputs {
     width: 100%;
 }

@@ -39,36 +39,42 @@
         }
     </div>
 </div>
-
-<table class="fsm-list-container">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th class="date-created-col">Date Created</th>
-            <th class="date-modified-col">Date Modified</th>
-            <th style="width: @(_bulkDelete ? "9em" : "5em")">Delete</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (FiniteStateMachine fsm in User.StateMachines)
-        {
+@if (User?.StateMachines.Count <= 0)
+{
+    <h2 style="text-align:center;">No other FSMs found.</h2>
+}
+else
+{
+    <table class="fsm-list-container">
+        <thead>
             <tr>
-                <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Name</td>
-                <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Description</td>
-                <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-created-col">@fsm.TimeCreated</td>
-                <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-modified-col">@fsm.TimeUpdated</td>
-                <td class="delete-button-cell">
-                    <DeleteButton 
-                    BulkDelete="_bulkDelete"
-                    DeleteFsmHandler="async e => await DeleteFsms(fsm.Id)"
-                    MarkDeleteFsmHandler="e => AddFsmToDelete(fsm.Id)"
-                    MarkedDelete="_markDeleteFsms.Contains(fsm.Id)" />
-                </td>
+                <th>Name</th>
+                <th>Description</th>
+                <th class="date-created-col">Date Created</th>
+                <th class="date-modified-col">Date Modified</th>
+                <th style="width: @(_bulkDelete ? "9em" : "5em")">Delete</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (FiniteStateMachine fsm in User.StateMachines)
+            {
+                <tr>
+                    <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Name</td>
+                    <td @onclick="async e => await ClickRowHandler(fsm, true)">@fsm.Description</td>
+                    <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-created-col">@fsm.TimeCreated</td>
+                    <td @onclick="async e => await ClickRowHandler(fsm, true)" class="date-modified-col">@fsm.TimeUpdated</td>
+                    <td class="delete-button-cell"
+                    style="@(_markDeleteFsms.Contains(fsm.Id) ? "background-color: #0000009d;" : null)">
+                        <DeleteButton 
+                        BulkDelete="_bulkDelete"
+                        DeleteFsmHandler="async e => await DeleteFsms(fsm.Id)"
+                        MarkDeleteFsmHandler="e => AddFsmToDelete(fsm.Id)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
     [Parameter]
