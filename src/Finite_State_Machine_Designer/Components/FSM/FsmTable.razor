@@ -18,7 +18,7 @@
         @bind:event="oninput" @bind="_searchFsmQuery" />
         @if (!_searching)
         {
-            <button @onclick="QueryFsms">🔎</button>
+            <button class="search-button" @onclick="QueryFsms">🔎</button>
         }
         else
         {

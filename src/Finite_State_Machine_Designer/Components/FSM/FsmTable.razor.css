@@ -16,6 +16,10 @@ h2 {
     width: 89%
 }
 
+.search-button {
+    padding: 0.1em;
+}
+
 .display-current-drawn-fsm {
     width: 13em;
     text-wrap: nowrap;
@@ -27,6 +31,7 @@ h2 {
     display: grid;
     grid-template-columns: 0.75fr 1fr 1fr;
     justify-items: center;
+    align-items:center;
     height: min-content;
 }
 
@@ -39,25 +44,22 @@ h2 {
     line-height: 2em;
 }
 
-    .fsm-list-container tbody tr {
-        border-top: solid 1px #ffffff;
+.fsm-list-container tbody tr {
+    border-top: solid 1px #ffffff;
+}
+
+.fsm-list-container tr {
+    td, th {
+        border-right: solid 1px #ffffff;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .fsm-list-container tr {
-        td, th
-
-{
-    border-right: solid 1px #ffffff;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-td {
-    cursor: pointer;
-}
-
+    td {
+        cursor: pointer;
+    }
 }
 
 .fsm-list-container tr {

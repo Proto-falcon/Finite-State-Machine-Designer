@@ -12,6 +12,18 @@
     background-color: #313338dd;
 }
 
+.page-buttons-container {
+    display: flex;
+    flex-direction: row;
+    margin-top: 1.5em;
+    margin-bottom: 2.5em;
+    justify-content: space-evenly;
+}
+
+.page-btn {
+    width: 100px;
+}
+
 .load-more-button {
     flex-grow: 1;
     margin: 0.5em;

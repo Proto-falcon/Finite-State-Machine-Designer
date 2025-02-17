@@ -52,6 +52,14 @@
         DisplayCurrentDrawnFsmHandler="async e => await DisplayFsmAsync(_currentDrawnFsm)"
         User="_user"
         SetErrorMsg="text => _errorMsg = text"/>
+    <div class="page-buttons-container">
+        <button class="page-btn" style="@(_loadPrevFsms ? "" : "visibility: hidden")">
+            Previous
+        </button>
+        <button class="page-btn" style="@(_loadMoreFsms ? "" : "visibility: hidden")">
+            Next
+        </button>
+    </div>
 }
 else
 {
