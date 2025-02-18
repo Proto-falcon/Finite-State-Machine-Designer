@@ -172,7 +172,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                         catch (Exception ex)
                         {
                             _fsmSaveState = SaveState.Failed;
-                            _errorMsg = "Couldn't save!! Something went wrong.";
+                            _errorMsg = $"Couldn't save!! {ex.Message.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)}";
                             _logger.LogError(
                                 "Couldn't save the current FSM "
                                 + "'{FsmName}' from user '{user}'",
