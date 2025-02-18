@@ -19,12 +19,6 @@ namespace Finite_State_Machine_Designer.Data
 
                 fsmBuilder.Property(fsm => fsm.Id)
                     .IsFixedLength()
-                    .HasMaxLength(36)
-                    .ValueGeneratedNever();
-
-                fsmBuilder.Property(fsm => fsm.Id)
-                    .IsFixedLength()
-                    .HasMaxLength(36)
                     .ValueGeneratedNever();
 
                 fsmBuilder.Property(fsm => fsm.TimeCreated)
