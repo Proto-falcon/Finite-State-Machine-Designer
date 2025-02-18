@@ -59,26 +59,31 @@ namespace Finite_State_Machine_Designer.Data
         /// <param name="maxTime">
         /// The time to get more least recent updated FSMs
         /// </param>
+        /// <param name="includeMax">Include the fsm with max time</param>
         /// <param name="numOfFsms"></param>
         /// <returns><see langword="true"/> for more available FSMs in next page,
         /// otherwise no more FSMs.</returns>
         public async static Task<bool> FetchPageFsmsAsync(DbContext dbContext,
-            ApplicationUser user, DateTime maxTime, int numOfFsms = int.MaxValue)
+            ApplicationUser user, DateTime maxTime, bool includeMax = false, int numOfFsms = int.MaxValue)
         {
-            FiniteStateMachine[] newFsms = await dbContext.Entry(user)
+            var query = dbContext.Entry(user)
                 .Collection(appUser => appUser.StateMachines)
-                .Query()
-                .Where(fsm => fsm.TimeUpdated < maxTime)
+                .Query();
+            if (includeMax)
+                query = query.Where(fsm => fsm.TimeUpdated <= maxTime);
+            else
+                query = query.Where(fsm => fsm.TimeUpdated < maxTime);
+            List<FiniteStateMachine> newFsms = await query
                 .OrderByDescending(fsm => fsm.TimeUpdated)
                 .Take(numOfFsms + 1)
                 .AsNoTrackingWithIdentityResolution()
-                .ToArrayAsync();
+                .ToListAsync();
             user.StateMachines = [];
-            if (newFsms.Length > numOfFsms)
-                user.StateMachines.AddRange(newFsms[..^1]);
+            if (newFsms.Count > numOfFsms)
+                user.StateMachines = newFsms[..^1];
             else
-                user.StateMachines.AddRange(newFsms);
-            if (newFsms.Length <= numOfFsms)
+                user.StateMachines = newFsms;
+            if (newFsms.Count <= numOfFsms)
                 return false;
             return true;
         }

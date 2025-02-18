@@ -14,8 +14,11 @@ namespace Finite_State_Machine_Designer.Components.Pages
         /// Doesn't correctly load states and transitions.
         /// </summary>
         /// <param name="maxTime">Max Time to filter the Fsms.</param>
-        private async Task GetUserCurrentFsmsPage(DateTime maxTime)
+        /// <param name="includeMax">Include the fsm with max time</param>
+        /// <returns><see langword="true"/> for completing successfully, otherwise <see langword="false"/>.</returns>
+        private async Task<bool> GetUserFsmsPage(DateTime maxTime, bool includeMax = false)
         {
+            bool completed = false;
             if (_user is not null)
             {
                 await using ApplicationDbContext dbContext
@@ -23,7 +26,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 try
                 {
                     _loadMoreFsms = await DBCommands.FetchPageFsmsAsync(dbContext, _user, maxTime,
-                        _userConfig.Value.VisibleFsmsLimit);
+                        includeMax, _userConfig.Value.VisibleFsmsLimit);
+                    completed = true;
                 }
                 catch (Exception ex)
                 {
@@ -31,6 +35,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                     _logger.LogError("{Error}", ex.ToString());
                 }
             }
+            return completed;
         }
 
         /// <summary>
@@ -57,16 +62,17 @@ namespace Finite_State_Machine_Designer.Components.Pages
             if (fetchedUser is not null)
             {
                 _user = fetchedUser;
-                await GetUserCurrentFsmsPage(DateTime.MaxValue);
+                await GetUserFsmsPage(DateTime.MaxValue);
                 if (_user.StateMachines.Count > 0)
                     _leastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;
-                if (_user.StateMachines.Count < _userConfig.Value.VisibleFsmsLimit)
-                    _loadMoreFsms = false;
+                _finishLoading = true;
             }
             else
+            {
+                _finishLoading = true;
                 Navigation.NavigateTo("Account/Login");
-            _finishLoading = true;
+            }
         }
 
         /// <summary>

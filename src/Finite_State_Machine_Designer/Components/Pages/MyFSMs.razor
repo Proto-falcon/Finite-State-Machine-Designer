@@ -31,34 +31,48 @@
     else
     {
         <FsmPreview 
-            Fsm="_currentFsm"
-            FsmState="_currentFsmResult"
-            CloseDisplayFsmHandler="CloseDisplayFsmHandler"
-            FsmSvgUrl="@_fsmSvgUrl"
-            OnLoadFsmSvgHandler="e => RevokeUrlAsync(_fsmSvgUrl)"
-            CanSave="_currentDrawnFsm is not null && _currentDrawnFsm.Name == _currentFsm?.Name"
-            ReadonlyDescription="_currentDrawnFsm is null || _currentDrawnFsm.Name != _currentFsm?.Name"
-            SetSaveHandler="SetSaveCurrent"
-            SetDrawHandler="async (e) => await SetDrawingFsmAsync(_currentFsm)"
-            ErrorMsg="@_errorMsg"
-            FsmSaveState="_fsmSaveState"/>
+        Fsm="_currentFsm"
+        FsmState="_currentFsmResult"
+        CloseDisplayFsmHandler="CloseDisplayFsmHandler"
+        FsmSvgUrl="@_fsmSvgUrl"
+        OnLoadFsmSvgHandler="e => RevokeUrlAsync(_fsmSvgUrl)"
+        CanSave="_currentDrawnFsm is not null && _currentDrawnFsm.Name == _currentFsm?.Name"
+        ReadonlyDescription="_currentDrawnFsm is null || _currentDrawnFsm.Name != _currentFsm?.Name"
+        SetSaveHandler="SetSaveCurrent"
+        SetDrawHandler="async (e) => await SetDrawingFsmAsync(_currentFsm)"
+        ErrorMsg="@_errorMsg"
+        FsmSaveState="_fsmSaveState"/>
     }
 }
 @if (_finishLoading && _user is not null)
 {
     <FsmTable
-        ClickRowHandler="DisplayFsmAsync"
-        CurrentDrawnFsm="_currentDrawnFsm"
-        DisplayCurrentDrawnFsmHandler="async e => await DisplayFsmAsync(_currentDrawnFsm)"
-        User="_user"
-        SetErrorMsg="text => _errorMsg = text"/>
+    ClickRowHandler="DisplayFsmAsync"
+    CurrentDrawnFsm="_currentDrawnFsm"
+    DisplayCurrentDrawnFsmHandler="async e => await DisplayFsmAsync(_currentDrawnFsm)"
+    User="_user"
+    SetErrorMsg="text => _errorMsg = text"/>
     <div class="page-buttons-container">
-        <button class="page-btn" style="@(_loadPrevFsms ? "" : "visibility: hidden")">
-            Previous
-        </button>
-        <button class="page-btn" style="@(_loadMoreFsms ? "" : "visibility: hidden")">
-            Next
-        </button>
+        @if (_loadPrevFsms)
+        {
+            <button class="page-btn" @onclick="GetPrevFsmsHandler">
+                Previous
+            </button>
+        }
+        else
+        {
+            <button class="hidden-btn" />
+        }
+        @if (_loadMoreFsms)
+        {
+            <button class="page-btn" @onclick="GetMoreFsmsHandler">
+                Next
+            </button>
+        }
+        else
+        {
+            <button class="hidden-btn" />
+        }
     </div>
 }
 else
@@ -89,9 +103,9 @@ else
     private FiniteStateMachine? _currentDrawnFsm = null;
     private DateTime _leastRecentModifiedTime = DateTime.MaxValue;
     /// <summary>
-    /// Recent updated times of first FSM in a page from most to least recent
+    /// Recent updated times of first FSM in a page from most at top to least recent at bottom
     /// </summary>
-    private List<DateTime> _recentModifiedTimes = [DateTime.MaxValue];
+    private Stack<DateTime> _recentModifiedTimes = new Stack<DateTime>();
     private double _mainFsmSvgScale = 0.5;
     private bool _displayCurrentFsm = false;
     private SaveState _fsmSaveState = SaveState.NotSaved;
@@ -136,13 +150,17 @@ else
             await InitialiseUserAsync();
             StateHasChanged();
         }
-        if (SaveCurrent && _currentDrawnFsm is not null)
+        if (SaveCurrent && _user is not null && _currentDrawnFsm is not null)
             await DisplayFsmAsync(_currentDrawnFsm);
         if (_saveFsm | SaveCurrent)
         {
             SaveCurrent = false;
             await SaveCurrentFSMAsync();
-            await GetUserCurrentFsmsPage(_recentModifiedTimes.LastOrDefault());
+            _recentModifiedTimes.Clear();
+            _loadPrevFsms = false;
+            await GetUserFsmsPage(DateTime.MaxValue);
+            if (_user?.StateMachines.LastOrDefault() is FiniteStateMachine fsm)
+                _leastRecentModifiedTime = fsm.TimeUpdated;
         }
     }
 
@@ -173,9 +191,7 @@ else
             }
         }
         else
-        {
             _currentFsmResult = FsmResultState.Success;
-        }
 
         try
         {
@@ -225,21 +241,34 @@ else
     {
         if (_user is not null)
         {
-            await using ApplicationDbContext dbContext =
-                await DbFactory.CreateDbContextAsync();
-            try
-            {
-                _loadMoreFsms = await DBCommands.FetchPageFsmsAsync(dbContext, _user,
-                    _leastRecentModifiedTime, _userConfig.Value.VisibleFsmsLimit);
-                _recentModifiedTimes.Add(_leastRecentModifiedTime);
-                _leastRecentModifiedTime = _user.StateMachines.Last().TimeUpdated;
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Couldn't load more FSMs");
-                _logger.LogError("{ERROR}", ex.ToString());
-            }
+            DateTime mostRecentTime = DateTime.MaxValue;
+            if (_user.StateMachines.FirstOrDefault() is FiniteStateMachine recentFsm)
+                mostRecentTime = recentFsm.TimeUpdated;
+            _recentModifiedTimes.Push(mostRecentTime);
+            await GetUserFsmsPage(_leastRecentModifiedTime);
+            if (_user.StateMachines.LastOrDefault() is FiniteStateMachine fsm)
+                _leastRecentModifiedTime = fsm.TimeUpdated;
+            else
+                _leastRecentModifiedTime = DateTime.MaxValue;
+            _loadPrevFsms = true;
+            StateHasChanged();
+        }
+    }
+
+    private async void GetPrevFsmsHandler(MouseEventArgs mouseEventArgs)
+    {
+        if (_user is not null)
+        {
+            if (!_recentModifiedTimes.TryPop(out DateTime prevRecentTime))
+                prevRecentTime = DateTime.MaxValue;
+            await GetUserFsmsPage(prevRecentTime, true);
+            if (_user.StateMachines.LastOrDefault() is FiniteStateMachine fsm)
+                _leastRecentModifiedTime = fsm.TimeUpdated;
+            else
+                _leastRecentModifiedTime = DateTime.MaxValue;
+            // _recentModifiedTimes.RemoveAt(_recentModifiedTimes.Count-1);
+            _loadPrevFsms = _recentModifiedTimes.Count > 0;
+            StateHasChanged();
         }
     }
 
