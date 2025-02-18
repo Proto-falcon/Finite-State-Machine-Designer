@@ -18,8 +18,13 @@ namespace Finite_State_Machine_Designer.Data
                 fsmBuilder.HasKey(fsm => fsm.Id);
 
                 fsmBuilder.Property(fsm => fsm.Id)
-                    .IsFixedLength()
                     .ValueGeneratedNever();
+
+                fsmBuilder.Property(fsm => fsm.Name)
+                    .HasMaxLength(128);
+
+                fsmBuilder.Property(fsm => fsm.Description)
+                    .HasMaxLength(2056);
 
                 fsmBuilder.Property(fsm => fsm.TimeCreated)
                     .IsRequired();
@@ -42,8 +47,11 @@ namespace Finite_State_Machine_Designer.Data
 
                 stateBuilder
                     .Property(state => state.Id)
-                    .IsFixedLength()
                     .ValueGeneratedNever();
+
+                stateBuilder.Property(state => state.Text)
+                    .HasMaxLength(128);
+
             });
 
 
@@ -76,6 +84,9 @@ namespace Finite_State_Machine_Designer.Data
                 transitionBuilder
                     .HasIndex(transition => transition.ToStateId)
                     .IsUnique(false);
+
+                transitionBuilder.Property(transition => transition.Text)
+                    .HasMaxLength(128);
             });
         }
     }
