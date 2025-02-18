@@ -27,6 +27,8 @@
 .inline-button {
     display: inline;
     width: fit-content;
+    height: 2em;
+    padding-top: 0.2em;
 }
 
 .blink {

@@ -13,26 +13,17 @@
 }
 
 .page-buttons-container {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     margin-top: 1.5em;
     margin-bottom: 2.5em;
-    justify-content: space-evenly;
+    justify-items: center;
 }
 
 .page-btn {
     width: 100px;
 }
 
-.load-more-button {
-    flex-grow: 1;
-    margin: 0.5em;
-    padding: 0.2em;
-    border: solid 1px #ffffff;
-    list-style: none;
-    cursor: pointer;
-    width: fit-content;
-    font-size: 2em;
-    text-align: center;
-    align-content: center;
+.hidden-btn {
+    visibility: hidden;
 }
