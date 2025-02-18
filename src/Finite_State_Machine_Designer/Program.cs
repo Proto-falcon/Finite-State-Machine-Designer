@@ -84,7 +84,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(
 builder.Services.AddSingleton<SmtpFactory>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
     IdentityEmailSender>();
-builder.Services.AddHostedService<DeleteUnconfirmedUsersService>();
 builder.Services.AddHsts(options =>
 {
     options.IncludeSubDomains = true;
