@@ -116,6 +116,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
                             await using (ApplicationDbContext dbContext =
                                 await DbFactory.CreateDbContextAsync())
                             {
+                                VerifyFsm(dbContext, _currentDrawnFsm);
                                 FiniteStateMachine? existingFSM =
                                     await dbContext.Entry(_user)
                                     .Collection(user => user.StateMachines)
@@ -172,7 +173,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
                         catch (Exception ex)
                         {
                             _fsmSaveState = SaveState.Failed;
-                            _errorMsg = $"Couldn't save!! {ex.Message.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)}";
+                            string? errMsg = ex.Message.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                            _errorMsg = $"Couldn't save!! '{errMsg}'";
                             _logger.LogError(
                                 "Couldn't save the current FSM "
                                 + "'{FsmName}' from user '{user}'",
@@ -184,6 +186,20 @@ namespace Finite_State_Machine_Designer.Components.Pages
                 return _fsmSaveState;
             }
             return SaveState.Failed;
+        }
+
+        private static void VerifyFsm(ApplicationDbContext dbContext, FiniteStateMachine fsm)
+        {
+            if (fsm.Name.Length > dbContext.FsmNameLimit)
+                throw new InvalidOperationException($"Name must be below o {dbContext.FsmNameLimit+1} characters long");
+            if (fsm.Description.Length > dbContext.FsmDescLimit)
+                throw new InvalidOperationException($"Description must be below {dbContext.FsmDescLimit+1} characters long");
+            foreach (var state in fsm.States)
+                if (state.Text.Length > dbContext.FsmTextLimit)
+                    throw new InvalidOperationException($"State text must be below {dbContext.FsmDescLimit+1} characters long");
+            foreach (var transition in fsm.Transitions)
+                if (transition.Text.Length > dbContext.FsmTextLimit)
+                    throw new InvalidOperationException($"Transition text must be below {dbContext.FsmDescLimit+1} characters long");
         }
     }
 }

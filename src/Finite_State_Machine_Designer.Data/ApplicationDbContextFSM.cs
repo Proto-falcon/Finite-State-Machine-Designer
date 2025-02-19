@@ -6,6 +6,10 @@ namespace Finite_State_Machine_Designer.Data
 {
     public partial class ApplicationDbContext
     {
+        public int FsmNameLimit { get; } = 128;
+        public int FsmDescLimit { get; } = 514;
+        public int FsmTextLimit { get; } = 128;
+
         private static void OnModelCreateFSM(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ApplicationUser>()
@@ -21,7 +25,7 @@ namespace Finite_State_Machine_Designer.Data
                     .ValueGeneratedNever();
 
                 fsmBuilder.Property(fsm => fsm.Name)
-                    .HasMaxLength(128);
+                    .HasMaxLength(512);
 
                 fsmBuilder.Property(fsm => fsm.Description)
                     .HasMaxLength(2056);
@@ -50,8 +54,7 @@ namespace Finite_State_Machine_Designer.Data
                     .ValueGeneratedNever();
 
                 stateBuilder.Property(state => state.Text)
-                    .HasMaxLength(128);
-
+                    .HasMaxLength(512);
             });
 
 
@@ -86,7 +89,7 @@ namespace Finite_State_Machine_Designer.Data
                     .IsUnique(false);
 
                 transitionBuilder.Property(transition => transition.Text)
-                    .HasMaxLength(128);
+                    .HasMaxLength(512);
             });
         }
     }

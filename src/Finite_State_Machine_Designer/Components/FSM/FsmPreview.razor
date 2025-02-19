@@ -12,6 +12,7 @@ style="@(Fsm is null | FsmState == FsmResultState.Fail ? "grid-template-columns:
             <div>
                 <div class="canvas-name-group canvas-info-group">
                     <h2><label for="canvasName">Name: @Fsm.Name</label></h2>
+                    <p class="character-length">Character Length: @Fsm.Name.Length</p>
                     <input id="canvasName" class="canvas-name" type="text"
                     name="name" placeholder="Name"
                     @bind:event="oninput" @bind="Fsm.Name" />
@@ -48,6 +49,7 @@ style="@(Fsm is null | FsmState == FsmResultState.Fail ? "grid-template-columns:
                 <p class="canvas-desc-summary">Description</p>
                 <div class="canvas-desc-group canvas-info-group">
                     <label class="canvas-desc-label" for="canvasDesc">Description:</label>
+                    <p class="character-length">Character Length: @Fsm.Description.Length</p>
                     <textarea id="canvasDesc" name="Description"
                     readonly="@ReadonlyDescription"
                     placeholder="Description" rows="10" cols="69"

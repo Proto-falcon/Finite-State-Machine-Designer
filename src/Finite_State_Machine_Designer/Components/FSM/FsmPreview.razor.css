@@ -16,6 +16,17 @@
     width: 40em;
 }
 
+.canvas-name-group label {
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    overflow: hidden;
+    width: 200%;
+}
+
+.character-length {
+    margin: 0;
+}
+
 .canvas-info-group {
     margin-bottom: 0.5em;
 }
