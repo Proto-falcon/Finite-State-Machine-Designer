@@ -21,7 +21,7 @@ namespace Finite_State_Machine_Designer.Components.Pages
             bool completed = false;
             if (_user is not null)
             {
-                await using ApplicationDbContext dbContext
+                await using ApplicationDbContext dbContext 
                     = await DbFactory.CreateDbContextAsync();
                 try
                 {
@@ -44,10 +44,14 @@ namespace Finite_State_Machine_Designer.Components.Pages
         private async Task InitialiseUserAsync()
         {
             string? userName = "";
+            _userFsmsLimit = _userConfig.Value.FsmsLimit;
             ApplicationUser? fetchedUser = null;
-            await using (ApplicationDbContext dbContext =
-                await DbFactory.CreateDbContextAsync())
+            await using (ApplicationDbContext dbContext
+                = await DbFactory.CreateDbContextAsync())
             {
+                _fsmNameLimit = dbContext.FsmNameLimit;
+                _fsmDescLimit = dbContext.FsmDescLimit;
+                _fsmTextLimit = dbContext.FsmTextLimit;                
                 userName = userService.GetUser().Identity?.Name;
                 if (userName is null)
                 {
@@ -63,6 +67,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
             {
                 _user = fetchedUser;
                 await GetUserFsmsPage(DateTime.MaxValue);
+                if (await CountUserFsms(_user.Id) is int num)
+                    _totalUserFsms = num;
                 if (_user.StateMachines.Count > 0)
                     _leastRecentModifiedTime = _user.StateMachines
                         .Last().TimeUpdated;
@@ -91,6 +97,24 @@ namespace Finite_State_Machine_Designer.Components.Pages
             }
         }
 
+        private async Task<int?> CountUserFsms(Guid userId)
+        {
+            int? num = null;
+            await using ApplicationDbContext dbContext = await DbFactory.CreateDbContextAsync();
+            try
+            {
+                num = dbContext.Users
+                    .Where(user => user.Id == userId)
+                    .SelectMany(user => user.StateMachines)
+                    .Count();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Couldn't count the the user Fsms for user {Id}", userId);
+            }
+            return num;
+        }
+
         /// <summary>
         /// Saves the current FSM in use to database.
         /// </summary>
@@ -113,10 +137,10 @@ namespace Finite_State_Machine_Designer.Components.Pages
                     else
                         try
                         {
+                            VerifyFsm(_currentDrawnFsm);
                             await using (ApplicationDbContext dbContext =
                                 await DbFactory.CreateDbContextAsync())
                             {
-                                VerifyFsm(dbContext, _currentDrawnFsm);
                                 FiniteStateMachine? existingFSM =
                                     await dbContext.Entry(_user)
                                     .Collection(user => user.StateMachines)
@@ -129,6 +153,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                         await dbContext.Database.BeginTransactionAsync();
                                     try
                                     {
+                                        if (_totalUserFsms > _userConfig.Value.FsmsLimit)
+                                            await DBCommands.DeleteOldModifiedFsms(dbContext, _user, _userConfig.Value.FsmsLimit - 1);
                                         _currentDrawnFsm.Id = existingFSM.Id;
                                         await DBCommands.UpdateFsmAsync(
                                             dbContext,
@@ -148,6 +174,8 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                         await dbContext.Database.BeginTransactionAsync();
                                     try
                                     {
+                                        if (_totalUserFsms >= _userConfig.Value.FsmsLimit)
+                                            await DBCommands.DeleteOldModifiedFsms(dbContext, _user, _userConfig.Value.FsmsLimit - 1);
                                         await DBCommands.AddFSMAsync(
                                             dbContext,
                                             _currentDrawnFsm,
@@ -173,14 +201,16 @@ namespace Finite_State_Machine_Designer.Components.Pages
                         catch (Exception ex)
                         {
                             _fsmSaveState = SaveState.Failed;
-                            string? errMsg = ex.Message.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-                            _errorMsg = $"Couldn't save!! '{errMsg}'";
+                            _errorMsg = $"Couldn't save!!";
                             _logger.LogError(
                                 "Couldn't save the current FSM "
                                 + "'{FsmName}' from user '{user}'",
                             _currentDrawnFsm.Name, _user.Id);
                             _logger.LogError("{ERROR}", ex.ToString());
                         }
+
+                    if (await CountUserFsms(_user.Id) is int num)
+                        _totalUserFsms = num;
                 }
                 StateHasChanged();
                 return _fsmSaveState;
@@ -188,18 +218,18 @@ namespace Finite_State_Machine_Designer.Components.Pages
             return SaveState.Failed;
         }
 
-        private static void VerifyFsm(ApplicationDbContext dbContext, FiniteStateMachine fsm)
+        private void VerifyFsm(FiniteStateMachine fsm)
         {
-            if (fsm.Name.Length > dbContext.FsmNameLimit)
-                throw new InvalidOperationException($"Name must be below o {dbContext.FsmNameLimit+1} characters long");
-            if (fsm.Description.Length > dbContext.FsmDescLimit)
-                throw new InvalidOperationException($"Description must be below {dbContext.FsmDescLimit+1} characters long");
+            if (fsm.Name.Length > _fsmNameLimit)
+                throw new InvalidOperationException($"Name must be below o {_fsmNameLimit + 1} characters long");
+            if (fsm.Description.Length > _fsmDescLimit)
+                throw new InvalidOperationException($"Description must be below {_fsmDescLimit + 1} characters long");
             foreach (var state in fsm.States)
-                if (state.Text.Length > dbContext.FsmTextLimit)
-                    throw new InvalidOperationException($"State text must be below {dbContext.FsmDescLimit+1} characters long");
+                if (state.Text.Length >_fsmTextLimit)
+                    throw new InvalidOperationException($"State text must be below {_fsmTextLimit + 1} characters long");
             foreach (var transition in fsm.Transitions)
-                if (transition.Text.Length > dbContext.FsmTextLimit)
-                    throw new InvalidOperationException($"Transition text must be below {dbContext.FsmDescLimit+1} characters long");
+                if (transition.Text.Length > _fsmTextLimit)
+                    throw new InvalidOperationException($"Transition text must be below {_fsmTextLimit + 1} characters long");
         }
     }
 }

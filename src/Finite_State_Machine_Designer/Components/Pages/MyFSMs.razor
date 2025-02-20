@@ -41,6 +41,7 @@
         SetSaveHandler="SetSaveCurrent"
         SetDrawHandler="async (e) => await SetDrawingFsmAsync(_currentFsm)"
         ErrorMsg="@_errorMsg"
+        DisplayWarning="_totalUserFsms >= _userConfig.Value.FsmsLimit"
         FsmSaveState="_fsmSaveState"/>
     }
 }
@@ -63,6 +64,7 @@
         {
             <button class="hidden-btn" />
         }
+        <h3>@_totalUserFsms/@_userFsmsLimit FSMs</h3>
         @if (_loadMoreFsms)
         {
             <button class="page-btn" @onclick="GetMoreFsmsHandler">
@@ -92,6 +94,11 @@ else
     private bool _saveFsm = false;
 
     private ApplicationUser? _user = null;
+    private int _fsmNameLimit = 64;
+    private int _fsmDescLimit = 64;
+    private int _fsmTextLimit = 64;
+    private long _userFsmsLimit = 100;
+    private int _totalUserFsms = 0;
     /// <summary>
     /// Current FSM to be viewed.
     /// </summary>
@@ -266,7 +273,6 @@ else
                 _leastRecentModifiedTime = fsm.TimeUpdated;
             else
                 _leastRecentModifiedTime = DateTime.MaxValue;
-            // _recentModifiedTimes.RemoveAt(_recentModifiedTimes.Count-1);
             _loadPrevFsms = _recentModifiedTimes.Count > 0;
             StateHasChanged();
         }

@@ -10,7 +10,28 @@ namespace Finite_State_Machine_Designer.Data
     public static class DBCommands
     {
         /// <summary>
-        /// Delete Fsms in the database via Ids.
+        /// Deletes older FSMs.
+        /// </summary>
+        /// <param name="dbContext">Database Context to query with.</param>
+        /// <param name="user">User with Finite State Machines</param>
+        /// <param name="skipNum">Number of FSMs to skip.</param>
+        public async static Task DeleteOldModifiedFsms(ApplicationDbContext dbContext, ApplicationUser user, int skipNum)
+        {
+            FiniteStateMachine? oldFsm = await dbContext.Users
+                .Where(u => u.Id == user.Id)
+                .SelectMany(user => user.StateMachines)
+                .OrderByDescending(fsm => fsm.TimeUpdated)
+                .Skip(skipNum)
+                .FirstAsync();
+            await dbContext.StateMachines
+                .Where(fsm => fsm.TimeUpdated <= oldFsm.TimeUpdated)
+                .ExecuteDeleteAsync();
+        }
+
+        /// <summary>
+        /// <para>Delete Fsms in the database via Ids.</para>
+        /// <b>Note:</b> Deletes them wihtin a transaction so can't use it with
+        /// other database contexts with an already existing transaction.
         /// </summary>
         /// <param name="dbContext">Database Context to query with.</param>
         /// <param name="fsmIds">Finite State Machine Ids</param>

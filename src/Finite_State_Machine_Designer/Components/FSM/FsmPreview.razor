@@ -46,6 +46,10 @@ style="@(Fsm is null | FsmState == FsmResultState.Fail ? "grid-template-columns:
                         <p class="blink">Saved!!</p>
                     }
                 </div>
+                @if (DisplayWarning)
+                {
+                    <div class="warning"><p class="blink">Will delete older modified Fsms when limit is reached.</p></div>
+                }
                 <p class="canvas-desc-summary">Description</p>
                 <div class="canvas-desc-group canvas-info-group">
                     <label class="canvas-desc-label" for="canvasDesc">Description:</label>
@@ -110,6 +114,9 @@ style="@(Fsm is null | FsmState == FsmResultState.Fail ? "grid-template-columns:
 
     [Parameter]
     public SaveState FsmSaveState { get; set; }
+
+    [Parameter]
+    public bool DisplayWarning { get; set; }
 
     private RenderFragment _fsmContent = @<></>;
 }

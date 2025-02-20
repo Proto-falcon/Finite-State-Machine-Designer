@@ -46,6 +46,7 @@
     animation: blinker 1s linear normal;
     display: inline;
     margin-left: 0.3em;
+    color: #ffffff;
 }
 
 @keyframes blinker {
@@ -54,10 +55,15 @@
     }
 }
 
+.warning {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
 .canvas-desc-summary {
     font-size: 1.5em;
     user-select: none;
-    width: fit-content
+    width: fit-content;
 }
 
 .canvas-desc-group {
