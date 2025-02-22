@@ -9,7 +9,7 @@
     justify-items: center;
     align-items: center;
     grid-template-columns: 1fr 1fr;
-    background-color: #313338dd;
+    background-color: var(--bg-colour);
 }
 
 .page-buttons-container {

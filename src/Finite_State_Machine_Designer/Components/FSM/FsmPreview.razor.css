@@ -9,7 +9,7 @@
     justify-items: center;
     align-items: center;
     grid-template-columns: 1fr 1fr;
-    background-color: #313338dd;
+    background-color: var(--bg-colour);
 }
 
 .canvas-name-group {
@@ -46,7 +46,7 @@
     animation: blinker 1s linear normal;
     display: inline;
     margin-left: 0.3em;
-    color: #ffffff;
+    color: var(--text-colour);
 }
 
 @keyframes blinker {
@@ -85,7 +85,7 @@
 }
 
 .fsm-svg {
-    border: solid 5px #ffffff;
+    border: solid 5px var(--border-colour);
     border-radius: 5px;
 }
 

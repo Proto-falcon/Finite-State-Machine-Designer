@@ -40,17 +40,17 @@ h2 {
     text-wrap: nowrap;
     width: 100%;
     margin-top: 1em;
-    border: solid 3px #ffffff;
+    border: solid 3px var(--border-colour);
     line-height: 2em;
 }
 
 .fsm-list-container tbody tr {
-    border-top: solid 1px #ffffff;
+    border-top: solid 1px var(--border-colour);
 }
 
 .fsm-list-container tr {
     td, th {
-        border-right: solid 1px #ffffff;
+        border-right: solid 1px var(--border-colour);
         padding-left: 0.5em;
         padding-right: 0.5em;
         overflow: hidden;
@@ -69,5 +69,5 @@ h2 {
 }
 
 .delete-button-cell:active {
-    background-color: #ffffff54;
+    background-color: var(--highlighted-colour);
 }

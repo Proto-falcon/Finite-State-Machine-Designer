@@ -6,7 +6,7 @@
     border-style: solid;
     border-color: black;
     border-width: thin;
-    background-color: #313338;
+    background-color: var(--bg-colour);
 }
 
 .canvas-top-buttons {
@@ -26,7 +26,7 @@
 
 .canvas-form {
     padding: 5px;
-    border: 2px solid #ffffff; 
+    border: 2px solid var(--border-colour); 
     border-radius: 5px;
 }
 
@@ -55,7 +55,7 @@
 
 .canvas-details {
     position: relative;
-    bottom: 1.9em;
+    bottom: 2.3em;
     left: 2rem;
     width: fit-content;
     align-self: flex-start;
@@ -65,7 +65,7 @@
     width: fit-content;
     list-style: none;
     text-align: right;
-    border-color: #808080;
+    border: 2px solid var(--border-colour);
     padding: 5px;
     border-radius: 5px;
 }

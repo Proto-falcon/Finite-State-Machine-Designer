@@ -1,5 +1,10 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --text-colour: #ffffff;
+    --text-colour-second: #bb61d1;
+    --border-colour: #ffffff;
+    --bg-colour: #313338dd;
+    --highlighted-colour: #ffffff54;
 }
 
 a, .btn-link {
@@ -52,9 +57,9 @@ h1:focus {
 
 button, select {
     width: fit-content;
-    color: #bb61d1;
+    color: var(--text-colour-second);
     background: none;
-    border: solid 1px #ffffff;
+    border: solid 1px var(--border-colour);
     border-radius: 5px;
     padding: 0.75em;
     font: inherit;
