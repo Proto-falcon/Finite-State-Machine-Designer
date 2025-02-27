@@ -67,10 +67,8 @@
         }
 
         IEnumerable<AuthenticationScheme> authSchemes = await SignInManager.GetExternalAuthenticationSchemesAsync();
-        List<Task<bool>> removeTasks = new (authSchemes.Count());
         foreach (AuthenticationScheme authScheme in authSchemes)
-            removeTasks.Add(TokenManager.RemoveToken(UserManager, user, authScheme.Name));
-        await Task.WhenAll(removeTasks);
+            await TokenManager.RemoveToken(UserManager, user, authScheme.Name);
 
         var result = await UserManager.DeleteAsync(user);
         if (!result.Succeeded)

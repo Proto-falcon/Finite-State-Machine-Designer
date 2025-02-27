@@ -1,8 +1,4 @@
-﻿.external-login {
-    color: #bb61d1;
-}
-
-.external-login-container {
+﻿.external-login-container {
     display: flex;
     flex-direction: column;
     align-items: center;

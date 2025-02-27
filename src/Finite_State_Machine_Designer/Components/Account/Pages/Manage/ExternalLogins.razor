@@ -1,4 +1,4 @@
-﻿@page "/Account/Manage/ExternalLogins"
+﻿@page "/Account/Manage/ExternalLogins/{Provider}"
 
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
@@ -32,14 +32,13 @@
                                 <AntiforgeryToken />
                                 <div>
                                     <input type="hidden" name="@nameof(LoginProvider)" 
-                                        value="@login.LoginProvider"
+                                    value="@login.LoginProvider"
                                     />
                                     <input type="hidden" name="@nameof(ProviderKey)" 
-                                        value="@login.ProviderKey"
+                                    value="@login.ProviderKey"
                                     />
                                     <button type="submit" class="btn btn-primary"
-                                    title="Remove this 
-                                    @login.ProviderDisplayName login from your account">
+                                    title="Remove this @login.ProviderDisplayName login from your account">
                                         Remove
                                     </button>
                                 </div>
@@ -62,16 +61,15 @@
     <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
         <AntiforgeryToken />
         <div>
-            <p>
+            <div class="external-login-container">
                 @foreach (var provider in otherLogins)
                 {
-                    <button type="submit" class="btn btn-primary" name="Provider" 
-                    value="@provider.Name" title="Log in using your 
-                        @provider.DisplayName account">
+                    <button type="submit" name="Provider" 
+                    value="@provider.Name" title="Log in using your @provider.DisplayName account">
                         @provider.DisplayName
                     </button>
                 }
-            </p>
+            </div>
         </div>
     </form>
 }
@@ -95,6 +93,9 @@
 
     [SupplyParameterFromQuery]
     private string? Action { get; set; }
+
+    [Parameter]
+    public string? Provider { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

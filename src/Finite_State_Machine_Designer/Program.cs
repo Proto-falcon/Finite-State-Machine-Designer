@@ -2,6 +2,7 @@ using Finite_State_Machine_Designer.Client.Pages;
 using Finite_State_Machine_Designer.Components;
 using Finite_State_Machine_Designer.Components.Account;
 using Finite_State_Machine_Designer.Configuration;
+using Finite_State_Machine_Designer.Configuration.ExternalLogins;
 using Finite_State_Machine_Designer.Data;
 using Finite_State_Machine_Designer.Data.Identity;
 using Finite_State_Machine_Designer.Services;
@@ -45,26 +46,19 @@ AuthenticationBuilder authBuilder = builder.Services.AddAuthentication(options =
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     });
-GoogleAuth googleAuthOptions = new();
-builder.Configuration
-    .GetSection("FSM:ExternalAuths:GoogleAuth")
-    .Bind(googleAuthOptions);
 
-if (!string.IsNullOrWhiteSpace(googleAuthOptions.ClientId)
-        && !string.IsNullOrWhiteSpace(googleAuthOptions.ClientSecret))
-{
-    authBuilder.AddGoogle(googleOptions =>
-        {
-            googleOptions.SaveTokens = true;
-            googleOptions.AccessDeniedPath = "/Account/Login";
-            googleOptions.ClientId = googleAuthOptions.ClientId;
-            googleOptions.ClientSecret = googleAuthOptions.ClientSecret;
-            googleOptions.Validate();
-        })
-        .AddIdentityCookies();
-}
-else
-    authBuilder.AddIdentityCookies();
+ExternalAuths externalAuths = new();
+builder.Configuration.GetSection("FSM:ExternalAuths")
+    .Bind(externalAuths);
+
+string accessDeniedPath = "/Account/Login";
+
+ExternalGoogle.Setup(externalAuths.GoogleAuth, authBuilder, accessDeniedPath);
+ExternalSlack.Setup(externalAuths.SlackAuth, authBuilder, accessDeniedPath);
+ExternalGithub.Setup(externalAuths.GithubAuth, authBuilder, accessDeniedPath);
+ExternalDiscord.Setup(externalAuths.DiscordAuth, authBuilder, accessDeniedPath);
+
+authBuilder.AddIdentityCookies();
 
 var connectionString = builder.Configuration
     .GetConnectionString("DefaultConnection") 

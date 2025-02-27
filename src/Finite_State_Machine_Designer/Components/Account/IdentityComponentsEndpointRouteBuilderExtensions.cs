@@ -33,7 +33,7 @@ namespace Microsoft.AspNetCore.Routing
 
                 var redirectUrl = UriHelper.BuildRelative(
                     context.Request.PathBase,
-                    "/Account/ExternalLogin",
+                    $"/Account/ExternalLogin/{provider}",
                     QueryString.Create(query));
 
                 var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
@@ -61,7 +61,7 @@ namespace Microsoft.AspNetCore.Routing
 
                 var redirectUrl = UriHelper.BuildRelative(
                     context.Request.PathBase,
-                    "/Account/Manage/ExternalLogins",
+                    $"/Account/Manage/ExternalLogins/{provider}",
                     QueryString.Create("Action", ExternalLogins.LinkLoginCallbackAction));
 
                 var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl, signInManager.UserManager.GetUserId(context.User));
