@@ -70,7 +70,10 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 );
 
 builder.Services.AddIdentityCore<ApplicationUser>(
-        options => options.SignIn.RequireConfirmedAccount = true)
+        options => {
+            options.SignIn.RequireConfirmedAccount = true;
+            options.User.RequireUniqueEmail = true;
+            })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
