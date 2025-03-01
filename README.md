@@ -22,14 +22,14 @@ And modifications from
             "EmailLayout": ".\\EmailContent\\EmailLayout.html"
         },
         "UsersConfig": {
-            "MaxUnconfirmedDays": 0,
-            "DeleteUnconfirmedInterval": 1
+            "VisibleFsmsLimit": 5,
+            "FsmsLimit": 6
         },
     }
 
 - EmailLayout - Path of email layout path in code.
-- MaxUnconfirmedDays - Max number of days for unconfirmed accounts to persist in the database.
-- DeleteUnconfirmedInterval - Every number of days to routinely delete unconfirmed users.
+- VisibleFsmsLimit - Number of FSMs that can be viewed per page.
+- FsmsLimit - Maximum number of FSMs that each user can store remotely.
 
 ### Environment Variables
 
