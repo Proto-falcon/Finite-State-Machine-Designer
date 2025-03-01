@@ -8,7 +8,11 @@ html, body {
 }
 
 a, .btn-link {
-    color: #006bb7;
+    color: var(--text-colour-second);
+}
+
+a:hover {
+    color: #d9a2e6;
 }
 
 .btn-primary {
@@ -57,7 +61,7 @@ h1:focus {
 
 button, select {
     width: fit-content;
-    color: var(--text-colour-second);
+    color: var(--text-colour);
     background: none;
     border: solid 1px var(--border-colour);
     border-radius: 5px;
