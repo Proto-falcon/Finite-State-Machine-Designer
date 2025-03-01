@@ -80,7 +80,6 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>,
     IdentityEmailSender>();
 builder.Services.AddHsts(options =>
 {
-    options.IncludeSubDomains = true;
     options.MaxAge = TimeSpan.FromDays(1);
 });
 var app = builder.Build();
