@@ -36,8 +36,8 @@ namespace Finite_State_Machine_Designer.Components.Account
             if (!MailboxAddress.TryParse(
                 config.Value.DisplayAddress, out _fromServiceAddress))
                 throw new FormatException(
-                    "From address '{FROM}' that successfully connected"
-                    + " to smtp.gmail.com had invalid email format");
+                    $"From address '{config.Value.DisplayAddress}' that successfully connected"
+                    + " to email server had invalid email format");
         }
 
         public Task SendConfirmationLinkAsync(ApplicationUser user,
