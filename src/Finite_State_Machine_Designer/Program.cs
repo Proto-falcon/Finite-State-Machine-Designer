@@ -9,6 +9,7 @@ using Finite_State_Machine_Designer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -39,6 +40,8 @@ builder.Services.AddScoped<AuthenticationStateProvider,
 builder.Services.AddScoped<UserService>();
 builder.Services.TryAddEnumerable(
     ServiceDescriptor.Scoped<CircuitHandler, UserCircuitHandler>());
+if (builder.Configuration.GetSection("FSM:KeyPath").Get<string>() is string keyPath)
+    builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(keyPath));
 
 builder.Services.AddAuthorization();
 AuthenticationBuilder authBuilder = builder.Services.AddAuthentication(options =>

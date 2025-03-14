@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Finite_State_Machine_Designer.Data\Finite_State_Machine_Designer.Data.csproj" />
     <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.3.0" />
     <PackageReference Include="AspNet.Security.OAuth.GitHub" Version="8.3.0" />
+    <PackageReference Include="Azure.Extensions.AspNetCore.DataProtection.Keys" Version="1.4.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <PackageReference Include="MailKit" Version="4.10.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.13" />

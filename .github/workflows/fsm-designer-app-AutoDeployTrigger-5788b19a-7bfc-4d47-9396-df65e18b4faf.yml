@@ -35,14 +35,9 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          _dockerfilePathKey_: _dockerfilePath_
-          registryUrl: 
+          _dockerfilePathKey_: ./DockerFile
           registryUsername: ${{ secrets.FSMDESIGNERAPP_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.FSMDESIGNERAPP_REGISTRY_PASSWORD }}
           containerAppName: fsm-designer-app
           resourceGroup: TobiCreations_group
           imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
-
-
