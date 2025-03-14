@@ -1,0 +1,8 @@
+﻿form {
+    margin-bottom: 1rem;
+}
+
+form button, .delete-button {
+    width: 6rem;
+}
+

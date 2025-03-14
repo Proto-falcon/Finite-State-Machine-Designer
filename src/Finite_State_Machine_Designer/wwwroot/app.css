@@ -11,6 +11,10 @@ a, .btn-link {
     color: var(--text-colour-second);
 }
 
+.form-floating label {
+    color: #838383;
+}
+
 a:hover {
     color: #d9a2e6;
 }
