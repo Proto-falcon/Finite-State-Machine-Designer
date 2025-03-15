@@ -40,8 +40,8 @@ builder.Services.AddScoped<AuthenticationStateProvider,
 builder.Services.AddScoped<UserService>();
 builder.Services.TryAddEnumerable(
     ServiceDescriptor.Scoped<CircuitHandler, UserCircuitHandler>());
-if (builder.Configuration.GetSection("FSM:KeyPath").Get<string>() is string keyPath)
-    builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(keyPath));
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<DataProtectionContext>();
 
 builder.Services.AddAuthorization();
 AuthenticationBuilder authBuilder = builder.Services.AddAuthentication(options =>
@@ -67,9 +67,15 @@ var connectionString = builder.Configuration
     .GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' not found.");
+var dppConnString = builder.Configuration.GetConnectionString("DPPConnection")
+    ?? throw new InvalidOperationException("Connection string 'DPPConnection' not found.");
+builder.Services.AddDbContextFactory<DataProtectionContext>(options =>
+    options.UseSqlServer(dppConnString,
+    x => x.MigrationsAssembly("Finite_State_Machine_Designer.Data"))
+);
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options => 
-        options.UseSqlServer(connectionString,
-        x => x.MigrationsAssembly("Finite_State_Machine_Designer.Data"))
+    options.UseSqlServer(connectionString,
+    x => x.MigrationsAssembly("Finite_State_Machine_Designer.Data"))
 );
 
 builder.Services.AddIdentityCore<ApplicationUser>(
