@@ -10,11 +10,17 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+});
 
 builder.Services
     .Configure<EmailServiceConfig>(
@@ -96,6 +102,7 @@ builder.Services.AddHsts(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseForwardedHeaders();
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
