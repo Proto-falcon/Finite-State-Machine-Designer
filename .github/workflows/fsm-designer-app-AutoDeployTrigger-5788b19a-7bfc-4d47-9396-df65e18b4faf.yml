@@ -41,4 +41,4 @@ jobs:
           registryPassword: ${{ secrets.FSMDESIGNERAPP_REGISTRY_PASSWORD }}
           containerAppName: fsm-designer-app
           resourceGroup: TobiCreations_group
-          imageToBuild: ${{ secrets.FSMDESIGNERAPP_REGISTRY_USERNAME }}/[parameters('containerAppName')]:${{ github.sha }}
+          imageToBuild: ${{ secrets.FSMDESIGNERAPP_REGISTRY_USERNAME }}/fsm-designer-app:${{ github.sha }}
