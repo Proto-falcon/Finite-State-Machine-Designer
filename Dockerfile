@@ -16,7 +16,7 @@
 # most recent version of that image when you build your Dockerfile.
 # If reproducability is important, consider using a versioned tag
 # (e.g., alpine:3.17.2) or SHA (e.g., alpine@sha256:c41ab5c992deb4fe7e5da09f67a8804a46bd0592bfdf0b1847dde0e0889d2bff).
-FROM mcr.microsoft.com/dotnet/sdk:8.0.406-alpine3.21-arm64v8 AS base
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.21-amd64 AS base
 
 COPY ./src /source
 WORKDIR /source
@@ -32,7 +32,7 @@ WORKDIR /source
 FROM base AS build
 
 RUN dotnet publish "Finite_State_Machine_Designer\\Finite_State_Machine_Designer.csproj" \
--a arm64 -o /app
+-a amd64 -o /app
 
 ################################################################################
 # Create a final stage for running your application.
