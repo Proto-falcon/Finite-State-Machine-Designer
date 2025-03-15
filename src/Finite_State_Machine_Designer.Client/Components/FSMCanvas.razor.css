@@ -110,3 +110,7 @@ form {
 .scale-input {
     width: 4.5em;
 }
+
+option {
+    color: var(--bg-colour);
+}
