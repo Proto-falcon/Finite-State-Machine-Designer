@@ -35,7 +35,7 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          registryUrl: https://hub.docker.com/repositories/${{ secrets.FSMDESIGNERAPP_REGISTRY_USERNAME }}
+          registryUrl: https://hub.docker.com
           dockerfilePath: Dockerfile
           registryUsername: ${{ secrets.FSMDESIGNERAPP_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.FSMDESIGNERAPP_REGISTRY_PASSWORD }}
