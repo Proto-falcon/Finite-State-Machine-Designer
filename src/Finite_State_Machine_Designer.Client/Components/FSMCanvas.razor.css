@@ -1,7 +1,52 @@
-﻿#FSMCanvas {
+﻿@media (min-width: 1200px) {
+    .canvas-top-buttons {
+        position: sticky;
+        top: 0.75rem;
+        margin-right: 2rem;
+        align-items: center;
+        align-self: end;
+    }
+
+    .canvas-details {
+        position: relative;
+        bottom: 2.3em;
+        left: 2rem;
+        align-self: flex-start;
+    }
+
+    #FSMCanvas {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+}
+
+@media (max-width: 1119px) {
+    .canvas-top-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .upload-json {
+        text-wrap: nowrap;
+    }
+
+    .canvas-btn-group {
+        display: flex;
+        margin-bottom: 0.5rem;
+        width: fit-content;
+    }
+
+    .canvas-details {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+#FSMCanvas {
     border-radius: 20px;
     -moz-border-radius: 20px;
-    margin: 10px auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
     cursor: default;
     border-style: solid;
     border-color: black;
@@ -11,13 +56,8 @@
 
 .canvas-top-buttons {
     display: flex;
-    align-items: center;
-    position: sticky;
     width: fit-content;
-    align-self: end;
     z-index: 2;
-    top: 0.75rem;
-    margin-right: 2rem;
 }
 
 .center {
@@ -34,16 +74,12 @@
     width: fit-content;
 }
 
-.canvas-name {
-    width: 30em;
-}
-
-.canvas-desc-group {
+.canvas-info-group {
     text-align: left;
     display: grid;
 }
 
-.canvas-desc-label {
+.canvas-info-label {
     display: block;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
@@ -54,18 +90,15 @@
 }
 
 .canvas-details {
-    position: relative;
-    bottom: 2.3em;
-    left: 2rem;
+    
     width: fit-content;
-    align-self: flex-start;
 }
 
 .canvas-details-button {
     width: fit-content;
     list-style: none;
     text-align: right;
-    border: 2px solid var(--border-colour);
+    border: 1px solid var(--border-colour);
     padding: 5px;
     border-radius: 5px;
 }

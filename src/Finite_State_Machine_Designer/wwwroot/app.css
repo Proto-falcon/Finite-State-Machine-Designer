@@ -7,6 +7,12 @@ html, body {
     --highlighted-colour: #ffffff54;
 }
 
+@media (max-width: 642px) {
+    .content {
+        min-height: 81.485vh;
+    }
+}
+
 a, .btn-link {
     color: var(--text-colour-second);
 }

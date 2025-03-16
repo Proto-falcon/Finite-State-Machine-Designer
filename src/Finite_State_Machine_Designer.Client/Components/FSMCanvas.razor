@@ -7,43 +7,47 @@
 @inject ILogger<FSMCanvas> _logger
 
 <div class="center canvas-top-buttons">
-	Export as:
-	<input class="scale-input" type="number" min="0" placeholder="Export Scale" step="0.01"
-	@bind:event="oninput" @bind="_canvasExportScale" />
-	<select class="export-select" @bind="_exportType">
-		<option value="@ExportTypes.Png">PNG</option>
-		<option value="@ExportTypes.Svg">SVG</option>
-		<option value="@ExportTypes.Json">JSON</option>
-	</select>
-	<button class="canvas-button" @onclick="ExportCanvas">Export</button>
-	<button class="canvas-button" @onclick="UploadJson">Upload JSON</button>
-	<AuthorizeView>
-		<button class="canvas-button" @onclick="NavToSave">
-			Save
-		</button>
-	</AuthorizeView>
+	<div class="canvas-btn-group">
+		Export as:
+		<input class="scale-input" type="number" min="0" placeholder="Export Scale" step="0.01"
+		@bind:event="oninput" @bind="_canvasExportScale" />
+		<select class="export-select" @bind="_exportType">
+			<option value="@ExportTypes.Png">PNG</option>
+			<option value="@ExportTypes.Svg">SVG</option>
+			<option value="@ExportTypes.Json">JSON</option>
+		</select>
+		<button class="canvas-button" @onclick="ExportCanvas">Export</button>
+	</div>
+	<div class="canvas-btn-group">
+		<button class="canvas-button upload-json" @onclick="UploadJson">Upload JSON</button>
+		<AuthorizeView>
+			<button class="canvas-button" @onclick="NavToSave">
+				Save
+			</button>
+		</AuthorizeView>
 
-	<button title="ctrl+." class="canvas-button"
-	style="@(_superScriptMode ? "background-color:#a45cbd": null)"
-	@onclick="ToggleSuperScriptHandler">
-		aˣ
-	</button>
-	<button title="ctrl+," class="canvas-button"
-	style="@(_subScriptMode ? "background-color:#a45cbd": null)"
-	@onclick="ToggleSubScriptHandler">
-		aₓ
-	</button>
+		<button title="ctrl+." class="canvas-button"
+				style="@(_superScriptMode ? "background-color:#a45cbd": null)"
+				@onclick="ToggleSuperScriptHandler">
+			aˣ
+		</button>
+		<button title="ctrl+," class="canvas-button"
+				style="@(_subScriptMode ? "background-color:#a45cbd": null)"
+				@onclick="ToggleSubScriptHandler">
+			aₓ
+		</button>
+	</div>
 </div>
 <details class="canvas-details">
 	<summary class="canvas-details-button">Finite State Machine Name & Description</summary>
 	<form class="center canvas-form">
-		<div class="canvas-name-group">
+		<div class="canvas-info-group">
 			<label for="canvasName">Name:</label>
-			<input id="canvasName" class="canvas-name" type="text" name="name" placeholder="Name"
+			<input id="canvasName" type="text" name="name" placeholder="Name"
 			@bind:event="oninput" @bind="_fsmDrawer.FSM.Name" />
 		</div>
-		<div class="canvas-desc-group">
-			<label class="canvas-desc-label" for="canvasDesc">Description:</label>
+		<div class="canvas-info-group">
+			<label class="canvas-info-label" for="canvasDesc">Description:</label>
 			<textarea id="canvasDesc" name="Description" placeholder="Description" rows="10" cols="50"
 			@bind:event="oninput" @bind="_fsmDrawer.FSM.Description" />
 		</div>

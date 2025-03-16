@@ -29,7 +29,7 @@ main {
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
 }
 
-@media (min-width: 641px) {
+@media (min-width: 760px) {
     .page {
         flex-direction: row;
     }
@@ -39,11 +39,6 @@ main {
         height: 100vh;
         position: sticky;
         top: 0;
-    }
-
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
     }
     
     .top-row {
@@ -57,6 +52,23 @@ main {
         text-align: right;
         width: 0;
     }
+}
+
+@media (max-width: 761px) {
+    
+
+    .top-row {
+        justify-content: space-between;
+    }
+
+    .top-row ::deep a, .top-row ::deep .btn-link {
+        margin-left: 0;
+    }
+}
+
+.top-row, article {
+    padding-left: 2rem !important;
+    padding-right: 1.5rem !important;
 }
 
 #blazor-error-ui {
@@ -81,7 +93,7 @@ main {
 .top-row {
     border-bottom: 1px solid var(--border-colour);
     justify-content: flex-end;
-    height: 3.5rem;
+    height: 9.257vh;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -101,14 +113,4 @@ main {
 .top-row ::deep a:first-child {
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
-
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
 }
