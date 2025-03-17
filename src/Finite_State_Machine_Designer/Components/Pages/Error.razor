@@ -1,25 +1,47 @@
 ﻿@page "/Error"
 @using System.Diagnostics
+@using Microsoft.AspNetCore.Diagnostics
+@inject ILogger<Error> Logger
 
 <PageTitle>Error</PageTitle>
 
 <h1 class="text-danger">Error.</h1>
 <h2 class="text-danger">An error occurred while processing your request.</h2>
 
-@if (ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@RequestId</code>
-    </p>
-}
+<p>
+    <strong>Status @StatusCode:</strong> <code>@Message</code>
+</p>
 
 @code{
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
+    private string Message = "Something went wrong";
+    private int StatusCode = StatusCodes.Status400BadRequest;
 
-    private string? RequestId { get; set; }
-    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
-
-    protected override void OnInitialized() =>
-        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+    protected override void OnInitialized()
+    {
+        if (HttpContext is not null)
+        {
+            var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            StatusCode = HttpContext.Response.StatusCode;
+            if (exceptionHandlerPathFeature is not null)
+            {
+                string errMsg = exceptionHandlerPathFeature.Error.Message.ToLower();
+                if (errMsg.Contains("database") || errMsg.Contains("sql"))
+                {
+                    if (errMsg.Contains("login"))
+                        Message = "Login failed to connect to the database";
+                    else if (errMsg.Contains("timeout"))
+                        Message = "Connection Timed out to the database";
+                    else if (errMsg.Contains("unknown database"))
+                        Message = "Couldn't connect to the database on server";
+                    else if (errMsg.Contains("table"))
+                        Message = "Couldn't execute query on table";
+                    Message = "Couldn't connect to the database server";
+                }
+                else if (errMsg.Contains("javascript") || errMsg.Contains("js"))
+                    Message = "Couldn't load/execute the Javascript on this page, may need to reload.";
+            }
+        }
+    }
 }
