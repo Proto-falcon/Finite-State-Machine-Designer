@@ -45,6 +45,7 @@ namespace Finite_State_Machine_Designer.Data
         {
             if (fsmIds.Length <= 0)
                 return true;
+            bool isDeleted = false;
             string deleteQuery = "DELETE dbo.StateMachines WHERE Id IN ( ";
 
             List<SqlParameter> parameters = [];
@@ -56,20 +57,24 @@ namespace Finite_State_Machine_Designer.Data
                 deleteQuery += $"@id{i}, ";
             }
             deleteQuery = deleteQuery.TrimEnd(',', ' ') + " )";
-            await using var transact = await dbContext.Database.BeginTransactionAsync();
+            var transactStrategy = dbContext.Database.CreateExecutionStrategy();
             try
             {
-                await dbContext.Database.ExecuteSqlRawAsync(deleteQuery, parameters);
-                await transact.CommitAsync();
-                return true;
+                await transactStrategy.ExecuteAsync(async () =>
+                {
+                    await using var transact = await dbContext.Database.BeginTransactionAsync();
+                    await dbContext.Database.ExecuteSqlRawAsync(deleteQuery, parameters);
+                    await transact.CommitAsync();
+                    isDeleted = true;
+                });
             }
-            catch (OperationCanceledException ex)
+            catch (Exception ex)
             {
-                await transact.RollbackAsync();
-                logger?.LogError("Coudln't delete the Finite State Machines");
-                logger?.LogError("{Error}", ex.ToString());
-                return false;
+                logger?.LogError(ex, "Coudln't delete the Finite State Machines");
+                isDeleted = false;
             }
+
+            return isDeleted;
         }
 
         /// <summary>

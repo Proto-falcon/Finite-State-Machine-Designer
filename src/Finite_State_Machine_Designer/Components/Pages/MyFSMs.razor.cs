@@ -147,46 +147,56 @@ namespace Finite_State_Machine_Designer.Components.Pages
                                     .Query()
                                     .Where(fsm => fsm.Name == _currentDrawnFsm.Name)
                                     .FirstOrDefaultAsync();
+                                var transactStrategy = dbContext.Database.CreateExecutionStrategy();
                                 if (existingFSM is not null)
                                 {
-                                    await using var transact =
+                                    DateTime oldModifiedTime = _currentDrawnFsm.TimeUpdated;
+                                    await transactStrategy.ExecuteAsync(async () =>
+                                    {
+                                        await using var transact =
                                         await dbContext.Database.BeginTransactionAsync();
-                                    try
-                                    {
-                                        if (_totalUserFsms > _userConfig.Value.FsmsLimit)
-                                            await DBCommands.DeleteOldModifiedFsms(dbContext, _user, _userConfig.Value.FsmsLimit - 1);
-                                        _currentDrawnFsm.Id = existingFSM.Id;
-                                        await DBCommands.UpdateFsmAsync(
-                                            dbContext,
-                                            _currentDrawnFsm,
-                                            _user.Id);
-                                        await transact.CommitAsync();
-                                    }
-                                    catch (OperationCanceledException)
-                                    {
-                                        await transact.RollbackAsync();
-                                        throw;
-                                    }
+                                        try
+                                        {
+                                            if (_totalUserFsms > _userConfig.Value.FsmsLimit)
+                                                await DBCommands.DeleteOldModifiedFsms(dbContext, _user, _userConfig.Value.FsmsLimit - 1);
+                                            _currentDrawnFsm.Id = existingFSM.Id;
+                                            await DBCommands.UpdateFsmAsync(
+                                                dbContext,
+                                                _currentDrawnFsm,
+                                                _user.Id);
+                                            await transact.CommitAsync();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex, "Issue with saving Current FSM");
+                                            await transact.RollbackAsync();
+                                            throw;
+                                        }
+                                    });
                                 }
                                 else
                                 {
-                                    await using var transact =
-                                        await dbContext.Database.BeginTransactionAsync();
-                                    try
+                                    await transactStrategy.ExecuteAsync(async () =>
                                     {
-                                        if (_totalUserFsms >= _userConfig.Value.FsmsLimit)
-                                            await DBCommands.DeleteOldModifiedFsms(dbContext, _user, _userConfig.Value.FsmsLimit - 1);
-                                        await DBCommands.AddFSMAsync(
-                                            dbContext,
-                                            _currentDrawnFsm,
-                                            _user.Id);
-                                        await transact.CommitAsync();
-                                    }
-                                    catch (OperationCanceledException)
-                                    {
-                                        await transact.RollbackAsync();
-                                        throw;
-                                    }
+                                        await using var transact =
+                                            await dbContext.Database.BeginTransactionAsync();
+                                        try
+                                        {
+                                            if (_totalUserFsms >= _userConfig.Value.FsmsLimit)
+                                                await DBCommands.DeleteOldModifiedFsms(dbContext, _user, _userConfig.Value.FsmsLimit - 1);
+                                            await DBCommands.AddFSMAsync(
+                                                dbContext,
+                                                _currentDrawnFsm,
+                                                _user.Id);
+                                            await transact.CommitAsync();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex, "Issue with saving Current FSM");
+                                            await transact.RollbackAsync();
+                                            throw;
+                                        }
+                                    });
                                 }
                             }
                             _fsmSaveState = SaveState.Saved;
