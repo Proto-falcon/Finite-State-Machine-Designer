@@ -7,6 +7,12 @@ I made a Finite State Machine Designer website based on Evan Wallace and improve
 - Resize individual States
 - Export PNG & SVG at any scale
 - Backup your Finite State Machines to the website it self
+- Save FSMs to the cloud
+- Account System with OAuth logins with:
+  - Google
+  - Slack
+  - Discord
+  - Github
 
 Inspired by [Evan Wallace's](https://madebyevan.com/) -
 [Finite Machine Designer](https://madebyevan.com/fsm/) in 2010
@@ -33,8 +39,8 @@ And modifications from
 
 ### Environment Variables
 
-- FSM__ExternalAuths__GoogleAuth__ClientId - Client Id of Google app from Google Cloud.
-- FSM__ExternalAuths__GoogleAuth__ClientSecret - Client Secret of Google app from Google Cloud.
+- FSM__ExternalAuths__{Provider}__ClientId - Client Id of Oauth app from a provider.
+- FSM__ExternalAuths__{Provider}__ClientSecret - Client Secret of Oauth app from a provider.
 
 To get the Client Id and Secret any other provider [follow these steps](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/?view=aspnetcore-8.0&tabs=visual-studio).
 
