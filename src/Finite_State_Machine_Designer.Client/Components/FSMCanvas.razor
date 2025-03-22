@@ -27,13 +27,13 @@
 		</AuthorizeView>
 
 		<button title="ctrl+." class="canvas-button"
-				style="@(_superScriptMode ? "background-color:#a45cbd": null)"
-				@onclick="ToggleSuperScriptHandler">
+		style="@(_superScriptMode ? "background-color:#a45cbd": null)"
+		@onclick="ToggleSuperScriptHandler">
 			aˣ
 		</button>
 		<button title="ctrl+," class="canvas-button"
-				style="@(_subScriptMode ? "background-color:#a45cbd": null)"
-				@onclick="ToggleSubScriptHandler">
+		style="@(_subScriptMode ? "background-color:#a45cbd": null)"
+		@onclick="ToggleSubScriptHandler">
 			aₓ
 		</button>
 	</div>
@@ -70,7 +70,7 @@ width="@Width"
 	Your browser does not support the HTML5 &lt;canvas&gt;
 	element.
 </canvas>
-
+<button class="btn btn-lg btn-danger" @onclick="ClearFSM">Clear Everything</button>
 <input @ref="_jsonUpload" id="json-upload" type="file" accept="application/json" @onchange="LoadUploadedJson" />
 
 @code {
@@ -346,6 +346,11 @@ width="@Width"
 
 	private void NavToSave(MouseEventArgs mouseEventArgs)
 		=> Navigation.NavigateTo("MyFSMs?saveCurrent=true");
+
+	private void ClearFSM(MouseEventArgs mouseEventArgs)
+	{
+		_fsmDrawer.FSM = new FiniteStateMachine();
+	}
 	#endregion
 
 	#region Key Events
