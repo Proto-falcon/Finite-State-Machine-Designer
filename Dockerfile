@@ -43,7 +43,9 @@ RUN dotnet publish "Finite_State_Machine_Designer\\Finite_State_Machine_Designer
 # the smallest image possible. This often means using a different and smaller
 # image than the one used for building the application, but for illustrative
 # purposes the "base" image is used here.
-FROM build AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.14-alpine3.21-amd64 AS final
+RUN apk add icu
+
 WORKDIR /app
 COPY --from=build /app .
 
