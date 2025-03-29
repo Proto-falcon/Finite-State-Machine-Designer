@@ -55,7 +55,7 @@ else
             var result = await UserManager.ConfirmEmailAsync(user, code);
             if (result.Succeeded)
                 if (!string.IsNullOrWhiteSpace(Provider))
-                    statusMessage = result.Succeeded ? $"Thank for logging in with {Provider}."
+                    statusMessage = result.Succeeded ? $"Thank you for logging in with {Provider}."
                         : $"Error logging in with {Provider}.";
                 else
                     statusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
