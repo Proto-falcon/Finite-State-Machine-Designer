@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using AspNet.Security.OAuth.GitHub;
+using Microsoft.AspNetCore.Authentication;
+using Finite_State_Machine_Designer.Configuration.ExternalLogins.Github;
 
 namespace Finite_State_Machine_Designer.Configuration.ExternalLogins
 {
@@ -9,7 +11,8 @@ namespace Finite_State_Machine_Designer.Configuration.ExternalLogins
             if (!string.IsNullOrWhiteSpace(externalAuth.ClientId)
                 | !string.IsNullOrWhiteSpace(externalAuth.ClientSecret))
             {
-                authBuilder.AddGitHub(githubOptions =>
+                authBuilder.AddOAuth<GitHubAuthenticationOptions,GitAuthHandler>(
+                    GitHubAuthenticationDefaults.AuthenticationScheme, GitHubAuthenticationDefaults.DisplayName, githubOptions =>
                 {
                     githubOptions.CallbackPath = "/Account/ExternalLogin/Github/";
                     githubOptions.SaveTokens = true;

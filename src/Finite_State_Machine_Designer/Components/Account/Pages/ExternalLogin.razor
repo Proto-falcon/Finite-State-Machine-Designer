@@ -6,6 +6,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Finite_State_Machine_Designer.Configuration
 @using Finite_State_Machine_Designer.Data;
 @using Finite_State_Machine_Designer.Data.Identity
 
@@ -176,19 +177,19 @@
                     if (UserManager.Options.SignIn.RequireConfirmedAccount)
                     {
                         if (externalLoginInfo.Principal
-                                .HasClaim(c => c.Type == "email_verified" && c.Value == true.ToString().ToLower()))
+                                .HasClaim(c => c.Type == UserClaimTypes.EmailVerified && c.Value.ToLower() == true.ToString().ToLower()))
                         {
                             callbackUrl = NavigationManager.GetUriWithQueryParameters(
                                 NavigationManager.ToAbsoluteUri($"Account/ConfirmLogin/{externalLoginInfo.LoginProvider}").AbsoluteUri,
                                 new Dictionary<string, object?> 
-                                { ["userId"] = userId, ["code"] = code });
-                            NavigationManager.NavigateTo(callbackUrl, true);
+                            { ["userId"] = userId, ["code"] = code });
+                            RedirectManager.RedirectTo(callbackUrl);
                         }
                         else
                         {
                             callbackUrl = NavigationManager.GetUriWithQueryParameters(
                                 NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+                            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
                             await EmailSender.SendConfirmationLinkAsync(
                                 user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
                             RedirectManager.RedirectTo(

@@ -16,6 +16,7 @@ namespace Finite_State_Machine_Designer.Configuration.ExternalLogins
                     discordOptions.AccessDeniedPath = accessDeniedPath;
                     discordOptions.ClientId = externalAuth.ClientId;
                     discordOptions.ClientSecret = externalAuth.ClientSecret;
+                    discordOptions.ClaimActions.MapJsonKey(UserClaimTypes.EmailVerified, "verified");
                     discordOptions.Scope.Add("email");
                     discordOptions.Validate();
                 });
